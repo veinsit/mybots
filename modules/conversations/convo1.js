@@ -74,7 +74,7 @@ const step_start = (convo) => {
               .then(() => step_askLinea(convo))
     
           }
-     );
+     )
      s.doStep(convo)
 }
 
@@ -94,11 +94,9 @@ const step_askLinea = (convo) => {
             const text = payload.message.text;
             convo.set('linea', text);
             convo.say(`Hai scelto quickreply: ${text}`)
-              .then(() => step_showResults(convo))
-    
-          },
-     );
-     
+              .then( () => step_showResults(convo) )
+          }
+     )
      s.doStep(convo)
 }
 
