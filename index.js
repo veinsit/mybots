@@ -25,15 +25,9 @@ app.listen(app.get('port'), function() {
 //================= bootbot cli
 
 const BootBot = require('bootbot');
-const config = require('config');
+// const config = require('config');
 
-const bot = new BootBot(
-/*{
-  accessToken: config.get('accessToken'),
-  verifyToken: config.get('verifyToken'),
-  appSecret: config.get('appSecret')
-}*/
-{
+const bot = new BootBot({
   accessToken: process.env.ATOK,
   verifyToken: process.env.VTOK,
   appSecret: process.env.APPSEC,
