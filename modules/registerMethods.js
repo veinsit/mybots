@@ -7,7 +7,7 @@ class RegisterMethods {
     if (!options || (options && (!options.client))) {
       throw new Error('manca il client !!');
     }
-    const baseUri ="http://servizi.startromagna.it/opendata/od/api/tpl/"
+    const baseUri = process.env.OPENDATAURIBASE
     
     this.client = options.client;
     this.client.registerMethod("lineeFC",             baseUri+"FC/linee?format=json", "GET");
