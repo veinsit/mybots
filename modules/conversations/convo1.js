@@ -9,12 +9,11 @@ const rm = new RegisterMethods({ client })
 const RegisterMethods = require('../registerMethods');
 const rm = new RegisterMethods();
 
-const QuickReplyStep = require("../convodef.js")
-
-const lineeMap = new Map();
+const QuickReplyStep = require("../convodef.js");
+const lineeMap = new Map()
 .set("UFO",["FO02", "FO03", "FO04", "FO06", "FO07", "FO08"])
 .set("UCE",["CE02","CE03","CE04"])
-.set("EXT",["F127","F129","F132", "S091", "S092"])
+.set("EXT",["F127","F129","F132", "S091", "S092"]);
 
 const step_start = (convo) => {
     //  ask(question, answer, callbacks, options)
@@ -83,7 +82,7 @@ const step_showResults = (convo) => {
       NOME_NODO_INIZIO: 'S.BENEDETTO IN ALPE 2',
       NOME_NODO_FINE: 'MURAGLIONE' },
         */
-        
+
     rm.client.methods
       .getFC_CorseOggi(args, function (data, response) {
         var result = {
