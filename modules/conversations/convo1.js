@@ -53,9 +53,12 @@ const lineeMap = new Map()
 
 const step_start = (convo) => {
     //  ask(question, answer, callbacks, options)
-    new QuickReplyStep("start",
+    var s = new QuickReplyStep("start",
+
         'Quale servizio ti interessa?',
+
         Array.from(lineeMap.keys()),
+
         (payload, convo) => {
             const text = payload.message.text;
             convo.set('servizio', text);
@@ -63,14 +66,16 @@ const step_start = (convo) => {
               .then(() => step_askLinea(convo))
     
           },
+
           (payload, convo) => {
             const text = payload.message.text;
             convo.set('servizio', text);
             convo.say(`Hai scelto quickreply: ${text}`)
               .then(() => step_askLinea(convo))
     
-          },
-     ).doStep(convo)
+          }
+     );
+     s.doStep(convo)
 }
 
 const step_askLinea = (convo) => {

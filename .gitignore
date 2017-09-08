@@ -1,6 +1,7 @@
 #personal configs
 config
 examples
+gitpush.cmd
 
 # Node build artifacts
 node_modules

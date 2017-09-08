@@ -28,8 +28,7 @@ const BootBot = require('bootbot');
 const config = require('config');
 
 const bot = new BootBot(
-/*  
-{
+/*{
   accessToken: config.get('accessToken'),
   verifyToken: config.get('verifyToken'),
   appSecret: config.get('appSecret')
