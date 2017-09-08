@@ -80,7 +80,7 @@ const step_start = (convo) => {
 
 const step_askLinea = (convo) => {
     //  ask(question, answer, callbacks, options)
-    new QuickReplyStep("askLinea",
+    var s = new QuickReplyStep("askLinea",
         'Quale linea ti interessa?',
         lineeMap.get(convo.get("servizio")),
         (payload, convo) => {
@@ -97,7 +97,9 @@ const step_askLinea = (convo) => {
               .then(() => step_showResults(convo))
     
           },
-     ).doStep(convo)
+     );
+     
+     s.doStep(convo)
 }
 
 const step_showResults = (convo) => {
