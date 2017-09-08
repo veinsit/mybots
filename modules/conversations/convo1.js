@@ -83,6 +83,7 @@ const step_showResults = (convo) => {
       NOME_NODO_INIZIO: 'S.BENEDETTO IN ALPE 2',
       NOME_NODO_FINE: 'MURAGLIONE' },
         */
+        
     rm.client.methods
       .getFC_CorseOggi(args, function (data, response) {
         var result = {
