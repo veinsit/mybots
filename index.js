@@ -37,8 +37,8 @@ const bot = new BootBot({
 
 );
 
-bot.deletePersistentMenu()
-bot.deleteGetStartedButton()
+//bot.deletePersistentMenu()
+//bot.deleteGetStartedButton()
 
 
 var convo1=require("./modules/conversations/convo1")
