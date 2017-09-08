@@ -6,18 +6,18 @@ const client = new Client();
 const RegisterMethods = require('../registerMethods');
 const rm = new RegisterMethods({ client })
 */
-const RegisterMethods = require('../registerMethods');
-const rm = new RegisterMethods();
+const RegisterMethods = require('../registerMethods')
+const rm = new RegisterMethods()
 
-const QuickReplyStep = require("../convodef.js");
+const convodef = require("../convodef.js");
 const lineeMap = new Map()
-.set("UFO",["FO02", "FO03", "FO04", "FO06", "FO07", "FO08"])
-.set("UCE",["CE02","CE03","CE04"])
-.set("EXT",["F127","F129","F132", "S091", "S092"]);
+  .set("UFO",["FO02", "FO03", "FO04", "FO06", "FO07", "FO08"])
+  .set("UCE",["CE02","CE03","CE04"])
+  .set("EXT",["F127","F129","F132", "S091", "S092"])
 
 const step_start = (convo) => {
     //  ask(question, answer, callbacks, options)
-    var s = new QuickReplyStep("start",
+    var s = new convodef.QuickReplyStep("start",
 
         'Quale servizio ti interessa?',
 
@@ -44,7 +44,7 @@ const step_start = (convo) => {
 
 const step_askLinea = (convo) => {
     //  ask(question, answer, callbacks, options)
-    var s = new QuickReplyStep("askLinea",
+    var s = new convodef.QuickReplyStep("askLinea",
         'Quale linea ti interessa?',
         lineeMap.get(convo.get("servizio")),
         (payload, convo) => {
