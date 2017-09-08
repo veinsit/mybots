@@ -1,10 +1,14 @@
 const EventEmitter = require('eventemitter3');
-
+/*
 const Client = require('node-rest-client').Client;
 const client = new Client();
 
 const RegisterMethods = require('../registerMethods');
 const rm = new RegisterMethods({ client })
+*/
+const RegisterMethods = require('../registerMethods');
+const rm = new RegisterMethods()
+
 
 
 class StepDesc extends EventEmitter {
