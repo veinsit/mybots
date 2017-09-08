@@ -40,6 +40,9 @@ const bot = new BootBot({
 //bot.deletePersistentMenu()
 //bot.deleteGetStartedButton()
 
+bot.setGetStartedButton(()=>{
+  bot.say("Dimmi 'convo1' o 'convo2'")
+})
 
 var convo1=require("./modules/conversations/convo1")
 bot.hear('convo1', (payload, chat) => {
