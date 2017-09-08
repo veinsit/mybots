@@ -1,4 +1,4 @@
-const EventEmitter = require('eventemitter3');
+'use strict';
 /*
 const Client = require('node-rest-client').Client;
 const client = new Client();
@@ -7,50 +7,11 @@ const RegisterMethods = require('../registerMethods');
 const rm = new RegisterMethods({ client })
 */
 const RegisterMethods = require('../registerMethods');
-const rm = new RegisterMethods()
+const rm = new RegisterMethods();
 
+const QuickReplyStep = require("../convodef.js")
 
-
-class StepDesc extends EventEmitter {
-    constructor(name, text) {
-        super();
-        this.name = name;
-        this.text = text;
-    }
-}//end class  
-
-class QuickReplyStep extends StepDesc {
-    constructor(name, text, quickReplies, answer, callback) {
-        super(name, text);
-        this.quickReplies = quickReplies;
-        this.callback = callback; // se clicco una quick-reply
-        this.answer = answer; // se rispondo digitando un testo
-    }
-
-    doStep(convo) {
-        //  ask(question, answer, callbacks, options)
-        convo.ask(
-            // primo param di ask : un oggetto
-            {
-              text: this.text,
-              quickReplies: this.quickReplies
-            },
-            this.answer,
-            // secondo param di ask : una funzione
-
-            // terzo param di ask : un array di eventi
-            [ // in questo caso solo la gestione del quick-reply
-              {
-                event: 'quick_reply',
-                callback: this.callback
-              }
-            ]
-          ); // end ask
-  }
-
-}//end class 
-
-const lineeMap = new Map()
+const lineeMap = new Map();
 .set("UFO",["FO02", "FO03", "FO04", "FO06", "FO07", "FO08"])
 .set("UCE",["CE02","CE03","CE04"])
 .set("EXT",["F127","F129","F132", "S091", "S092"])
@@ -135,19 +96,20 @@ const step_showResults = (convo) => {
           })
         }
         convo.say("Ecco le corse di oggi della linea " + args.path.linea)
-  
-        var i = 0;
-        while (i < result.corse.length) {
-          var text = result.corse.slice(i, i + 4).reduce(function (total, item) {
-            return total + "" + item.parte + " " + item.corsa + "  " + item.arriva + "\n";
-          })
-          console.log(text);
-          convo.say(text);
-          i += 4
-        }
-        convo.end()
+        .then(()=>{
+            var i = 0;
+            while (i < result.corse.length) {
+              var text = result.corse.slice(i, i + 4).reduce(function (total, item) {
+                return total + "" + item.parte + " " + item.corsa + "  " + item.arriva + "\n";
+              })
+              console.log(text);
+              convo.say(text);
+              i += 4
+            }
+        })
+        .then(()=>convo.end())
+        
       })
-  
   };
   
 
