@@ -64,15 +64,16 @@ bot.setGetStartedButton((payload, chat) => {
      "fallback_url": "http://servizi.startromagna.it/opendata"
    },
    "buttons":[
-     {
-       "type":"web_url",
-       "url": "http://www.startromagna.it",
-       "title":"View Website"
-     },{
-       "type":"postback",
-       "title":"Info orari",
-       "payload":"ORARI_FOCE"
-     }              
+    {
+      title: 'Linee e orari',
+      type: 'postback',
+      payload: 'ORARI_FOCE'
+    },
+{
+  title: 'Sito',
+  type: 'web_url',
+  url: 'http://www.startromagna.it'
+}          
    ]      
  }
 ]
