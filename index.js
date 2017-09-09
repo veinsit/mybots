@@ -54,52 +54,52 @@ bot.sendRequest({
     "text":"Benvenuto {{user_first_name}}. Digita il numero di una linea, oppure scrivi 'linee' "
     
   }}
-).then(()=>{
+)//.then(()=>{
     //Se desideri usare anche il menu permanente, 
    // devi configurare un pulsante Inizia.
   bot.setGetStartedButton(()=>{
-    bot.say("Dimmi 'convo1' o 'convo2'")
+    bot.say("get started btn")
   })
 
-}).then(()=>{
-  bot.sendRequest({
-    persistent_menu:[
-      {
-        "locale":"default",
-        "composer_input_disabled":true,
-        "call_to_actions":[
-          {
-            "title":"My Account",
-            "type":"nested",
-            "call_to_actions":[
-              {
-                "title":"Pay Bill",
-                "type":"postback",
-                "payload":"PAYBILL_PAYLOAD"
-              },
-              {
-                "title":"History",
-                "type":"postback",
-                "payload":"HISTORY_PAYLOAD"
-              },
-              {
-                "title":"Contact Info",
-                "type":"postback",
-                "payload":"CONTACT_INFO_PAYLOAD"
-              }
-            ]
-          },
-          {
-            "type":"web_url",
-            "title":"Sito",
-            "url":"http://www.startromagna.it",
-            "webview_height_ratio":"full"
-          }
-        ]
-      }
-    ]}
-  )
-})
+//})
+//.then(()=>{
+
+  bot.setPersistentMenu([
+
+        {
+          title: 'Linee e orari',
+          type: 'postback',
+          payload: 'ORARI_FOCE'
+        },
+        {
+          title: 'History',
+          type: 'postback',
+          payload: 'HISTORY_PAYLOAD'
+        },
+        {
+          title: 'Contact Info',
+          type: 'postback',
+          payload: 'CONTACT_INFO_PAYLOAD'
+        },
+    {
+      title: 'Sito',
+      type: 'web_url',
+      url: 'http://www.startromagna.it'
+    }
+  ], true); // disableInput
+  
+  bot.on('postback:ORARI_FOCE', (payload, chat) => {
+    chat.say(`Scrivi 'linee' oppure il numero di una linea`);
+  });
+  
+  bot.on('postback:HISTORY_PAYLOAD', (payload, chat) => {
+    chat.say(`History here...`);
+  });
+  
+  bot.on('postback:CONTACT_INFO_PAYLOAD', (payload, chat) => {
+    chat.say(`Contact info here...`);
+  });
+// })
 
 
 var convo1=require("./modules/conversations/convo1")
