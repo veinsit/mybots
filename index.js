@@ -50,8 +50,36 @@ in sostituzione della descrizione della Pagina.
 */
 bot.setGreetingText('GreetingText');
 bot.setGetStartedButton((payload, chat) => {
-  chat.say('Per informazione sugli orari, scrivi il numero della linea');
+ // chat.say('Per informazione sugli orari, scrivi il numero della linea');
+ chat.sendGenericTemplate([
+  {
+   "title":"Benvenuto a ....",
+   "image_url":"https://petersfancybrownhats.com/company_image.png",
+   "subtitle":"Per informazione sugli orari, scrivi il numero della linea",
+   "default_action": {
+     "type": "web_url",
+     "url": "http://www.startromagna.it",
+     "messenger_extensions": true,
+     "webview_height_ratio": "tall",
+     "fallback_url": "http://servizi.startromagna.it/opendata"
+   },
+   "buttons":[
+     {
+       "type":"web_url",
+       "url": "http://www.startromagna.it",
+       "title":"View Website"
+     },{
+       "type":"postback",
+       "title":"Info orari",
+       "payload":"ORARI_FOCE"
+     }              
+   ]      
+ }
+]
+
+ )
 });
+/*
 bot.setPersistentMenu([
 
         {
@@ -65,7 +93,7 @@ bot.setPersistentMenu([
       url: 'http://www.startromagna.it'
     }
   ], false); // disableInput
-  
+  */
   bot.on('postback:ORARI_FOCE', (payload, chat) => {
     chat.say(`Scrivi 'linee' oppure il numero di una linea`);
   });
