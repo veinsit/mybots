@@ -48,19 +48,11 @@ per spiegare le capacità del bot.
 Se imposti il testo del saluto, questo viene usato 
 in sostituzione della descrizione della Pagina.
 */
-bot.setGreetingText(
-  "Benvenuto {{user_first_name}}. Digita il numero di una linea, oppure scrivi 'linee' "
-).then(()=>{
-    //Se desideri usare anche il menu permanente, 
-   // devi configurare un pulsante Inizia.
-  bot.setGetStartedButton(()=>{
-    bot.say("get started btn")
-  })
-
-})
-.then(()=>{
-
-  bot.setPersistentMenu([
+bot.setGreetingText('GreetingText');
+bot.setGetStartedButton((payload, chat) => {
+  chat.say('Per informazione sugli orari, scrivi il numero della linea');
+});
+bot.setPersistentMenu([
 
         {
           title: 'Linee e orari',
@@ -72,14 +64,14 @@ bot.setGreetingText(
       type: 'web_url',
       url: 'http://www.startromagna.it'
     }
-  ], true); // disableInput
+  ], false); // disableInput
   
   bot.on('postback:ORARI_FOCE', (payload, chat) => {
     chat.say(`Scrivi 'linee' oppure il numero di una linea`);
   });
   
 
- })
+
 
 
 var convo1=require("./modules/conversations/convo1")
