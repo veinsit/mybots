@@ -45,13 +45,16 @@ function askFoCe(convo, lineaNum) {
       convo.say(`Non ho capito. Scegli dal menù`).then(() => askFoCe(convo, lineaNum));
     }, [
         {event: 'postback:UFO', callback: (payload, convo) => {
-            convo.say('Hai scelto Forlì').then(() => fromLinea(convo,lineaNum,"FO"));
+            convo.say('Hai scelto Forlì')
+                .then(() => fromLinea(convo,lineaNum,"Forlì"));
         }},
         {event: 'postback:UCE', callback: (payload, convo) => {
-            convo.say('Hai scelto Cesena').then(() => fromLinea(convo,lineaNum,"CE"));
+            convo.say('Hai scelto Cesena')
+                .then(() => fromLinea(convo,lineaNum,"Cesena"));
         }},
         {event: 'postback:U_UNKNOWN', callback: (payload, convo) => {
-            convo.say('Se vuoi, puoi dirmi di nuovo la linea').then(() => convo.end());
+            convo.say('Se vuoi, puoi dirmi di nuovo la linea')
+                .then(() => convo.end());
         }},
         {event: 'quick_reply', callback: () => {}},
         /*
@@ -68,10 +71,10 @@ function askFoCe(convo, lineaNum) {
 }
 
 function _getCodiceLinea(lineaNum, foce) {
-    if (foce === 'FO' || foce === 'CE')  {
-       return foce+((["1","2","3","4","5","6","7","8","9"].indexOf(lineaNum)>-1)?"0":"")+lineaNum
+    if (foce === 'Forlì' || foce === 'Cesena')  {
+       return (foce.substr(0,2).toUpperCase())+((["1","2","3","4","5","6","7","8","9"].indexOf(lineaNum)>-1)?"0":"")+lineaNum
     }
-    return "F"+lineaNum
+    return (lineaNum.startsWith("9") ? "S0" : "F") + lineaNum
 }
 
 
@@ -107,15 +110,15 @@ const fromLinea = (convo, lineaNum, foce)  => {
                 }
               })
             }
-            convo.say("Ecco le corse di oggi della linea " + args.path.linea)
+            convo.say("Ecco le corse di oggi della linea " + lineaNum + (typeof foce === 'string' ? "di "+foce:""))
             .then(()=>{
                 var i = 0;
                 while (i < result.corse.length) {
                   var text = result.corse.slice(i, i + 4).reduce(function (total, item) {
                     const s = item.parte + " " + item.corsa + "  " + item.arriva + "\n"
-                    return (total ? "" + total +s : s)
+                    return "" + total + s
                   })
-                  console.log(text);
+                  // console.log(text);
                   convo.say(text);
                   i += 4
                 }
