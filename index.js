@@ -54,7 +54,7 @@ bot.setGetStartedButton((payload, chat) => {
  chat.sendGenericTemplate([
   {
    "title":"Benvenuto a ....",
-   "image_url":"https://petersfancybrownhats.com/company_image.png",
+   "image_url":"http://www.imdb.com/name/nm0915208/mediaviewer/rm2785845760",
    "subtitle":"Per informazione sugli orari, scrivi il numero della linea",
    "default_action": {
      "type": "web_url",
