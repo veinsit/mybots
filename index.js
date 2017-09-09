@@ -48,21 +48,17 @@ per spiegare le capacità del bot.
 Se imposti il testo del saluto, questo viene usato 
 in sostituzione della descrizione della Pagina.
 */
-bot.sendRequest({
-  setting_type:"greeting",
-  greeting:{
-    "text":"Benvenuto {{user_first_name}}. Digita il numero di una linea, oppure scrivi 'linee' "
-    
-  }}
-)//.then(()=>{
+bot.setGreetingText(
+  "Benvenuto {{user_first_name}}. Digita il numero di una linea, oppure scrivi 'linee' "
+).then(()=>{
     //Se desideri usare anche il menu permanente, 
    // devi configurare un pulsante Inizia.
   bot.setGetStartedButton(()=>{
     bot.say("get started btn")
   })
 
-//})
-//.then(()=>{
+})
+.then(()=>{
 
   bot.setPersistentMenu([
 
@@ -83,7 +79,7 @@ bot.sendRequest({
   });
   
 
-// })
+ })
 
 
 var convo1=require("./modules/conversations/convo1")
