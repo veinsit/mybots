@@ -2,6 +2,7 @@
 config
 examples
 gitpush.cmd
+ignore.txt
 
 # Node build artifacts
 node_modules

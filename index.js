@@ -54,4 +54,8 @@ bot.hear('convo2', (payload, chat) => {
   convo2.start(chat)
 })  
 
+const LineeBot = require("./modules/lineebot")
+const lbot = new LineeBot(bot)
+lbot.startHearing()
+
 bot.start(process.env.PORT /* config è in .gitignore  || config.get('botPort') */);

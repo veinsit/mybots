@@ -8,16 +8,16 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "node test.js"
+    "test": "mocha"
   },
   "dependencies": {
     "bootbot": "^1.0.12",
     "ejs": "2.5.6",
     "express": "4.15.2",
+    "mocha": "^3.5.0",
     "node-rest-client": "^3.1.0"
   },
   "devDependencies": {
-    "mocha": "^3.5.0",
     "request": "^2.81.0",
     "tape": "^4.7.0"
   },
