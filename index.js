@@ -59,7 +59,7 @@ bot.setGetStartedButton((payload, chat) => {
    "default_action": {
      "type": "web_url",
      "url": "http://www.startromagna.it",
-     "messenger_extensions": true,
+     "messenger_extensions": false,
      "webview_height_ratio": "tall",
      "fallback_url": "http://servizi.startromagna.it/opendata"
    },
