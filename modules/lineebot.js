@@ -113,10 +113,14 @@ const fromLinea = (convo, lineaNum, foce)  => {
             convo.say("Ecco le corse di oggi della linea " + lineaNum + (typeof foce === 'string' ? "di "+foce:""))
             .then(()=>{
                 var i = 0;
+                const convert = (x)=>x.parte + " " + x.corsa + "  " + x.arriva + "\n"
                 while (i < result.corse.length) {
                   var text = result.corse.slice(i, i + 4).reduce(function (total, item) {
                     const s = item.parte + " " + item.corsa + "  " + item.arriva + "\n"
-                    return "" + total + s
+                    if (typeof total === 'string')
+                        return total + convert(item)
+                    else
+                        return convert(total) + convert(item)
                   })
                   // console.log(text);
                   convo.say(text);

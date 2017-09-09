@@ -40,9 +40,67 @@ const bot = new BootBot({
 //bot.deletePersistentMenu()
 //bot.deleteGetStartedButton()
 
-bot.setGetStartedButton(()=>{
-  bot.say("Dimmi 'convo1' o 'convo2'")
+// messaggio di saluto E messaggio iniziale
+
+/*
+Il testo del saluto può fungere da introduzione 
+per spiegare le capacità del bot. 
+Se imposti il testo del saluto, questo viene usato 
+in sostituzione della descrizione della Pagina.
+*/
+bot.sendRequest({
+  setting_type:"greeting",
+  greeting:{
+    "text":"Benvenuto {{user_first_name}}. Digita il numero di una linea, oppure scrivi 'linee' "
+    
+  }}
+).then(()=>{
+    //Se desideri usare anche il menu permanente, 
+   // devi configurare un pulsante Inizia.
+  bot.setGetStartedButton(()=>{
+    bot.say("Dimmi 'convo1' o 'convo2'")
+  })
+
+}).then(()=>{
+  bot.sendRequest({
+    persistent_menu:[
+      {
+        "locale":"default",
+        "composer_input_disabled":true,
+        "call_to_actions":[
+          {
+            "title":"My Account",
+            "type":"nested",
+            "call_to_actions":[
+              {
+                "title":"Pay Bill",
+                "type":"postback",
+                "payload":"PAYBILL_PAYLOAD"
+              },
+              {
+                "title":"History",
+                "type":"postback",
+                "payload":"HISTORY_PAYLOAD"
+              },
+              {
+                "title":"Contact Info",
+                "type":"postback",
+                "payload":"CONTACT_INFO_PAYLOAD"
+              }
+            ]
+          },
+          {
+            "type":"web_url",
+            "title":"Sito",
+            "url":"http://www.startromagna.it",
+            "webview_height_ratio":"full"
+          }
+        ]
+      }
+    ]}
+  )
 })
+
 
 var convo1=require("./modules/conversations/convo1")
 bot.hear('convo1', (payload, chat) => {
