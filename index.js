@@ -71,16 +71,6 @@ bot.sendRequest({
           type: 'postback',
           payload: 'ORARI_FOCE'
         },
-        {
-          title: 'History',
-          type: 'postback',
-          payload: 'HISTORY_PAYLOAD'
-        },
-        {
-          title: 'Contact Info',
-          type: 'postback',
-          payload: 'CONTACT_INFO_PAYLOAD'
-        },
     {
       title: 'Sito',
       type: 'web_url',
@@ -92,13 +82,7 @@ bot.sendRequest({
     chat.say(`Scrivi 'linee' oppure il numero di una linea`);
   });
   
-  bot.on('postback:HISTORY_PAYLOAD', (payload, chat) => {
-    chat.say(`History here...`);
-  });
-  
-  bot.on('postback:CONTACT_INFO_PAYLOAD', (payload, chat) => {
-    chat.say(`Contact info here...`);
-  });
+
 // })
 
 
