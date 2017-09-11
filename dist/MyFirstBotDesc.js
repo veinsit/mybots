@@ -10,7 +10,6 @@ client.registerMethod("getLinee", baseUri + "${bacino}/linee?format=json", "GET"
 client.registerMethod("getCorseOggi", baseUri + "${bacino}/linee/${linea}/corse/giorno/0?format=json", "GET");
 client.registerMethod("getPassaggiCorsa", baseUri + "${bacino}/linee/${linea}/corse/${corsa}?format=json", "GET");
 console.log("metodi registrati !");
-exports.hearings = [];
 var bot;
 exports.start = (_bot, done) => {
     /*
@@ -31,19 +30,27 @@ exports.start = (_bot, done) => {
         console.log(data);
         // data è un array di linee
         //TODO: Effetto collaterale !!!!!
-        exports.hearings = [
-            { tokens: ["a", "b"], action: ab_action },
+        const hearings = [
+            { "tokens": ["a", "b"], "action": ab_action },
             {
-                tokens: data.map(it => it.display_name),
-                action: numlinea_action
+                "tokens": data.map(it => it.display_name),
+                "action": numlinea_action
             }
         ];
         bot = _bot; //TODO: Effetto collaterale !!!!!
-        exports.hearings.forEach(it => _bot.hear(it.hearings, (payload, chat) => {
-            chat.conversation(convo => {
-                it.action(convo, payload.message.text);
+        for (let h of exports.hearings) {
+            _bot.hear(h.tokens, (payload, chat) => {
+                chat.conversation(convo => h.action(convo, payload.message.text));
             });
-        }));
+            console.log("** hearing for " + h.tokens.toString());
+        }
+        /*
+        exports.hearings.forEach(it=> {
+            _bot.hear(it.tokens, (payload, chat) => {
+                chat.conversation(convo => it.action(convo, payload.message.text))
+            })
+            console.log("** hearing for "+it.tokens.toString())
+        })*/
         done(data);
     });
 };
