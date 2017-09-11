@@ -38,7 +38,7 @@ exports.start = (_bot, done) => {
             }
         ];
         bot = _bot; //TODO: Effetto collaterale !!!!!
-        for (let h of exports.hearings) {
+        for (let h of hearings) {
             _bot.hear(h.tokens, (payload, chat) => {
                 chat.conversation(convo => h.action(convo, payload.message.text));
             });
