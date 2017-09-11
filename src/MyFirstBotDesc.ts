@@ -34,7 +34,7 @@ exports.start = (_bot, done) => {
 	        var args = { path: { bacino:'FC'}}
 
 		client.methods.getLinee(args, (data, response) => {
-			console.log(data)
+			//console.log(data)
 	  // data è un array di linee
 		//TODO: Effetto collaterale !!!!!
 		const hearings : any[] = [
