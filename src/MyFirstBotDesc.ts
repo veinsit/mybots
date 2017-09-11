@@ -45,11 +45,12 @@ exports.start = (_bot, done) => {
 			 }
 		]   		
 		bot = _bot //TODO: Effetto collaterale !!!!!
-		exports.hearings.forEach(it=>
-			_bot.hear(it.hearings, (payload, chat) => {
-				chat.conversation(convo => { it.action(convo, payload.message.text) 
+		exports.hearings.forEach(it=> {
+			_bot.hear(it.tokens, (payload, chat) => {
+				chat.conversation(convo => it.action(convo, payload.message.text)) 
 			})
-		}))
+			console.log("** hearing for "+it.tokens.toString())
+		})
 		done(data)
 	})
 }    
