@@ -1,6 +1,6 @@
 "use strict";
-// import * as supertest from 'supertest'
 Object.defineProperty(exports, "__esModule", { value: true });
+const MyFirstBotDesc_1 = require("./MyFirstBotDesc");
 const assert = require("assert");
 /*
 describe('AppBoot', () => {
@@ -13,8 +13,7 @@ describe('AppBoot', () => {
 })
 */
 describe('MyFirstBotDesc', function () {
-    let obj = require("./MyFirstBotDesc");
-    let linee = [];
+    var rm;
     before(function () {
         // runs before all tests in this block
     });
@@ -28,12 +27,8 @@ describe('MyFirstBotDesc', function () {
         // runs after each test in this block
     });
     // test cases
-    it('dovrebbe caricare le linee', () => {
-        obj.start(_linee => {
-            linee = _linee;
-            console.log(linee);
-            assert.ok(linee.length > 20, "non ha caricato le linee");
-        });
+    it('works', () => {
+        assert.ok((new MyFirstBotDesc_1.MyFirstBotDesc()).numlinee() > 20, "non ha caricato le linee");
     });
 });
-//# sourceMappingURL=MyFirstBotDesc.spec.js.map
+//# sourceMappingURL=MyFirstBotDesc.spec - Copia.js.map

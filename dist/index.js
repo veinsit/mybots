@@ -1,9 +1,24 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const AppBootBot_1 = require("./AppBootBot");
-const MyFirstBotDesc_1 = require("./MyFirstBotDesc");
-(new AppBootBot_1.AppBootBot(new MyFirstBotDesc_1.MyFirstBotDesc()))
-    .start(process.env.PORT || 3000);
+/*
+import {AppBootBot} from './AppBootBot'
+import {MyFirstBotDesc} from './MyFirstBotDesc'
+
+(new AppBootBot(new MyFirstBotDesc()))
+    .start(process.env.PORT || 3000)
+*/
+const BootBot = require('bootbot');
+// const config = require('config');
+const bot = new BootBot({
+    accessToken: process.env.ATOK || "fake",
+    verifyToken: process.env.VTOK || "fake",
+    appSecret: process.env.APPSEC || "fake",
+});
+let obj = require("./MyFirstBotDesc");
+obj.start(bot, _linee => {
+    console.log(_linee);
+    // così non rinfresca più le linee
+    bot.start(process.env.PORT || 3000);
+});
+// (new AppBootBot(obj))
 /* se app fosse express:
 app.listen(port, (err) => {
   if (err) {

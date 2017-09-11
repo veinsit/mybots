@@ -1,4 +1,6 @@
 // import * as supertest from 'supertest'
+import {AppBootBot} from './AppBootBot'
+import {MyFirstBotDesc} from './MyFirstBotDesc'
 
 import * as assert from 'assert'
 /*
@@ -13,12 +15,9 @@ describe('AppBoot', () => {
 */
 
 describe('MyFirstBotDesc', function() {
-  let obj = require("./MyFirstBotDesc")
-  let linee = []
-  
+  var rm
   before(function() {
     // runs before all tests in this block
-
   });
 
   after(function() {
@@ -35,12 +34,9 @@ describe('MyFirstBotDesc', function() {
 
   // test cases
   
-  it('dovrebbe caricare le linee', () => {
-	  	obj.start(_linee => {
-		linee = _linee;
-		console.log(linee)
-		assert.ok( linee.length >20 , "non ha caricato le linee")
-    })
+  it('works', () => {
+    assert.ok( (new MyFirstBotDesc()).numlinee()>20 , "non ha caricato le linee")
   })
+
   
 });

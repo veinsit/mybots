@@ -38,9 +38,7 @@ const bot = new BootBot({
   appSecret: process.env.APPSEC,
 //  botPort: process.env.BOTPORT,
 //  botTunnelSubDomain: process.env.BOTTUN
-}
-
-);
+});
 
 //bot.deletePersistentMenu()
 //bot.deleteGetStartedButton()
