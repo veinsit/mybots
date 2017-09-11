@@ -8,12 +8,28 @@
     "tasks": [
         {
             "taskName": "eslint",
-
             "args": [
-                "eslint ."  // To use locally installed eslint,  ./node_modules/eslint/bin/eslint.js .
+                "eslint ."
             ],
             "problemMatcher": [
-                "$eslint-stylish"   
+                "$eslint-stylish"
             ]
+        },
+        {
+            "type": "typescript",
+            "tsconfig": "tsconfig.json",
+            "problemMatcher": [
+                "$tsc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "type": "npm",
+            "script": "test",
+            "problemMatcher": []
         }
-    ]}
+    ]
+}

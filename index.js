@@ -1,8 +1,13 @@
 'use strict';
+/* OK:
+const tplcode = require("./dist/tplcode")
+console.log("ciao "+tplcode.dotest())
+process.exit(0);
+*/
 
 //================== da startup di heroku
-var express = require('express');
-var app = express();
+// var express = require('express');
+// var app = express();
 /*
 
 app.set('port', (process.env.PORT || 5000));
