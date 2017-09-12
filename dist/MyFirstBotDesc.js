@@ -20,16 +20,20 @@ function calcNumeriLinea(linee) {
     exports.numeriLineaUnivoci = [];
     exports.numeriLineaRipetuti = [];
     for (let it of nums) {
-        if (exports.numeriLineaUnivoci.indexOf(it) === -1) {
+        const inUnivoci = exports.numeriLineaUnivoci.indexOf(it) > 0;
+        const inRipetuti = exports.numeriLineaRipetuti.indexOf(it) > 0;
+        if (!inUnivoci && !inRipetuti) {
             exports.numeriLineaUnivoci.push(it);
-            l("univoco " + it);
+        }
+        else if (!inUnivoci && inRipetuti) {
+            // niente
+        }
+        else if (inUnivoci && !inRipetuti) {
+            exports.numeriLineaRipetuti.push(it);
+            exports.numeriLineaUnivoci = exports.numeriLineaUnivoci.filter(x => (x !== it));
         }
         else {
-            if (exports.numeriLineaRipetuti.indexOf(it) === -1) {
-                exports.numeriLineaRipetuti.push(it);
-                exports.numeriLineaUnivoci = exports.numeriLineaUnivoci.filter(x => (x !== it));
-                l("ripetuto " + it);
-            }
+            l("ERROR !!! linee ripetute");
         }
     }
     return exports.numeriLineaRipetuti.length;

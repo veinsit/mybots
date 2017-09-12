@@ -26,16 +26,21 @@ export function calcNumeriLinea(linee : any[]) : number {
     numeriLineaUnivoci = [];
     numeriLineaRipetuti = [];
     for (let it of nums) {
-        if (numeriLineaUnivoci.indexOf(it)===-1 && numeriLineaRipetuti.indexOf(it)===-1) {
+        const inUnivoci : boolean = numeriLineaUnivoci.indexOf(it) > 0
+        const inRipetuti : boolean = numeriLineaRipetuti.indexOf(it) > 0
+
+        if (!inUnivoci && !inRipetuti) {
             numeriLineaUnivoci.push(it)
-            // l("univoco "+it)
         }
-        else { // è già negli univoci oppure nei ripetuti
-            if (numeriLineaRipetuti.indexOf(it)===-1) { // è negli univoci
-                numeriLineaRipetuti.push(it)
-                numeriLineaUnivoci = numeriLineaUnivoci.filter(x=>(x!==it))
-                // l("ripetuto "+it)
-            }
+        else if (!inUnivoci &&  inRipetuti) {
+            // niente
+        }
+        else if ( inUnivoci &&  !inRipetuti) {
+            numeriLineaRipetuti.push(it)
+            numeriLineaUnivoci = numeriLineaUnivoci.filter(x=>(x!==it))
+        }
+        else {
+            l("ERROR !!! linee ripetute")
         }
     }
     return numeriLineaRipetuti.length
