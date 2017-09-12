@@ -17,7 +17,31 @@ console.log("metodi registrati !")
 
 var bot;
 
-exports.start = (_bot, done) => {
+var linee; // elenco linee caricate da ws
+export var numeriLineaUnivoci = [];
+export var numeriLineaRipetuti = [];
+const l = s=>console.log(s)
+export function calcNumeriLinea(linee : any[]) : number {
+    const nums = linee.map(it=>it.display_name)
+    numeriLineaUnivoci = [];
+    numeriLineaRipetuti = [];
+    for (let it of nums) {
+        if (numeriLineaUnivoci.indexOf(it)===-1) {
+            numeriLineaUnivoci.push(it)
+            l("univoco "+it)
+        }
+        else {
+            if (numeriLineaRipetuti.indexOf(it)===-1) {
+                numeriLineaRipetuti.push(it)
+                numeriLineaUnivoci = numeriLineaUnivoci.filter(x=>(x!==it))
+                l("ripetuto "+it)
+            }
+        }
+    }
+    return numeriLineaRipetuti.length
+}
+
+export function start(_bot, done)  {
 	/*
 	{
 	"Bacino": "FC",
@@ -35,19 +59,25 @@ exports.start = (_bot, done) => {
 
 		client.methods.getLinee(args, (data, response) => {
 			//console.log(data)
-	  // data è un array di linee
+      // data è un array di linee
+      linee = data
+		//TODO: Effetto collaterale !!!!!
+        calcNumeriLinea(linee)
 		//TODO: Effetto collaterale !!!!!
 		const hearings : any[] = [
 			{ "tokens":["a","b"], "action":  ab_action },
-			
 			{
-				"tokens": data.map(it=>it.display_name), 
-				"action": numlinea_action
-			 }
+                "tokens": numeriLineaUnivoci, 
+                "action": numlineaUnivoci_action
+    		},
+			{
+                "tokens": numeriLineaRipetuti, 
+                "action": numlineaRipetuti_action
+    		}
 		]   		
 		bot = _bot //TODO: Effetto collaterale !!!!!
 		for (let h of hearings){
-			_bot.hear(h.tokens, (payload, chat) => {
+			_bot && _bot.hear(h.tokens, (payload, chat) => {
 				chat.conversation(convo => h.action(convo, payload.message.text)) 
 			})
 			console.log("** hearing for "+h.tokens.toString())
@@ -62,12 +92,17 @@ exports.start = (_bot, done) => {
 		done(data)
 	})
 }    
+
 const ab_action = (convo, heard:string) : void => {
         convo.say(`Hai detto a o b : ${heard}`);
 		convo.end();
     }
-const numlinea_action = (convo, heard:string) : void => {
-        convo.say(`Hai detto il nome di una linea : ${heard}`)
+const numlineaUnivoci_action = (convo, heard:string) : void => {
+        convo.say(`Line univoca : ${heard}`)
 		convo.end();
+    }
+const numlineaRipetuti_action = (convo, heard:string) : void => {
+    convo.say(`Linea ripetuta : ${heard}`)
+    convo.end();
     }
 
