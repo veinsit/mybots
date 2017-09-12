@@ -14,7 +14,7 @@ var bot;
 var linee; // elenco linee caricate da ws
 var lineeUnivoche = [];
 var lineeRipetute = [];
-const lineeMap = new Map();
+exports.lineeMap = new Map();
 exports.numeriLineaUnivoci = []; // ["126", "127", ...]
 exports.numeriLineaRipetuti = []; // [{numLinea:"2", codici}
 const l = s => console.log(s);
@@ -25,8 +25,10 @@ function calcNumeriLinea(linee) {
     for (let linea of linee) {
         const numLinea = linea.display_name;
         const codLinea = linea.LINEA_ID;
-        let k = lineeMap.get(numLinea);
-        k ? lineeMap.set(numLinea, [...k, linea]) : lineeMap.set(numLinea, [linea]);
+        if (exports.lineeMap.has(numLinea))
+            exports.lineeMap.set(numLinea, [...(exports.lineeMap.get(numLinea)), linea]);
+        else
+            exports.lineeMap.set(numLinea, [linea]);
         /*
         let k:any[]
         if ((k=lineeMap.get(numLinea))) {
@@ -54,8 +56,8 @@ function calcNumeriLinea(linee) {
         else {
             l("ERROR !!! linee ripetute");
         }
-        l(JSON.stringify(lineeMap));
     }
+    l(JSON.stringify(exports.lineeMap));
     return exports.numeriLineaRipetuti.length;
 }
 exports.calcNumeriLinea = calcNumeriLinea;

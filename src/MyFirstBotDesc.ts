@@ -21,7 +21,7 @@ var linee; // elenco linee caricate da ws
 var lineeUnivoche = []
 var lineeRipetute = []
 
-const lineeMap = new Map<string, any[]>()
+export const lineeMap = new Map<string, any[]>()
 
 export var numeriLineaUnivoci = [];  // ["126", "127", ...]
 export var numeriLineaRipetuti = []; // [{numLinea:"2", codici}
@@ -34,8 +34,11 @@ export function calcNumeriLinea(linee : any[]) : number {
         const numLinea = linea.display_name
         const codLinea = linea.LINEA_ID
 
-        let k:any[] = lineeMap.get(numLinea)
-        k ? lineeMap.set(numLinea, [...k, linea]) : lineeMap.set(numLinea, [linea])
+
+        if (lineeMap.has(numLinea))
+            lineeMap.set(numLinea, [...(lineeMap.get(numLinea)), linea])
+        else 
+             lineeMap.set(numLinea, [linea])
 
         /*
         let k:any[]
@@ -67,8 +70,8 @@ export function calcNumeriLinea(linee : any[]) : number {
             l("ERROR !!! linee ripetute")
         }
 
-        l(JSON.stringify(lineeMap))
     }
+    l(JSON.stringify(lineeMap))
     return numeriLineaRipetuti.length
 }
 

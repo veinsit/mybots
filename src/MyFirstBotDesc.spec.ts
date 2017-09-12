@@ -40,6 +40,9 @@ describe('MyFirstBotDesc', function() {
       linee = _linee;
       //console.log("Linee: "+ (linee.length || "non caricate"))
       assert.ok(linee.length>10, "linee non caricate")
+      
+      assert.ok(myFirstBotDesc.lineeMap.get('4').length > 1, "linea 4");
+      assert.ok(myFirstBotDesc.lineeMap.get('92').length === 1, "linea 92");
 
       assert.ok(linee.map(it=>it.display_name).indexOf("3")>0, "Manca la linea 3")
       
