@@ -96,7 +96,7 @@ const ab_action = (convo, heard) => {
 };
 const numlineaUnivoci_action = (convo, numLinea) => {
     convo.say(`Linea univoca : ${numLinea}`)
-        .then(() => { _messagesLinea(numLinea).forEach(it => convo.say(it)); });
+        .then(() => _messagesLinea(numLinea).forEach(it => convo.say(it)));
     convo.end();
 };
 const numlineaRipetuti_action = (convo, heard) => {
@@ -104,7 +104,7 @@ const numlineaRipetuti_action = (convo, heard) => {
     convo.end();
 };
 const _messagesLinea = (numLinea, index = 0) => {
-    let msgs;
+    let msgs = [];
     const linea = exports.lineeMap.get(numLinea)[index];
     msgs.push("Linea " + numLinea);
     msgs.push(linea.asc_direction + '\n' + linea.asc_note);
