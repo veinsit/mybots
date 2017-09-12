@@ -1,16 +1,6 @@
 // import * as supertest from 'supertest'
 
 import * as assert from 'assert'
-/*
-describe('AppBoot', () => {
-  it('works', () =>
-    supertest(app)
-      .get('/')
-      .expect('Content-Type', /json/)
-      .expect(200)
-  )
-})
-*/
 import myFirstBotDesc = require("./MyFirstBotDesc")
 
 describe('MyFirstBotDesc', function() {

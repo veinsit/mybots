@@ -2,16 +2,6 @@
 // import * as supertest from 'supertest'
 Object.defineProperty(exports, "__esModule", { value: true });
 const assert = require("assert");
-/*
-describe('AppBoot', () => {
-  it('works', () =>
-    supertest(app)
-      .get('/')
-      .expect('Content-Type', /json/)
-      .expect(200)
-  )
-})
-*/
 const myFirstBotDesc = require("./MyFirstBotDesc");
 describe('MyFirstBotDesc', function () {
     // var obj = require("./MyFirstBotDesc")

@@ -18,8 +18,8 @@ console.log("metodi registrati !")
 var bot;
 
 var linee; // elenco linee caricate da ws
-var lineeUnivoche = []
-var lineeRipetute = []
+//var lineeUnivoche = []
+//var lineeRipetute = []
 
 export var lineeMap;
 
@@ -40,15 +40,15 @@ export function calcNumeriLinea(linee : any[]) : number {
         else 
             lineeMap.set(numLinea, [linea])
 
-        /*
-        let k:any[]
-        if ((k=lineeMap.get(numLinea))) {
-            lineeMap.set(numLinea, [...k, linea])
+        for (let entry of lineeMap.entries()) {
+            if (entry[1].length===1)
+                numeriLineaUnivoci.push(entry[0])
+            else
+                numeriLineaRipetuti.push(entry[0])
+            
+            console.log(entry[0], entry[1]);
         }
-        else {
-            lineeMap.set(numLinea, [linea])
-        }
-        */
+                /*
         const inUnivoci : boolean = (numeriLineaUnivoci.indexOf(numLinea) >= 0)
         const inRipetuti : boolean = (numeriLineaRipetuti.indexOf(numLinea) >= 0)
 
@@ -69,10 +69,11 @@ export function calcNumeriLinea(linee : any[]) : number {
         else {
             l("ERROR !!! linee ripetute")
         }
-
+*/
     }
-    l(JSON.stringify(lineeMap.get('4')))
-    l(JSON.stringify(lineeMap.get('92')))
+//    l(JSON.stringify(lineeMap.get('4')))
+//    l(JSON.stringify(lineeMap.get('92')))
+
     return numeriLineaRipetuti.length
 }
 

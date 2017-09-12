@@ -12,8 +12,6 @@ client.registerMethod("getPassaggiCorsa", baseUri + "${bacino}/linee/${linea}/co
 console.log("metodi registrati !");
 var bot;
 var linee; // elenco linee caricate da ws
-var lineeUnivoche = [];
-var lineeRipetute = [];
 exports.numeriLineaUnivoci = []; // ["126", "127", ...]
 exports.numeriLineaRipetuti = []; // [{numLinea:"2", codici}
 const l = s => console.log(s);
@@ -28,36 +26,38 @@ function calcNumeriLinea(linee) {
             exports.lineeMap.set(numLinea, [...(exports.lineeMap.get(numLinea)), linea]);
         else
             exports.lineeMap.set(numLinea, [linea]);
+        for (let entry of exports.lineeMap.entries()) {
+            if (entry[1].length === 1)
+                exports.numeriLineaUnivoci.push(entry[0]);
+            else
+                exports.numeriLineaRipetuti.push(entry[0]);
+            console.log(entry[0], entry[1]);
+        }
         /*
-        let k:any[]
-        if ((k=lineeMap.get(numLinea))) {
-            lineeMap.set(numLinea, [...k, linea])
-        }
-        else {
-            lineeMap.set(numLinea, [linea])
-        }
-        */
-        const inUnivoci = (exports.numeriLineaUnivoci.indexOf(numLinea) >= 0);
-        const inRipetuti = (exports.numeriLineaRipetuti.indexOf(numLinea) >= 0);
-        if (!inUnivoci && !inRipetuti) {
-            exports.numeriLineaUnivoci.push(numLinea);
-            lineeUnivoche.push(linea);
-        }
-        else if (!inUnivoci && inRipetuti) {
-            // niente
-        }
-        else if (inUnivoci && !inRipetuti) {
-            exports.numeriLineaRipetuti.push(numLinea);
-            exports.numeriLineaUnivoci = exports.numeriLineaUnivoci.filter(it => (it !== numLinea));
-            lineeRipetute.push(linea);
-            lineeUnivoche = lineeUnivoche.filter(it => (it !== linea));
-        }
-        else {
-            l("ERROR !!! linee ripetute");
-        }
+const inUnivoci : boolean = (numeriLineaUnivoci.indexOf(numLinea) >= 0)
+const inRipetuti : boolean = (numeriLineaRipetuti.indexOf(numLinea) >= 0)
+
+if (!inUnivoci && !inRipetuti) {
+    numeriLineaUnivoci.push(numLinea)
+    lineeUnivoche.push(linea)
+}
+else if (!inUnivoci &&  inRipetuti) {
+    // niente
+}
+else if ( inUnivoci &&  !inRipetuti) {
+    numeriLineaRipetuti.push(numLinea)
+    numeriLineaUnivoci = numeriLineaUnivoci.filter(it=>(it!==numLinea))
+
+    lineeRipetute.push(linea)
+    lineeUnivoche = lineeUnivoche.filter(it=>(it!==linea))
+}
+else {
+    l("ERROR !!! linee ripetute")
+}
+*/
     }
-    l(JSON.stringify(exports.lineeMap.get('4')));
-    l(JSON.stringify(exports.lineeMap.get('92')));
+    //    l(JSON.stringify(lineeMap.get('4')))
+    //    l(JSON.stringify(lineeMap.get('92')))
     return exports.numeriLineaRipetuti.length;
 }
 exports.calcNumeriLinea = calcNumeriLinea;
