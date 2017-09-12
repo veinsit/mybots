@@ -112,8 +112,16 @@ const ab_action = (convo, heard:string) : void => {
 		convo.end();
     }
 const numlineaUnivoci_action = (convo, numLinea:string) : void => {
-        convo.say(`Linea univoca : ${numLinea}`)
-        .then(()=>_messagesLinea(numLinea).forEach(it => convo.say(it)))
+        const msgs = _messagesLinea(numLinea)
+        convo.say(msgs[0]).then(()=>{
+            convo.say(msgs[1]).then(()=>{
+                convo.say(msgs[2]).then(()=>{
+                    convo.say(msgs[3])
+                    convo.end()
+                })
+            })
+        })
+        // convo.say(`Linea univoca : ${numLinea}`).then(()=>_messagesLinea(numLinea).forEach(it => convo.say(it)))
 		convo.end();
     }
 const numlineaRipetuti_action = (convo, heard:string) : void => {
