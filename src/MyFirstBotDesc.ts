@@ -18,30 +18,56 @@ console.log("metodi registrati !")
 var bot;
 
 var linee; // elenco linee caricate da ws
-export var numeriLineaUnivoci = [];
-export var numeriLineaRipetuti = [];
+var lineeUnivoche = []
+var lineeRipetute = []
+
+const lineeMap = new Map<string, any[]>()
+
+export var numeriLineaUnivoci = [];  // ["126", "127", ...]
+export var numeriLineaRipetuti = []; // [{numLinea:"2", codici}
 const l = s=>console.log(s)
 export function calcNumeriLinea(linee : any[]) : number {
-    const nums = linee.map(it=>it.display_name)
+    // const nums = linee.map(it=>it.display_name)
     numeriLineaUnivoci = [];
     numeriLineaRipetuti = [];
-    for (let it of nums) {
-        const inUnivoci : boolean = (numeriLineaUnivoci.indexOf(it) >= 0)
-        const inRipetuti : boolean = (numeriLineaRipetuti.indexOf(it) >= 0)
+    for (let linea of linee) {
+        const numLinea = linea.display_name
+        const codLinea = linea.LINEA_ID
+
+        let k=lineeMap.get(numLinea)
+        lineeMap.set(numLinea, [...k, linea])
+
+        /*
+        let k:any[]
+        if ((k=lineeMap.get(numLinea))) {
+            lineeMap.set(numLinea, [...k, linea])
+        }
+        else {
+            lineeMap.set(numLinea, [linea])
+        }
+        */
+        const inUnivoci : boolean = (numeriLineaUnivoci.indexOf(numLinea) >= 0)
+        const inRipetuti : boolean = (numeriLineaRipetuti.indexOf(numLinea) >= 0)
 
         if (!inUnivoci && !inRipetuti) {
-            numeriLineaUnivoci.push(it)
+            numeriLineaUnivoci.push(numLinea)
+            lineeUnivoche.push(linea)
         }
         else if (!inUnivoci &&  inRipetuti) {
             // niente
         }
         else if ( inUnivoci &&  !inRipetuti) {
-            numeriLineaRipetuti.push(it)
-            numeriLineaUnivoci = numeriLineaUnivoci.filter(x=>(x!==it))
+            numeriLineaRipetuti.push(numLinea)
+            numeriLineaUnivoci = numeriLineaUnivoci.filter(it=>(it!==numLinea))
+
+            lineeRipetute.push(linea)
+            lineeUnivoche = lineeUnivoche.filter(it=>(it!==linea))
         }
         else {
             l("ERROR !!! linee ripetute")
         }
+
+        l(JSON.stringify(lineeMap))
     }
     return numeriLineaRipetuti.length
 }
@@ -102,8 +128,9 @@ const ab_action = (convo, heard:string) : void => {
         convo.say(`Hai detto a o b : ${heard}`);
 		convo.end();
     }
-const numlineaUnivoci_action = (convo, heard:string) : void => {
-        convo.say(`Line univoca : ${heard}`)
+const numlineaUnivoci_action = (convo, numLinea:string) : void => {
+        convo.say(`Linea univoca : ${numLinea}`)
+            .then(()=> { _messagesLinea(numLinea).forEach(it => convo.say(it))})
 		convo.end();
     }
 const numlineaRipetuti_action = (convo, heard:string) : void => {
@@ -111,3 +138,9 @@ const numlineaRipetuti_action = (convo, heard:string) : void => {
     convo.end();
     }
 
+const _messagesLinea = (numLinea:string) : string[] => {
+    let msgs:string[];
+    let linea
+    msgs.push()
+    return msgs;
+}
