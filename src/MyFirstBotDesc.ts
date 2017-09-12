@@ -34,8 +34,8 @@ export function calcNumeriLinea(linee : any[]) : number {
         const numLinea = linea.display_name
         const codLinea = linea.LINEA_ID
 
-        let k=lineeMap.get(numLinea)
-        lineeMap.set(numLinea, [...k, linea])
+        let k:any[] = lineeMap.get(numLinea)
+        k ? lineeMap.set(numLinea, [...k, linea]) : lineeMap.set(numLinea, [linea])
 
         /*
         let k:any[]

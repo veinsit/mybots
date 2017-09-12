@@ -26,7 +26,7 @@ function calcNumeriLinea(linee) {
         const numLinea = linea.display_name;
         const codLinea = linea.LINEA_ID;
         let k = lineeMap.get(numLinea);
-        lineeMap.set(numLinea, [...k, linea]);
+        k ? lineeMap.set(numLinea, [...k, linea]) : lineeMap.set(numLinea, [linea]);
         /*
         let k:any[]
         if ((k=lineeMap.get(numLinea))) {
