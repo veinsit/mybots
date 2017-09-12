@@ -20,8 +20,8 @@ function calcNumeriLinea(linee) {
     exports.numeriLineaUnivoci = [];
     exports.numeriLineaRipetuti = [];
     for (let it of nums) {
-        const inUnivoci = exports.numeriLineaUnivoci.indexOf(it) > 0;
-        const inRipetuti = exports.numeriLineaRipetuti.indexOf(it) > 0;
+        const inUnivoci = (exports.numeriLineaUnivoci.indexOf(it) >= 0);
+        const inRipetuti = (exports.numeriLineaRipetuti.indexOf(it) >= 0);
         if (!inUnivoci && !inRipetuti) {
             exports.numeriLineaUnivoci.push(it);
         }

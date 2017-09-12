@@ -26,8 +26,8 @@ export function calcNumeriLinea(linee : any[]) : number {
     numeriLineaUnivoci = [];
     numeriLineaRipetuti = [];
     for (let it of nums) {
-        const inUnivoci : boolean = numeriLineaUnivoci.indexOf(it) > 0
-        const inRipetuti : boolean = numeriLineaRipetuti.indexOf(it) > 0
+        const inUnivoci : boolean = (numeriLineaUnivoci.indexOf(it) >= 0)
+        const inRipetuti : boolean = (numeriLineaRipetuti.indexOf(it) >= 0)
 
         if (!inUnivoci && !inRipetuti) {
             numeriLineaUnivoci.push(it)
