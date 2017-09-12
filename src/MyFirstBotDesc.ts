@@ -21,7 +21,7 @@ var linee; // elenco linee caricate da ws
 var lineeUnivoche = []
 var lineeRipetute = []
 
-export const lineeMap = new Map<string, any[]>()
+export var lineeMap;
 
 export var numeriLineaUnivoci = [];  // ["126", "127", ...]
 export var numeriLineaRipetuti = []; // [{numLinea:"2", codici}
@@ -30,15 +30,15 @@ export function calcNumeriLinea(linee : any[]) : number {
     // const nums = linee.map(it=>it.display_name)
     numeriLineaUnivoci = [];
     numeriLineaRipetuti = [];
+    lineeMap = new Map<string, any[]>()
+
     for (let linea of linee) {
         const numLinea = linea.display_name
-        const codLinea = linea.LINEA_ID
-
 
         if (lineeMap.has(numLinea))
             lineeMap.set(numLinea, [...(lineeMap.get(numLinea)), linea])
         else 
-             lineeMap.set(numLinea, [linea])
+            lineeMap.set(numLinea, [linea])
 
         /*
         let k:any[]
@@ -71,7 +71,8 @@ export function calcNumeriLinea(linee : any[]) : number {
         }
 
     }
-    l(JSON.stringify(lineeMap))
+    l(JSON.stringify(lineeMap.get('4')))
+    l(JSON.stringify(lineeMap.get('92')))
     return numeriLineaRipetuti.length
 }
 
