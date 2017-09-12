@@ -65,19 +65,23 @@ function start(_bot, done) {
             { "tokens": ["a", "b"], "action": ab_action },
             {
                 "tokens": exports.numeriLineaUnivoci,
-                "action": numlineaUnivoci_action
+                "chataction": numlineaUnivoci_actionGeneric
             },
             {
                 "tokens": exports.numeriLineaRipetuti,
-                "action": numlineaRipetuti_action
+                "convoaction": numlineaRipetuti_action
             }
         ];
         bot = _bot; //TODO: Effetto collaterale !!!!!
         for (let h of hearings) {
-            _bot && _bot.hear(h.tokens, (payload, chat) => {
-                chat.conversation(convo => h.action(convo, payload.message.text));
+            _bot && h.convoaction && _bot.hear(h.tokens, (payload, chat) => {
+                chat.conversation(convo => h.convoaction(convo, payload.message.text));
             });
-            console.log("** hearing for " + h.tokens.toString());
+            console.log("** convo hearing for " + h.tokens.toString());
+            _bot && h.chataction && _bot.hear(h.tokens, (payload, chat) => {
+                h.chataction(chat, payload.message.text);
+            });
+            console.log("** convo hearing for " + h.tokens.toString());
         }
         /*
         exports.hearings.forEach(it=> {
@@ -104,12 +108,42 @@ const numlineaUnivoci_action = (convo, numLinea) => {
             });
         });
     });
-    // convo.say(`Linea univoca : ${numLinea}`).then(()=>_messagesLinea(numLinea).forEach(it => convo.say(it)))
-    convo.end();
 };
 const numlineaRipetuti_action = (convo, heard) => {
     convo.say(`Linea ripetuta : ${heard}`);
     convo.end();
+};
+const numlineaUnivoci_actionGeneric = (chat, numLinea) => {
+    const linea = exports.lineeMap.get(numLinea)[0];
+    const elements = [
+        {
+            "title": "Linea " + numLinea,
+            //             "image_url":"https://petersfancybrownhats.com/company_image.png",
+            "subtitle": linea.strip_asc_direction + "\n" + linea.strip_desc_direction,
+            "default_action": {
+                "type": "web_url",
+                "url": "http://www.startromagna.it",
+            },
+            "buttons": [
+                {
+                    "type": "postback",
+                    "title": "Orari Andata",
+                    "payload": "DEVELOPER_DEFINED_PAYLOAD"
+                },
+                {
+                    "type": "postback",
+                    "title": "Orari Ritorno",
+                    "payload": "DEVELOPER_DEFINED_PAYLOADR"
+                },
+                {
+                    "type": "web_url",
+                    "url": "http://www.startromagna.it",
+                    "title": "Sito"
+                }
+            ]
+        }
+    ];
+    chat.sendGenericTemplate(elements);
 };
 const _messagesLinea = (numLinea, index = 0) => {
     let msgs = [];
