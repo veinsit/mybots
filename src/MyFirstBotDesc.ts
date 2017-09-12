@@ -32,6 +32,7 @@ export function calcNumeriLinea(linee : any[]) : number {
     numeriLineaRipetuti = [];
     lineeMap = new Map<string, any[]>()
 
+    // definisci lineeMap
     for (let linea of linee) {
         const numLinea = linea.display_name
 
@@ -40,39 +41,16 @@ export function calcNumeriLinea(linee : any[]) : number {
         else 
             lineeMap.set(numLinea, [linea])
 
-        for (let entry of lineeMap.entries()) {
-            if (entry[1].length===1)
-                numeriLineaUnivoci.push(entry[0])
-            else
-                numeriLineaRipetuti.push(entry[0])
-            
-            console.log(entry[0], entry[1]);
-        }
-                /*
-        const inUnivoci : boolean = (numeriLineaUnivoci.indexOf(numLinea) >= 0)
-        const inRipetuti : boolean = (numeriLineaRipetuti.indexOf(numLinea) >= 0)
-
-        if (!inUnivoci && !inRipetuti) {
-            numeriLineaUnivoci.push(numLinea)
-            lineeUnivoche.push(linea)
-        }
-        else if (!inUnivoci &&  inRipetuti) {
-            // niente
-        }
-        else if ( inUnivoci &&  !inRipetuti) {
-            numeriLineaRipetuti.push(numLinea)
-            numeriLineaUnivoci = numeriLineaUnivoci.filter(it=>(it!==numLinea))
-
-            lineeRipetute.push(linea)
-            lineeUnivoche = lineeUnivoche.filter(it=>(it!==linea))
-        }
-        else {
-            l("ERROR !!! linee ripetute")
-        }
-*/
     }
-//    l(JSON.stringify(lineeMap.get('4')))
-//    l(JSON.stringify(lineeMap.get('92')))
+    // definisci gli array di numeri linea per i bot.hear()
+    for (let entry of lineeMap.entries()) {
+        if (entry[1].length===1)
+            numeriLineaUnivoci.push(entry[0])
+        else
+            numeriLineaRipetuti.push(entry[0])
+        
+//        console.log(entry[0], entry[1]);
+    }
 
     return numeriLineaRipetuti.length
 }
@@ -143,9 +121,12 @@ const numlineaRipetuti_action = (convo, heard:string) : void => {
     convo.end();
     }
 
-const _messagesLinea = (numLinea:string) : string[] => {
+const _messagesLinea = (numLinea:string, index:number=0) : string[] => {
     let msgs:string[];
-    let linea
-    msgs.push()
+    const linea = lineeMap.get(numLinea)[index]
+    msgs.push("Linea "+numLinea)
+    msgs.push(linea.asc_direction+'\n'+linea.asc_note)
+    msgs.push(linea.desc_direction+'\n'+linea.desc_note)
+    
     return msgs;
 }
