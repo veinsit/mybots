@@ -84,13 +84,24 @@ function start(_bot, done) {
             })
             console.log("** convo hearing for "+h.tokens.toString())
         }*/
+        /*
         // bot && bot.hear("", (payload, chat) => {   })
         bot && bot.on('message', (payload, chat, data) => {
             const text = payload.message.text;
-            if (data.captured) {
-                return;
+            if (data.captured) { return; }
+            processMessage(chat, text)
+        });
+*/
+        const linea_numLinea_regexp = /(?:linea)?(?:[0-9]+)/i;
+        bot && bot.hear(linea_numLinea_regexp, (payload, chat) => {
+            const text = payload.message.text;
+            const numLinea = /[0-9]+/.exec(text); // text.replace(testNumberSomewhere, '$2')
+            if (exports.lineeMap.has(numLinea)) {
+                const linee = exports.lineeMap.get(numLinea);
+                onNumLinea(chat, linee);
             }
-            processMessage(chat, text);
+            else
+                chat.say("Non conosco la linea " + numLinea);
         });
         done(data);
     });
@@ -147,12 +158,12 @@ const numlineaUnivoci_actionGeneric = (chat, linea) => {
             "buttons": [
                 {
                     "type": "postback",
-                    "title": "Orari Andata",
+                    "title": "Orari verso " + linea.strip_asc_direction,
                     "payload": "DEVELOPER_DEFINED_PAYLOAD"
                 },
                 {
                     "type": "postback",
-                    "title": "Orari Ritorno",
+                    "title": "Orari verso " + linea.strip_desc_direction,
                     "payload": "DEVELOPER_DEFINED_PAYLOADR"
                 },
                 {

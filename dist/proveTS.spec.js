@@ -17,7 +17,6 @@ describe('MyFirstBotDesc', function () {
     afterEach(function () {
         // runs after each test in this block
     });
-    // test cases
     it('dopo funavar', (done) => {
         proveTS.funavar();
         assert.ok(proveTS.avar.length === 2, proveTS.avar.toString());
