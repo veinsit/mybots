@@ -97,18 +97,17 @@ function start(_bot, done) {
 }
 exports.start = start;
 const processMessage = (chat, text) => {
-    const testNumberAtStart = /(^\d+)(.+$)/i;
-    const testNumberSomewhere = /(^.+)(\w\d+\w)(.+$)/i;
-    var numLinea;
-    if (/\blinea\b/.test(text)) {
-        if (numLinea = text.replace(testNumberSomewhere, '$2')) {
-            if (exports.lineeMap.has(numLinea)) {
-                const linee = exports.lineeMap.get(numLinea);
-                onNumLinea(chat, linee);
-            }
-            else
-                chat.say("Non conosco la linea " + numLinea);
+    const testNumberAtStart = /(^\d+)(.+$)/i; // $1
+    const testNumberSomewhere = /(^.+)(\w\d+\w)(.+$)/i; // $2
+    //    if ( /\blinea\b/.test(text) ) {
+    if (/linea?\s*^[0-9]+$/.test(text)) {
+        const numLinea = text; // text.replace(testNumberSomewhere, '$2')
+        if (exports.lineeMap.has(numLinea)) {
+            const linee = exports.lineeMap.get(numLinea);
+            onNumLinea(chat, linee);
         }
+        else
+            chat.say("Non conosco la linea " + numLinea);
     }
 };
 const onNumLinea = (chat, linee) => {

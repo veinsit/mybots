@@ -116,12 +116,12 @@ export function start(_bot, done)  {
 }    
 
 const processMessage = (chat,text) => {
-    const testNumberAtStart = /(^\d+)(.+$)/i
-    const testNumberSomewhere = /(^.+)(\w\d+\w)(.+$)/i
+    const testNumberAtStart = /(^\d+)(.+$)/i             // $1
+    const testNumberSomewhere = /(^.+)(\w\d+\w)(.+$)/i   // $2
     
-    var numLinea;
-    if ( /\blinea\b/.test(text) ) {
-        if (numLinea=text.replace(testNumberSomewhere, '$2')) {
+//    if ( /\blinea\b/.test(text) ) {
+      if ( /linea?\s*^[0-9]+$/.test(text) ) {
+            const numLinea= text // text.replace(testNumberSomewhere, '$2')
             if (lineeMap.has(numLinea)) {
                 const linee = lineeMap.get(numLinea)
                 onNumLinea(chat, linee)
@@ -129,7 +129,6 @@ const processMessage = (chat,text) => {
             else
                 chat.say("Non conosco la linea "+numLinea)
         } 
-    }
 }
 
 
