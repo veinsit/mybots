@@ -14,7 +14,6 @@ const bot = new BootBot({
 });
 let obj = require("./MyFirstBotDesc");
 obj.start(bot, _linee => {
-    //		console.log(_linee);
     // così non rinfresca più le linee
     bot.start(process.env.PORT || 3000);
 });

@@ -56,6 +56,7 @@ export function calcNumeriLinea(linee : any[]) : number {
 }
 
 export function start(_bot, done)  {
+    bot = _bot //TODO: Effetto collaterale !!!!!
 	/*
 	{
 	"Bacino": "FC",
@@ -89,7 +90,8 @@ export function start(_bot, done)  {
                 "convoaction": numlineaRipetuti_action
     		}
 		]   		
-		bot = _bot //TODO: Effetto collaterale !!!!!
+
+        /*
 		for (let h of hearings){
 			_bot && h.convoaction && _bot.hear(h.tokens, (payload, chat) => {
 				chat.conversation(convo => h.convoaction(convo, payload.message.text)) 
@@ -99,17 +101,42 @@ export function start(_bot, done)  {
 				h.chataction(chat, payload.message.text) 
 			})
 			console.log("** convo hearing for "+h.tokens.toString())
-		}
-		/*
-		exports.hearings.forEach(it=> {
-			_bot.hear(it.tokens, (payload, chat) => {
-				chat.conversation(convo => it.action(convo, payload.message.text)) 
-			})
-			console.log("** hearing for "+it.tokens.toString())
-		})*/
+		}*/
+
+        // bot && bot.hear("", (payload, chat) => {   })
+        bot && bot.on('message', (payload, chat, data) => {
+            const text = payload.message.text;
+            if (data.captured) { return; }
+            processMessage(chat, text)
+        });
+
+
 		done(data)
 	})
 }    
+
+const processMessage = (chat,text) => {
+    const testNumberAtStart = /(^\d+)(.+$)/i
+    const testNumberSomewhere = /(^.+)(\w\d+\w)(.+$)/i
+    
+    var numLinea;
+    if ( /\blinea\b/.test(text) ) {
+        if (numLinea=text.replace(testNumberSomewhere, '$2')) {
+            if (lineeMap.has(numLinea)) {
+                const linee = lineeMap.get(numLinea)
+                onNumLinea(chat, linee)
+            }
+            else
+                chat.say("Non conosco la linea "+numLinea)
+        } 
+    }
+}
+
+
+const onNumLinea = (chat, linee:any[]) => {
+    if (linee.length===1)
+        numlineaUnivoci_actionGeneric(chat, linee[0])
+}
 
 const ab_action = (convo, heard:string) : void => {
         convo.say(`Hai detto a o b : ${heard}`);
@@ -133,11 +160,11 @@ const numlineaRipetuti_action = (convo, heard:string) : void => {
 }
 
 
-const numlineaUnivoci_actionGeneric = (chat, numLinea:string) : void => {
-    const linea = lineeMap.get(numLinea)[0]
+const numlineaUnivoci_actionGeneric = (chat, linea:any) : void => {
+    // const linea = lineeMap.get(numLinea)[0]
     const elements = [
         {
-         "title":"Linea "+numLinea,
+         "title":"Linea "+linea.display_name,
 //             "image_url":"https://petersfancybrownhats.com/company_image.png",
          "subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
          "default_action": {
