@@ -120,7 +120,7 @@ const processMessage = (chat,text) => {
     const testNumberSomewhere = /(^.+)(\w\d+\w)(.+$)/i   // $2
     
 //    if ( /\blinea\b/.test(text) ) {
-      if ( /linea?\s*^[0-9]+$/.test(text) ) {
+      if ( /^[0-9]+$/.test(text) ) {
             const numLinea= text // text.replace(testNumberSomewhere, '$2')
             if (lineeMap.has(numLinea)) {
                 const linee = lineeMap.get(numLinea)
