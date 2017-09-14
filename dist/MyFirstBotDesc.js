@@ -131,7 +131,12 @@ const onLineeMultiple = (chat, linee) => {
         "title": `linea ${it.LINEA_ID}`,
         "subtitle": it.asc_direction,
         //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
-        "buttons": _orariButtons(it.LINEA_ID, it.strip_asc_direction, it.strip_desc_direction, undefined),
+        "buttons": [{
+                title: "View",
+                type: "postback",
+                payload: "GO_LINEA",
+            }
+        ]
     }));
     /*
     const elements =[
