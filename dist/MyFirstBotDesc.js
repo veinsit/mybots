@@ -95,15 +95,11 @@ for (let h of hearings){
             processMessage(chat, text);
         });
         bot && bot.on('postback:ORARI_ASC', (payload, chat, data) => {
-            if (data.captured) {
-                return;
-            }
+            //            if (data.captured) { return; }
             onOrarioLinea(chat, payload, data, 'A');
         });
         bot && bot.on('postback:ORARI_DESC', (payload, chat, data) => {
-            if (data.captured) {
-                return;
-            }
+            //            if (data.captured) { return; }
             onOrarioLinea(chat, payload, data, 'D');
         });
         /*
