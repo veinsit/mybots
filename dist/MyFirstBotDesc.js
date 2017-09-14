@@ -121,7 +121,7 @@ for (let h of hearings){
             if (cmd.startsWith("ORARI_")) {
                 const AorD = cmd.substring(6, 8); // As or Di
                 const codLinea = cmd.substring(9);
-                onOrarioLinea(chat, linee.filter(it => it.LINEA_ID === codLinea), AorD);
+                onOrarioLinea(chat, linee.filter(it => it.LINEA_ID === codLinea)[0], AorD);
             }
         });
         /*
@@ -135,7 +135,7 @@ for (let h of hearings){
             else
                 chat.say("Non conosco la linea "+numLinea)        });
         */
-        done(data);
+        done(linee);
     });
 }
 exports.start = start;

@@ -30,7 +30,7 @@ describe('MyFirstBotDesc', function() {
       linee = _linee;
       //console.log("Linee: "+ (linee.length || "non caricate"))
       assert.ok(linee.length>10, "linee non caricate")
-      
+      assert.ok(linee.filter(it => it.LINEA_ID === 'F127')[0].display_name==='127',linee.filter(it => it.LINEA_ID === 'F127').toString()) 
       assert.ok(myFirstBotDesc.lineeMap.get('4').length > 1, "linea 4");
       assert.ok(myFirstBotDesc.lineeMap.get('92').length === 1, "linea 92");
 
