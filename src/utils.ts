@@ -1,0 +1,1 @@
+export const isNumeric  = (x:any) : boolean => !isNaN(x)

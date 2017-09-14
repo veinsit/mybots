@@ -12,33 +12,42 @@ client.registerMethod("getPassaggiCorsa", baseUri + "${bacino}/linee/${linea}/co
 console.log("metodi registrati !");
 var bot;
 var linee; // elenco linee caricate da ws
-exports.numeriLineaUnivoci = []; // ["126", "127", ...]
-exports.numeriLineaRipetuti = []; // [{numLinea:"2", codici}
+//var lineeUnivoche = []
+//var lineeRipetute = []
+exports.lineeMap = new Map();
+// export var numeriLineaUnivoci = [];  // ["126", "127", ...]
+// export var numeriLineaRipetuti = []; // [{numLinea:"2", codici}
 const l = s => console.log(s);
-function calcNumeriLinea(linee) {
+/*
+export function _OLD_calcNumeriLinea(linee : any[]) : number {
     // const nums = linee.map(it=>it.display_name)
-    exports.numeriLineaUnivoci = [];
-    exports.numeriLineaRipetuti = [];
-    exports.lineeMap = new Map();
+    numeriLineaUnivoci = [];
+    numeriLineaRipetuti = [];
+    lineeMap = new Map<string, any[]>()
+
     // definisci lineeMap
     for (let linea of linee) {
-        const numLinea = linea.display_name;
-        if (exports.lineeMap.has(numLinea))
-            exports.lineeMap.set(numLinea, [...(exports.lineeMap.get(numLinea)), linea]);
+        const numLinea = linea.display_name
+
+        if (lineeMap.has(numLinea))
+            lineeMap.set(numLinea, [...(lineeMap.get(numLinea)), linea])
         else
-            exports.lineeMap.set(numLinea, [linea]);
+            lineeMap.set(numLinea, [linea])
+
     }
     // definisci gli array di numeri linea per i bot.hear()
-    for (let entry of exports.lineeMap.entries()) {
-        if (entry[1].length === 1)
-            exports.numeriLineaUnivoci.push(entry[0]);
+    for (let entry of lineeMap.entries()) {
+        if (entry[1].length===1)
+            numeriLineaUnivoci.push(entry[0])
         else
-            exports.numeriLineaRipetuti.push(entry[0]);
-        //        console.log(entry[0], entry[1]);
+            numeriLineaRipetuti.push(entry[0])
+        
+//        console.log(entry[0], entry[1]);
     }
-    return exports.numeriLineaRipetuti.length;
+
+    return numeriLineaRipetuti.length
 }
-exports.calcNumeriLinea = calcNumeriLinea;
+*/
 function start(_bot, done) {
     bot = _bot; //TODO: Effetto collaterale !!!!!
     /*
@@ -60,7 +69,7 @@ function start(_bot, done) {
         // data è un array di linee
         linee = data;
         //TODO: Effetto collaterale !!!!!
-        calcNumeriLinea(linee);
+        //calcNumeriLinea(linee)
         //TODO: Effetto collaterale !!!!!
         /*
 const hearings : any[] = [
@@ -86,6 +95,14 @@ for (let h of hearings){
     })
     console.log("** convo hearing for "+h.tokens.toString())
 }*/
+        // definisci lineeMap
+        for (let linea of linee) {
+            const numLinea = linea.display_name;
+            if (exports.lineeMap.has(numLinea))
+                exports.lineeMap.set(numLinea, [...(exports.lineeMap.get(numLinea)), linea]);
+            else
+                exports.lineeMap.set(numLinea, [linea]);
+        }
         // bot && bot.hear("", (payload, chat) => {   })
         bot && bot.on('message', (payload, chat, data) => {
             const text = payload.message.text;
@@ -95,26 +112,16 @@ for (let h of hearings){
             processMessage(chat, text);
         });
         bot && bot.on('postback', (payload, chat, data) => {
-            /*  payload.postback
-            "postback":{
-                "title": "<TITLE_FOR_THE_CTA>",
-                "payload": "<USER_DEFINED_PAYLOAD>",
-                "referral": {
-                  "ref": "<USER_DEFINED_REFERRAL_PARAM>",
-                  "source": "<SHORTLINK>",
-                  "type": "OPEN_THREAD",
-                }
-              }
-        */
+            /*  payload.postback = { "title": "<TITLE_FOR_THE_CTA>",  "payload": "<USER_DEFINED_PAYLOAD>", "referral": { "ref": "<USER_DEFINED_REFERRAL_PARAM>", "source": "<SHORTLINK>", "type": "OPEN_THREAD",}} */
             console.log("VP> postback !");
             console.log(JSON.stringify(payload.postback));
             //    {"recipient":{"id":"303990613406509"},"timestamp":1505382935883,"sender":{"id":"1773056349400989"},"postback":{"payload":"ORARI_ASC","title":"Orari verso Muraglio..."}}
             console.log("  -- data = " + JSON.stringify(data)); // undefined
             const cmd = payload.postback.payload;
             if (cmd.startsWith("ORARI_")) {
-                const AorD = cmd.substring(6, 7);
-                const codLinea = cmd.substring(8);
-                onOrarioLinea(chat, codLinea, AorD);
+                const AorD = cmd.substring(6, 8); // As or Di
+                const codLinea = cmd.substring(9);
+                onOrarioLinea(chat, linee.filter(it => it.LINEA_ID === codLinea), AorD);
             }
         });
         /*
@@ -133,10 +140,26 @@ for (let h of hearings){
 }
 exports.start = start;
 const processMessage = (chat, text) => {
+    console.log("VP>on message :" + text);
+    text = text.toUpperCase();
+    if (text.startsWith('LINEA '))
+        text = text.substring(6);
+    if (exports.lineeMap.has(text)) {
+        const linee = exports.lineeMap.get(text);
+        onNumLinea(chat, linee);
+    }
+    else
+        chat.say("Non ho capito. Non conosco la linea " + text);
+    //        chat.say("Non ho capito. Prova a ripetere")
+};
+const processMessage_RegEx = (chat, text) => {
     //    const testNumberAtStart = /(^\d+)(.+$)/i             // $1
     //    const testNumberSomewhere = /(^.+)(\w\d+\w)(.+$)/i   // $2
     // NON RICONOSCE '?<' const linea_numLinea_regexp = /(?<=linea )(\b[0-9]+\b|1A|1B|5A|96A)$/i
-    const linea_numLinea_regexp = /(?:linea)? (\b[0-9]+\b|1A|1B|5A|96A)$/i;
+    // OK per :  "Linea 127",  "Linea 5A"
+    // KO per :  "127",  "5A", "Linea 5a"
+    // OK per <qualunqua cosa> 127   ?????
+    const linea_numLinea_regexp = /(?:linea)? (\b[0-9]+\b|1A|1a|1B|1b|5A|5a|96A|96a)$/i;
     console.log("VP>on message :" + text);
     let match = linea_numLinea_regexp.exec(text);
     if (match && match[1]) {
@@ -160,13 +183,13 @@ const onNumLinea = (chat, linee) => {
 const _orariButtons = (codLinea, atext, dtext, url) => [
     {
         "type": "postback",
-        "title": "Orari verso " + atext,
-        "payload": "ORARI_A_" + codLinea
+        "title": "verso " + atext,
+        "payload": "ORARI_As_" + codLinea
     },
     {
         "type": "postback",
-        "title": "Orari verso " + dtext,
-        "payload": "ORARI_D_" + codLinea
+        "title": "verso " + dtext,
+        "payload": "ORARI_Di_" + codLinea
     },
     {
         "type": "web_url",
@@ -179,7 +202,7 @@ const onLinea_usaGeneric = (chat, linea) => {
     const urlLinea = `http://servizi.startromagna.it/opendata/od/ui/tpl/${linea.Bacino}/linee/${linea.LINEA_ID}`;
     chat.sendGenericTemplate([
         {
-            "title": linea.name || ("Linea " + linea.display_name),
+            "title": ("Linea " + linea.display_name),
             //             "image_url":"https://petersfancybrownhats.com/company_image.png",
             //         "subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
             "subtitle": linea.strip_asc_direction,
@@ -191,8 +214,54 @@ const onLinea_usaGeneric = (chat, linea) => {
         }
     ]);
 };
-const onOrarioLinea = (chat, codLinea, AorD) => {
-    console.log("VP> onOrarioLinea " + codLinea + " " + AorD);
+const onOrarioLinea = (chat, linea, AorD) => {
+    console.log("VP> onOrarioLinea " + linea.LINEA_ID + " " + AorD);
+    var args = { path: { bacino: 'FC', linea: linea.LINEA_ID } };
+    client.methods.getCorseOggi(args, function (data, response) {
+        /*
+{ Bacino: 'FC',
+  CODICEVALIDITA: 28901,
+  CORSA: '655862',
+  LINEA: 'F127',
+  PERCORSO: '8674_A',
+  VERSO: 'As',
+  DESC_PERCORSO: 'SAN BENEDETTO IN ALPE-MURAGLIONE',
+  ORA_INIZIO: 27900,
+  ORA_FINE: 29100,
+  ORA_INIZIO_STR: '07:45',
+  ORA_FINE_STR: '08:05',
+  NOME_NODO_INIZIO: 'S.BENEDETTO IN ALPE 2',
+  NOME_NODO_FINE: 'MURAGLIONE' },
+    */
+        var result = {
+            linea,
+            corse: data.filter(it => it.verso === AorD).map(function (item) {
+                return {
+                    corsa: item.DESC_PERCORSO,
+                    parte: item.ORA_INIZIO_STR,
+                    arriva: item.ORA_FINE_STR,
+                };
+            })
+        };
+        chat.say("Corse di oggi della linea " + linea.display_name
+            + " verso " + (AorD === 'As' ? linea.strip_asc_direction : linea.strip_desc_direction))
+            .then(() => {
+            var i = 0;
+            const convert = (x) => x.parte + " " + x.corsa + "  " + x.arriva + "\n";
+            while (i < result.corse.length) {
+                var text = result.corse.slice(i, i + 4).reduce(function (total, item) {
+                    const s = item.parte + " " + item.corsa + "  " + item.arriva + "\n";
+                    if (typeof total === 'string')
+                        return total + convert(item);
+                    else
+                        return convert(total) + convert(item);
+                });
+                // console.log(text);
+                chat.say(text);
+                i += 4;
+            } // end while
+        }); // end .then
+    }); // end getCorseOggi
 };
 const onLinea_usaConvo = (chat, linea) => {
     chat.conversation(convo => {
