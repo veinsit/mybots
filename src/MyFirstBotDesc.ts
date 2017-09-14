@@ -139,8 +139,8 @@ export function start(_bot, done)  {
 const processMessage = (chat,text) => {
 //    const testNumberAtStart = /(^\d+)(.+$)/i             // $1
 //    const testNumberSomewhere = /(^.+)(\w\d+\w)(.+$)/i   // $2
-    const linea_numLinea_regexp = /(?<=linea )(\b[0-9]+\b|1A|1B|5A|96A)$/i
-
+    // NON RICONOSCE '?<' const linea_numLinea_regexp = /(?<=linea )(\b[0-9]+\b|1A|1B|5A|96A)$/i
+    const linea_numLinea_regexp = /(?:linea)? (\b[0-9]+\b|1A|1B|5A|96A)$/i
     console.log("VP>on message :"+text)
     
     let match = linea_numLinea_regexp.exec(text)
