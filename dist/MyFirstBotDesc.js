@@ -235,7 +235,7 @@ const onOrarioLinea = (chat, linea, AorD) => {
     */
         var result = {
             linea,
-            corse: data.filter(it => it.verso === AorD).map(function (item) {
+            corse: data.filter(it => it.VERSO === AorD).map(function (item) {
                 return {
                     corsa: item.DESC_PERCORSO,
                     parte: item.ORA_INIZIO_STR,
@@ -256,7 +256,7 @@ const onOrarioLinea = (chat, linea, AorD) => {
                     else
                         return convert(total) + convert(item);
                 });
-                // console.log(text);
+                console.log("chat.say: " + text);
                 chat.say(text);
                 i += 4;
             } // end while
