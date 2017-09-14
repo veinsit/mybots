@@ -1,6 +1,6 @@
 
 
-const BootBot = require('bootbot');
+const BootBot = require('../lib/MyBootBot');
 
 const bot = new BootBot({
   accessToken: process.env.ATOK || "fake",

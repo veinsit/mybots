@@ -74,6 +74,23 @@ function start(_bot, done) {
     });
 }
 exports.start = start;
+const _orariButtons = (codLinea, atext, dtext, url) => [
+    {
+        "type": "postback",
+        "title": "verso " + atext,
+        "payload": "ORARI_As_" + codLinea
+    },
+    {
+        "type": "postback",
+        "title": "verso " + dtext,
+        "payload": "ORARI_Di_" + codLinea
+    },
+    {
+        "type": "web_url",
+        "url": url || "http://www.startromagna.it",
+        "title": "Sito"
+    }
+];
 //====================================================================================
 //            gestione onMessage
 //====================================================================================
@@ -100,29 +117,77 @@ const onNumLinea = (chat, linee) => {
     }
 };
 const onLineeMultiple = (chat, linee) => {
-    const cards = ['Card1', 'Card2'];
-    const buttons = linee.map(it => it.LINEA_ID); //[ 'Button 1', 'Button 2' ];
-    const options = { typing: true };
-    chat.sendListTemplate(cards, buttons, options);
-};
-const onLinea_usaGeneric = (chat, linea) => {
-    const _orariButtons = (codLinea, atext, dtext, url) => [
+    const buttonsGlobal = [
         {
+            "title": "View More",
             "type": "postback",
-            "title": "verso " + atext,
-            "payload": "ORARI_As_" + codLinea
-        },
-        {
-            "type": "postback",
-            "title": "verso " + dtext,
-            "payload": "ORARI_Di_" + codLinea
-        },
-        {
-            "type": "web_url",
-            "url": url || "http://www.startromagna.it",
-            "title": "Sito"
+            "payload": "payload"
         }
     ];
+    const buttons = linee.map(it => it.LINEA_ID); //[ 'Button 1', 'Button 2' ];
+    const options = { typing: true };
+    let els = [];
+    linee.forEach(it => els.push({
+        "title": `linea ${it.LINEA_ID}`,
+        "subtitle": it.asc_direction,
+        //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
+        "buttons": _orariButtons(it.LINEA_ID, it.strip_asc_direction, it.strip_desc_direction, undefined),
+    }));
+    /*
+    const elements =[
+        {
+          "title": "Classic T-Shirt Collection",
+          "subtitle": "See all our colors",
+          "image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",
+          "buttons": [
+            {
+              "title": "View",
+              "type": "web_url",
+              "url": "https://peterssendreceiveapp.ngrok.io/collection",
+              "messenger_extensions": true,
+              "webview_height_ratio": "tall",
+              "fallback_url": "https://peterssendreceiveapp.ngrok.io/"
+            }
+          ]
+        },
+        {
+          "title": "Classic White T-Shirt",
+          "subtitle": "See all our colors",
+          "default_action": {
+            "type": "web_url",
+            "url": "https://peterssendreceiveapp.ngrok.io/view?item=100",
+            "messenger_extensions": true,
+            "webview_height_ratio": "tall",
+            "fallback_url": "https://peterssendreceiveapp.ngrok.io/"
+          }
+        },
+        {
+          "title": "Classic Blue T-Shirt",
+          "image_url": "https://peterssendreceiveapp.ngrok.io/img/blue-t-shirt.png",
+          "subtitle": "100% Cotton, 200% Comfortable",
+          "default_action": {
+            "type": "web_url",
+            "url": "https://peterssendreceiveapp.ngrok.io/view?item=101",
+            "messenger_extensions": true,
+            "webview_height_ratio": "tall",
+            "fallback_url": "https://peterssendreceiveapp.ngrok.io/"
+          },
+          "buttons": [
+            {
+              "title": "Shop Now",
+              "type": "web_url",
+              "url": "https://peterssendreceiveapp.ngrok.io/shop?item=101",
+              "messenger_extensions": true,
+              "webview_height_ratio": "tall",
+              "fallback_url": "https://peterssendreceiveapp.ngrok.io/"
+            }
+          ]
+        }
+      ];
+*/
+    chat.sendListTemplate(els, buttonsGlobal, options);
+};
+const onLinea_usaGeneric = (chat, linea) => {
     const urlLinea = `http://servizi.startromagna.it/opendata/od/ui/tpl/${linea.Bacino}/linee/${linea.LINEA_ID}`;
     chat.sendGenericTemplate([
         {
