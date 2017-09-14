@@ -112,14 +112,33 @@ export function start(_bot, done)  {
             if (data.captured) { return; }
             processMessage(chat, text)
         });
-        bot && bot.on('postback:ORARI_ASC', (payload, chat, data) => {
-//            if (data.captured) { return; }
-            onOrarioLinea(chat, payload, data, 'A')
+        bot && bot.on('postback', (payload, chat, data) => {
+    /*  payload.postback
+    "postback":{
+        "title": "<TITLE_FOR_THE_CTA>",  
+        "payload": "<USER_DEFINED_PAYLOAD>",
+        "referral": {
+          "ref": "<USER_DEFINED_REFERRAL_PARAM>",
+          "source": "<SHORTLINK>",
+          "type": "OPEN_THREAD",
+        }
+      }
+*/
+
+
+            console.log("VP> postback !")
+            console.log(JSON.stringify(payload.postback))
+            //    {"recipient":{"id":"303990613406509"},"timestamp":1505382935883,"sender":{"id":"1773056349400989"},"postback":{"payload":"ORARI_ASC","title":"Orari verso Muraglio..."}}
+            
+                console.log("  -- data = "+JSON.stringify(data))  // undefined
+            const cmd:string = payload.postback.payload
+            if (cmd.startsWith("ORARI_")) {
+                const AorD = cmd.substring(6,7)
+                const codLinea = cmd.substring(8)
+                onOrarioLinea(chat, codLinea, AorD)
+            }
         });
-        bot && bot.on('postback:ORARI_DESC', (payload, chat, data) => {
-//            if (data.captured) { return; }
-            onOrarioLinea(chat, payload, data, 'D')
-        });
+
 
         /*
         bot && bot.hear(linea_numLinea_regexp, (payload, chat) => {
@@ -167,16 +186,16 @@ const onNumLinea = (chat, linee:any[]) : void => {
     //    onLinea_usaConvo(chat, linee[0])
 }
 
-const _orariButtons = (atext, dtext, url) : any[] => [
+const _orariButtons = (codLinea, atext, dtext, url) : any[] => [
     {
       "type":"postback",
       "title":"Orari verso "+atext,
-      "payload":"ORARI_ASC"
+      "payload":"ORARI_A_"+codLinea
     },              
     {
      "type":"postback",
      "title":"Orari verso "+dtext,
-     "payload":"ORARI_DESC"
+     "payload":"ORARI_D_"+codLinea
     } ,
    {
      "type":"web_url",
@@ -202,14 +221,13 @@ const onLinea_usaGeneric = (chat, linea:any) : void => {
 //               "fallback_url": "https://peterssendreceiveapp.ngrok.io/"
          },
 
-         "buttons": _orariButtons(linea.strip_asc_direction, linea.strip_desc_direction, urlLinea),
+         "buttons": _orariButtons(linea.LINEA_ID, linea.strip_asc_direction, linea.strip_desc_direction, urlLinea),
        }
      ])
 }
 
-const onOrarioLinea = (chat, payload, data, AorD) => {
-    console.log(JSON.stringify(payload))
-    console.log(JSON.stringify(data))
+const onOrarioLinea = (chat, codLinea, AorD) => {
+    console.log("VP> onOrarioLinea "+codLinea + " " + AorD)
 }
 
     const onLinea_usaConvo = (chat, linea:any) : void => {
