@@ -146,19 +146,22 @@ const onLineeMultiple = (chat, linee:any[]) => {
     const buttons = linee.map(it=>it.LINEA_ID); //[ 'Button 1', 'Button 2' ];
     const options = { typing: true };
     let els = []
-    linee.forEach(it=>els.push({
-        
-            "title": `linea ${it.LINEA_ID}`,
-            "subtitle": it.asc_direction,
-            //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
-            "buttons": [{ // un solo button !!
-                title: "View",
-                type: "postback",
-                payload: "GO_LINEA",
-              }
-            ]
-                  
-    }));
+    for (let it of linee) {
+        els.push({
+            
+                "title": `linea ${it.LINEA_ID}`,
+                "subtitle": it.asc_direction,
+                //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
+                "buttons": [{ // un solo button !!
+                    title: "Orari",
+                    type: "postback",
+                    payload: "ON_CODLINEA_"+it.LINEA_ID,
+                  }
+                ]
+                      
+        })
+    }
+    //linee.forEach(it=>);
     /*
     const elements =[
         {
@@ -282,12 +285,44 @@ const botOnPostback = (chat, postbackPayload: string) => {
         const AorD = postbackPayload.substring(6, 8)  // As or Di
         const codLinea = postbackPayload.substring(9)
         botOnPostback_OrarioLinea(chat, linee.filter(it => it.LINEA_ID === codLinea)[0], AorD)
+        return;
+    }
+    if (postbackPayload.startsWith("ON_CODLINEA_")) {
+        const codLinea = postbackPayload.substring(12)
+        botOnPostback_OrarioLinea(chat, linee.filter(it => it.LINEA_ID === codLinea)[0], undefined)
+        return;
     }
 }
 
-const botOnPostback_OrarioLinea = (chat, linea: any, AorD) => {
+const botOnPostback_OrarioLinea = (chat, linea: any, AorD? : string) => {
     console.log("VP> onOrarioLinea " + linea.LINEA_ID + " " + AorD)
 
+    if (AorD===undefined) {
+        const qr = [ "Ascen", "Discen" ];
+        chat.conversation(convo => {
+            convo.ask({
+              text: 'In quale direzione ?',
+              quickReplies: qr
+            }, (payload, convo) => {
+              const text = payload.message.text;
+           //   convo.say(`Oh your favorite color is ${text}, cool!`);
+              convo.end();
+              botOnPostback_OrarioLinea(chat, linea, text.startsWith("A") ? "As" : "Di")
+        }, [
+              {
+                event: 'quick_reply',
+                callback: (payload, convo) => {
+                  const text = payload.message.text;
+                  // convo.say(`Thanks for choosing one of the options. Your favorite color is ${text}`);
+                  convo.end();
+                  botOnPostback_OrarioLinea(chat, linea, text.startsWith("A") ? "As" : "Di")
+                }
+              }
+            ]);
+        });
+
+        return;
+    }
     var args = { path: { bacino: 'FC', linea: linea.LINEA_ID } }
     client.methods.getCorseOggi(args, function (data, response) {
 
