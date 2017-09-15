@@ -1,3 +1,4 @@
+import service = require("./service")
 
 export const botOnPostback_OrarioLinea = (chat, linea: any, AorD? : string) => {
     console.log("VP> onOrarioLinea " + linea.LINEA_ID + " " + AorD)
@@ -140,25 +141,11 @@ const convo_showPage = (convo) => {
 }    
 
 const convo_Orari = (convo, linea, AorD_text) => {
-    /*
-    convo.ask(`Final question. How old are you?`, (payload, convo, data) => {
-      const text = payload.message.text;
-      convo.set('age', text);
-      convo.say(`That's great!`).then(() => {
-        convo.say(`Ok, here's what you told me about you:
-        - Name: ${convo.get('name')}
-        - Favorite Food: ${convo.get('food')}
-        - Gender: ${convo.get('gender')}
-        - Age: ${convo.get('age')}
-        `);
-        convo.end();
-      });
-    });
-*/
+
     const AorD = AorD_text.toUpperCase().startsWith("AS") ? "As" : "Di"
 
     var args = { path: { bacino: 'FC', linea: linea.LINEA_ID } }
-    client.methods.getCorseOggi(args, function (data, response) {
+    service.methods.getCorseOggi(args, function (data, response) {
 
         var result = {
             linea,
