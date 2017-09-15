@@ -1,5 +1,8 @@
 export const isNumeric  = (x:any) : boolean => !isNaN(x)
 
+export const singlePostbackBtn = (title,payload) =>[{ title, type: "postback", payload}]
+export const sayThenEnd = (convo, text) => { convo.say(text).then(()=>convo.end())}
+
 // prove js
 /*
 export var avar = []

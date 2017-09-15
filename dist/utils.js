@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isNumeric = (x) => !isNaN(x);
+exports.singlePostbackBtn = (title, payload) => [{ title, type: "postback", payload }];
+exports.sayThenEnd = (convo, text) => { convo.say(text).then(() => convo.end()); };
 // prove js
 /*
 export var avar = []

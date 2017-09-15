@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const service = require("./service");
+const utils = require("./utils");
 exports.botOnPostback_OrarioLinea = (chat, linea, AorD) => {
     console.log("VP> onOrarioLinea " + linea.LINEA_ID + " " + AorD);
     if (AorD === undefined) {
@@ -89,37 +90,31 @@ const quanteInsieme = 4;
 const convo_showPage = (convo) => {
     const result = convo.get("result");
     const page = convo.get("page");
+    var istart = page * quanteInsieme;
+    var iend = Math.min((page + 1) * quanteInsieme, result.corse.length);
     // -------------------- send 4 corse con List TEmplate    
     // Puoi inviare da un minimo di 2 a un massimo di 4 elementi.
     // L'aggiunta di un pulsante a ogni elemento è facoltativa. Puoi avere solo 1 pulsante per elemento.
     // Puoi avere solo 1 pulsante globale.
     let els = [];
-    for (var i = page * quanteInsieme; i < (page + 1) * quanteInsieme && i < result.corse.length; i++) {
+    for (var i = istart; i < iend; i++) {
         var corsa = result.corse[i];
         els.push({
             "title": `partenza ${corsa.parte}`,
             "subtitle": corsa.corsa + "  arriva alle " + corsa.arriva,
             //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
-            "buttons": [{
-                    title: "Dettaglio",
-                    type: "postback",
-                    payload: "ON_CORSA_" + corsa.CORSA,
-                }
-            ]
+            "buttons": utils.singlePostbackBtn("Dettaglio", "ON_CORSA_" + corsa.CORSA),
         });
     } //end for
-    convo.sendListTemplate(els, ((page + 1) * quanteInsieme === result.corse.length ? undefined : [{
-            "title": "Ancora",
-            "type": "postback",
-            "payload": "NEXT_PAGE_CORSE"
-        }]), { typing: true }).then(() => {
-        if ((page + 1) * quanteInsieme === result.corse.length) {
-            convo.say("Non ci sono altre corse.\nAbbiamo terminato la conversazione sulla linea " + result.linea.display_name)
-                .then(() => convo.end());
+    const noNextPage = page => ((page + 1) * quanteInsieme >= result.corse.length);
+    convo.sendListTemplate(els, noNextPage(page) ? undefined : utils.singlePostbackBtn("Ancora", "NEXT_PAGE_CORSE"), { typing: true }).then(() => {
+        if (noNextPage(page)) {
+            utils.sayThenEnd(convo, "Non ci sono altre corse.\nAbbiamo terminato la conversazione sulla linea " + result.linea.display_name);
         }
     });
 };
-const convo_Orari = (convo, linea, AorD_text) => {
+const convo_Orari = (convo, linea) => {
+    const AorD_text = convo.get("direzione");
     const AorD = AorD_text.toUpperCase().startsWith("AS") ? "As" : "Di";
     var args = { path: { bacino: 'FC', linea: linea.LINEA_ID } };
     service.methods.getCorseOggi(args, function (data, response) {
@@ -143,17 +138,18 @@ const convo_Orari = (convo, linea, AorD_text) => {
             }) // end .then
         */
         //--------------------- convo ask
-        convo.ask((convo) => { convo_showPage(convo); }, (payload, convo, data) => {
-            convo.say("Abbiamo terminato la conversazione sulla linea " + linea.display_name)
-                .then(() => convo.end());
+        convo.ask((convo) => {
+            convo.say("Corse di oggi della linea " + linea.display_name + " verso " + (AorD === 'As' ? linea.strip_asc_direction : linea.strip_desc_direction))
+                .then(() => convo_showPage(convo));
+        }, (payload, convo, data) => {
+            utils.sayThenEnd(convo, "Abbiamo terminato la conversazione sulla linea " + linea.display_name);
         }, [
             {
                 event: 'postback:NEXT_PAGE_CORSE',
                 callback: (payload, convo) => {
                     var newPage = 1 + convo.get("page");
                     if (newPage * quanteInsieme >= result.corse.length) {
-                        convo.say("Non ci sono più corse.\nAbbiamo terminato la conversazione sulla linea " + linea.display_name)
-                            .then(() => convo.end());
+                        utils.sayThenEnd(convo, "Non ci sono più corse.\nAbbiamo terminato la conversazione sulla linea " + linea.display_name);
                     }
                     else {
                         convo.set("page", newPage);
@@ -178,21 +174,21 @@ exports.botOnPostback_OrarioLinea_convo = (chat, linea, AorD) => {
                 const text = payload.message.text;
                 //   convo.say(`Oh your favorite color is ${text}, cool!`);
                 convo.set("direzione", text);
-                convo_Orari(convo, linea, text);
+                convo_Orari(convo, linea);
             }, [{
                     event: 'quick_reply',
                     callback: (payload, convo) => {
                         const text = payload.message.text;
                         // convo.say(`Thanks for choosing one of the options. Your favorite color is ${text}`);
                         convo.set("direzione", text);
-                        convo_Orari(convo, linea, text);
+                        convo_Orari(convo, linea);
                     }
                 }]);
             return;
         }
         // qui AorD è definito:
         convo.set("direzione", AorD);
-        convo_Orari(convo, linea, AorD);
+        convo_Orari(convo, linea);
     }); //end convo;
 };
 //# sourceMappingURL=orari.js.map
