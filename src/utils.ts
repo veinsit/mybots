@@ -9,6 +9,11 @@ export const sayThenDo  = (convo, text, action) => {
         action && action(convo)
 }
 
+export const postbackEvent  = (token, callback) => ({
+    event : 'postback:'+token,
+    callback
+  });
+
 // prove js
 /*
 export var avar = []

@@ -144,20 +144,17 @@ const convo_Orari = (convo, linea) => {
         }, (payload, convo, data) => {
             utils.sayThenEnd(convo, "Abbiamo terminato la conversazione sulla linea " + linea.display_name);
         }, [
-            {
-                event: 'postback:NEXT_PAGE_CORSE',
-                callback: (payload, convo) => {
-                    var newPage = 1 + convo.get("page");
-                    if (newPage * quanteInsieme >= result.corse.length) {
-                        utils.sayThenEnd(convo, "Non ci sono più corse.\nAbbiamo terminato la conversazione sulla linea " + linea.display_name);
-                    }
-                    else {
-                        convo.set("page", newPage);
-                        utils.sayThenDo(convo, `Pagina ${newPage}`, (_convo) => convo_showPage(_convo));
-                        // convo_showPage(convo);
-                    }
+            utils.postbackEvent('NEXT_PAGE_CORSE', (payload, convo) => {
+                var newPage = 1 + convo.get("page");
+                if (newPage * quanteInsieme >= result.corse.length) {
+                    utils.sayThenEnd(convo, "Non ci sono più corse.\nAbbiamo terminato la conversazione sulla linea " + linea.display_name);
                 }
-            }
+                else {
+                    convo.set("page", newPage);
+                    utils.sayThenDo(convo, `Pagina ${newPage}`, (_convo) => convo_showPage(_convo));
+                    // convo_showPage(convo);
+                }
+            })
         ]);
         //--------------------- end convo ask
     }); // end getCorseOggi

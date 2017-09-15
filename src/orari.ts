@@ -173,9 +173,7 @@ const convo_Orari = (convo, linea) => {
                     "Abbiamo terminato la conversazione sulla linea "+linea.display_name)
             },
            [
-            {
-              event: 'postback:NEXT_PAGE_CORSE',
-              callback: (payload, convo) => {
+            utils.postbackEvent('NEXT_PAGE_CORSE', (payload, convo) => {
                 var newPage = 1 + (convo.get("page") as number)
                 if (newPage*quanteInsieme >= result.corse.length) {
                     utils.sayThenEnd(convo,
@@ -185,8 +183,7 @@ const convo_Orari = (convo, linea) => {
                     utils.sayThenDo(convo, `Pagina ${newPage}`, (_convo) => convo_showPage(_convo))
                     // convo_showPage(convo);
                 }
-              }
-            }
+              })
           ]);
                 
         //--------------------- end convo ask
