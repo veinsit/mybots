@@ -100,7 +100,7 @@ const convo_showPage = (convo) => {
     for (var i = istart; i < iend; i++) {
         var corsa = result.corse[i];
         els.push({
-            "title": `partenza ${corsa.parte}`,
+            "title": `${i}) partenza ${corsa.parte}`,
             "subtitle": corsa.corsa + "  arriva alle " + corsa.arriva,
             //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
             "buttons": utils.singlePostbackBtn("Dettaglio", "ON_CORSA_" + corsa.CORSA),
@@ -153,7 +153,8 @@ const convo_Orari = (convo, linea) => {
                     }
                     else {
                         convo.set("page", newPage);
-                        convo_showPage(convo);
+                        utils.sayThenDo(convo, `Pagina ${newPage}`, (_convo) => convo_showPage(_convo));
+                        // convo_showPage(convo);
                     }
                 }
             }

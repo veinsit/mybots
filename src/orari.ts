@@ -113,7 +113,7 @@ const convo_showPage = (convo) => {
     for (var i = istart; i<iend; i++) {
         var corsa = result.corse[i]
         els.push({
-            "title": `partenza ${corsa.parte}`,
+            "title": `${i}) partenza ${corsa.parte}`,
             "subtitle": corsa.corsa + "  arriva alle " + corsa.arriva,
             //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
             "buttons": utils.singlePostbackBtn("Dettaglio","ON_CORSA_"+corsa.CORSA),
@@ -176,13 +176,14 @@ const convo_Orari = (convo, linea) => {
             {
               event: 'postback:NEXT_PAGE_CORSE',
               callback: (payload, convo) => {
-                var newPage = 1+(convo.get("page") as number)
+                var newPage = 1 + (convo.get("page") as number)
                 if (newPage*quanteInsieme >= result.corse.length) {
                     utils.sayThenEnd(convo,
                         "Non ci sono più corse.\nAbbiamo terminato la conversazione sulla linea "+linea.display_name)
                 } else {
                     convo.set("page", newPage)
-                    convo_showPage(convo);
+                    utils.sayThenDo(convo, `Pagina ${newPage}`, (_convo) => convo_showPage(_convo))
+                    // convo_showPage(convo);
                 }
               }
             }
