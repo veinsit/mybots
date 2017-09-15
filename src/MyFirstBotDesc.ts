@@ -136,6 +136,10 @@ const onNumLinea = (chat, linee: any[]): void => {
 }
 
 const onLineeMultiple = (chat, linee:any[]) => {
+
+    // Puoi inviare da un minimo di 2 a un massimo di 4 elementi.
+    // L'aggiunta di un pulsante a ogni elemento è facoltativa. Puoi avere solo 1 pulsante per elemento.
+    // Puoi avere solo 1 pulsante globale.
     const buttonsGlobal = [
         {
           "title": "View More",
@@ -148,20 +152,19 @@ const onLineeMultiple = (chat, linee:any[]) => {
     let els = []
     for (let it of linee) {
         els.push({
-            
-                "title": `linea ${it.LINEA_ID}`,
-                "subtitle": it.asc_direction,
-                //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
-                "buttons": [{ // un solo button !!
-                    title: "Orari",
-                    type: "postback",
-                    payload: "ON_CODLINEA_"+it.LINEA_ID,
-                  }
-                ]
-                      
+            "title": `linea ${it.LINEA_ID}`,
+            "subtitle": it.asc_direction,
+            //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
+            "buttons": [{ // un solo button !!
+                title: "Orari",
+                type: "postback",
+                payload: "ON_CODLINEA_"+it.LINEA_ID,
+                }
+            ]
         })
-    }
-    //linee.forEach(it=>);
+    }//end for
+
+    chat.sendListTemplate(els, undefined /* buttonsGlobal */, options);
     /*
     const elements =[
         {
@@ -214,20 +217,16 @@ const onLineeMultiple = (chat, linee:any[]) => {
         }
       ];
 */
-    chat.sendListTemplate(els, buttonsGlobal, options);
 }
 
 const onLinea_usaGeneric = (chat, linea: any): void => {
-    
-
-
     const urlLinea = `http://servizi.startromagna.it/opendata/od/ui/tpl/${linea.Bacino}/linee/${linea.LINEA_ID}`
     chat.sendGenericTemplate([
         {
             "title": ("Linea " + linea.display_name),
-            "image_url":"http://servizi.startromagna.it/opendata/Content/Images/start_logo.png",
+            // "image_url":"http://servizi.startromagna.it/opendata/Content/Images/start_logo.png",
             //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
-            "subtitle": linea.strip_asc_direction+"\n(*) "+linea.asc_note,
+            "subtitle": linea.asc_direction+ (linea.asc_note && "\n(*) "+linea.asc_note),
             "default_action": {
                 "type": "web_url",
                 "url": urlLinea,
@@ -240,7 +239,7 @@ const onLinea_usaGeneric = (chat, linea: any): void => {
         }
     ])
 }
-
+/*
 const onLinea_usaConvo = (chat, linea: any): void => {
     chat.conversation(convo => {
         convo.ask(
@@ -271,123 +270,30 @@ const onLinea_usaConvo = (chat, linea: any): void => {
                     const autoTimeout = (message && message.text) ? message.text.length * 10 : 1000;
                     const timeout = (typeof options.typing === 'number') ? options.typing : autoTimeout;
                     return this.sendTypingIndicator(recipientId, timeout).then(req);
-                }  */
+                }  
         );
     });
 }
+*/
 //====================================================================================
 //            gestione onPostback
 //====================================================================================
+import orari = require("./orari");
 const botOnPostback = (chat, postbackPayload: string) => {
     console.log("VP>on postback :" + postbackPayload)
 
     if (postbackPayload.startsWith("ORARI_")) {
         const AorD = postbackPayload.substring(6, 8)  // As or Di
         const codLinea = postbackPayload.substring(9)
-        botOnPostback_OrarioLinea(chat, linee.filter(it => it.LINEA_ID === codLinea)[0], AorD)
+        orari.botOnPostback_OrarioLinea_convo(chat, linee.filter(it => it.LINEA_ID === codLinea)[0], AorD)
         return;
     }
     if (postbackPayload.startsWith("ON_CODLINEA_")) {
         const codLinea = postbackPayload.substring(12)
-        botOnPostback_OrarioLinea(chat, linee.filter(it => it.LINEA_ID === codLinea)[0], undefined)
+        orari.botOnPostback_OrarioLinea_convo(chat, linee.filter(it => it.LINEA_ID === codLinea)[0], undefined)
         return;
     }
 }
-
-const botOnPostback_OrarioLinea = (chat, linea: any, AorD? : string) => {
-    console.log("VP> onOrarioLinea " + linea.LINEA_ID + " " + AorD)
-
-    if (AorD===undefined) {
-        const qr = [ "Ascen", "Discen" ];
-        chat.conversation(convo => {
-            convo.ask({
-              text: 'In quale direzione ?',
-              quickReplies: qr
-            }, (payload, convo) => {
-              const text = payload.message.text;
-           //   convo.say(`Oh your favorite color is ${text}, cool!`);
-              convo.end();
-              botOnPostback_OrarioLinea(chat, linea, text.startsWith("A") ? "As" : "Di")
-        }, [
-              {
-                event: 'quick_reply',
-                callback: (payload, convo) => {
-                  const text = payload.message.text;
-                  // convo.say(`Thanks for choosing one of the options. Your favorite color is ${text}`);
-                  convo.end();
-                  botOnPostback_OrarioLinea(chat, linea, text.startsWith("A") ? "As" : "Di")
-                }
-              }
-            ]);
-        });
-
-        return;
-    }
-    var args = { path: { bacino: 'FC', linea: linea.LINEA_ID } }
-    client.methods.getCorseOggi(args, function (data, response) {
-
-        var result = {
-            linea,
-            corse: data.filter(it => it.VERSO === AorD).map(function (item) {
-                return {
-                    corsa: item.DESC_PERCORSO,
-                    parte: item.ORA_INIZIO_STR,
-                    arriva: item.ORA_FINE_STR,
-                }
-            })
-        }
-
-        chat.say("Corse di oggi della linea " + linea.display_name 
-            + " verso " + (AorD === 'As' ? linea.strip_asc_direction : linea.strip_desc_direction))
-            .then(() => {
-                const convert = (x) => x.parte + " " + x.corsa + "  " + x.arriva + "\n";
-
-                /*
-                //=========================================================
-                //          loop sincrono : NON PUO' FUNZIUONARE !!!
-                //=========================================================
-                var i = 0;
-                while (i < result.corse.length) {
-                    var text = result.corse.slice(i, i + 4).reduce(function (total, item) {
-                        const s = item.parte + " " + item.corsa + "  " + item.arriva + "\n"
-                        if (typeof total === 'string')
-                            return total + convert(item)
-                        else
-                            return convert(total) + convert(item)
-                    })
-                    // console.log("chat.say: "+text);
-                    chat.say(text);
-                    i += 4
-                } // end while 
-                */
-                //=========================================================
-                //          loop con Promise  
-                //   https://stackoverflow.com/questions/40328932/javascript-es6-promise-for-loop
-                //=========================================================
-                const quanteInsieme=4;
-                (function loop(i) {
-                    const promise = new Promise((resolve, reject) => {
-                        var text = result.corse
-                            .slice(i, i + quanteInsieme)
-                            .reduce(function (total, item) {
-                                const s = item.parte + " " + item.corsa + "  " + item.arriva + "\n"
-                                if (typeof total === 'string')
-                                    return total + convert(item)
-                                else
-                                    return convert(total) + convert(item)
-                            }) // end reduce
-                        // console.log("chat.say: "+text);
-                        chat.say(text).then(() =>
-                                resolve()    //  resolve the promise !!!!!
-                            )
-                    }).then( () => i >= result.corse.length || loop(i+quanteInsieme) );
-                })(0);
-
-            }) // end .then
-
-    }) // end getCorseOggi
-}
-
 
 
 const _messagesLinea = (linea:any): string[] => {
