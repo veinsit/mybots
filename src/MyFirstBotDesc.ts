@@ -340,8 +340,13 @@ const botOnPostback_OrarioLinea = (chat, linea: any, AorD? : string) => {
         chat.say("Corse di oggi della linea " + linea.display_name 
             + " verso " + (AorD === 'As' ? linea.strip_asc_direction : linea.strip_desc_direction))
             .then(() => {
+                const convert = (x) => x.parte + " " + x.corsa + "  " + x.arriva + "\n";
+
+                /*
+                //=========================================================
+                //          loop sincrono : NON PUO' FUNZIUONARE !!!
+                //=========================================================
                 var i = 0;
-                const convert = (x) => x.parte + " " + x.corsa + "  " + x.arriva + "\n"
                 while (i < result.corse.length) {
                     var text = result.corse.slice(i, i + 4).reduce(function (total, item) {
                         const s = item.parte + " " + item.corsa + "  " + item.arriva + "\n"
@@ -350,10 +355,34 @@ const botOnPostback_OrarioLinea = (chat, linea: any, AorD? : string) => {
                         else
                             return convert(total) + convert(item)
                     })
-                    console.log("chat.say: "+text);
+                    // console.log("chat.say: "+text);
                     chat.say(text);
                     i += 4
-                } // end while
+                } // end while 
+                */
+                //=========================================================
+                //          loop con Promise  
+                //   https://stackoverflow.com/questions/40328932/javascript-es6-promise-for-loop
+                //=========================================================
+                const quanteInsieme=4;
+                (function loop(i) {
+                    const promise = new Promise((resolve, reject) => {
+                        var text = result.corse
+                            .slice(i, i + quanteInsieme)
+                            .reduce(function (total, item) {
+                                const s = item.parte + " " + item.corsa + "  " + item.arriva + "\n"
+                                if (typeof total === 'string')
+                                    return total + convert(item)
+                                else
+                                    return convert(total) + convert(item)
+                            }) // end reduce
+                        // console.log("chat.say: "+text);
+                        chat.say(text).then(() =>
+                                resolve()    //  resolve the promise !!!!!
+                            )
+                    }).then( () => i >= result.corse.length || loop(i+quanteInsieme) );
+                })(0);
+
             }) // end .then
 
     }) // end getCorseOggi
