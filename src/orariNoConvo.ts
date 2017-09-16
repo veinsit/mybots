@@ -3,7 +3,7 @@ import utils = require("./utils")
 
 
 const quanteInsieme=4;
-
+var context = {page:0, result:undefined}
 const noconvo_showPage = (chat, result, page:number) => {
 
     var istart = page*quanteInsieme
@@ -26,19 +26,25 @@ const noconvo_showPage = (chat, result, page:number) => {
 
     // MODIFICARE DA QUI
     const noNextPage = page => ((page+1)*quanteInsieme >= result.corse.length);
+
+    // emetti max 4 elementi
     chat.sendListTemplate(
         els, 
         noNextPage(page) ? undefined : utils.singlePostbackBtn("Ancora","NEXT_PAGE_CORSE"), 
         { typing: true }
     ).then(()=>{
         if (noNextPage(page)) {
-            utils.sayThenEnd(convo, 
+            chat.say( 
                 "Non ci sono altre corse.\nAbbiamo terminato la conversazione sulla linea "+result.linea.display_name
             )
         }
     })    
 
 }    
+export const on_postback_NEXT_PAGE_CORSE =  (chat) => {
+    context.page = context.page+1;
+    noconvo_showPage(chat, context.result,context.page )
+}
 
 const noconvo_Orari = (chat, linea: any, AorD : string)  => {
 
@@ -56,26 +62,13 @@ const noconvo_Orari = (chat, linea: any, AorD : string)  => {
             })
         }
 
+        context.result = result;
+        context.page=0;
+
         chat.say("Corse di oggi della linea " + linea.display_name 
             + " verso " + (AorD === 'As' ? linea.strip_asc_direction : linea.strip_desc_direction))
             .then(() => {
-                noconvo_showPage(chat, result, 0)
-                /*
-                const convert = (x) => x.parte + " " + x.corsa + "  " + x.arriva + "\n";
-
-                //=========================================================
-                //          loop con Promise  
-                //   https://stackoverflow.com/questions/40328932/javascript-es6-promise-for-loop
-                //=========================================================
-                const quanteInsieme=4;
-                var startIndex = 0;
-                (function loop(i) {
-                    const promise = new Promise((resolve, reject) => {
-                        bodyPromise4orari(result.corse, i, chat, resolve)
- 
-                    }).then( () => i >= result.corse.length || loop(i+quanteInsieme) );
-                })(startIndex);
-                */
+                noconvo_showPage(chat, context.result, context.page)
             }) // end .then
     }) // end getCorseOggi
 };

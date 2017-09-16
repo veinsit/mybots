@@ -238,19 +238,23 @@ const onLinea_usaConvo = (chat, linea: any): void => {
 //====================================================================================
 //            gestione onPostback
 //====================================================================================
-import orari = require("./orari");
+import orari = require("./orariNoConvo");
 const botOnPostback = (chat, postbackPayload: string) => {
     console.log("VP>on postback :" + postbackPayload)
 
     if (postbackPayload.startsWith("ORARI_")) {
         const AorD = postbackPayload.substring(6, 8)  // As or Di
         const codLinea = postbackPayload.substring(9)
-        orari.botOnPostback_OrarioLinea_convo(chat, linee.filter(it => it.LINEA_ID === codLinea)[0], AorD)
+        orari.botOnPostback_OrarioLinea_noconvo(chat, linee.filter(it => it.LINEA_ID === codLinea)[0], AorD)
         return;
     }
     if (postbackPayload.startsWith("ON_CODLINEA_")) {
         const codLinea = postbackPayload.substring(12)
-        orari.botOnPostback_OrarioLinea_convo(chat, linee.filter(it => it.LINEA_ID === codLinea)[0], undefined)
+        orari.botOnPostback_OrarioLinea_noconvo(chat, linee.filter(it => it.LINEA_ID === codLinea)[0], undefined)
+        return;
+    }
+    if (postbackPayload==='NEXT_PAGE_CORSE') {
+        orari.on_postback_NEXT_PAGE_CORSE(chat) 
         return;
     }
 }
