@@ -39,8 +39,10 @@ const bot = new BootBot({
 
 
 // Load Persistent Menu, Greeting Text and set GetStarted Button
-const menuAssets = require('./assets/menu')
-bot.module(menuAssets)
+import menuAssets = require('./assets/menu')
+//bot.module(menuAssets)
+menuAssets.defineMenu(bot)
+
 bot.setGetStartedButton((payload, chat) => {
   chat.sendTypingIndicator(500).then(() => showIntro(chat))
 })
