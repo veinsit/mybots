@@ -21,10 +21,13 @@ require("./MyFirstBotDesc").start(bot, (linee:any[]) => {
 */
 
 // https://github.com/sotirelisc/tvakis
+// https://www.messenger.com/t/thecvbot
 
 'use strict'
 import utils   = require("./utils")
 import service = require("./service")
+// Load emojis
+import emo = require('./assets/emoji')
 
 const BootBot = require('../lib/MyBootBot')
 
@@ -85,10 +88,29 @@ const showAbout = (chat) => {
 }
 
 const showHelp = (chat) => {
-  const help_msg = emoji.heart + "help help help 1" +
-    "\n" + emoji.tv + "help help help 2" 
+  const help_msg = emo.emoji.heart + "help help help 1" +
+    "\n" + emo.emoji.tv + "help help help 2" 
   chat.say(help_msg)
 }
+
+const _orariButtons = (codLinea, atext, dtext, url): any[] => [
+  {
+      "type": "postback",
+      "title": "verso " + atext,
+      "payload": "ORARI_As_" + codLinea
+  },
+  {
+      "type": "postback",
+      "title": "verso " + dtext,
+      "payload": "ORARI_Di_" + codLinea
+  },
+  {
+      "type": "web_url",
+      "url": url || "http://www.startromagna.it",
+      "title": "Sito"
+  }
+]
+
 
 const searchLinea = (chat, askedLinea) => {
   service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
@@ -104,7 +126,7 @@ const searchLinea = (chat, askedLinea) => {
       }
 
       if (res.results.length === 0) {
-        chat.say(`Non ho trovato la linea ${askedLinea}` + emoji.not_found)
+        chat.say(`Non ho trovato la linea ${askedLinea}` + emo.emoji.not_found)
       } else {
         let movies_to_get = res.results.length
         // Show 7 (or less) relevant movies
@@ -120,14 +142,16 @@ const searchLinea = (chat, askedLinea) => {
           movies.push({
             "title": ("Linea " + linea.display_name),
             "subtitle": linea.asc_direction+ (linea.asc_note && "\n(*) "+linea.asc_note),
-            "image_url":service.baseUri+'FC/linee/'+linea.LINEA_ID,
+            // IMMAGINE DELLA LINEA : "image_url":service.baseUiUri+'FC/linee/'+linea.LINEA_ID,
             //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
+            /*
             "buttons": [{
               "type": "web_url",
-              "url": service.baseUri+'FC/linee/'+linea.LINEA_ID,
-              "title": emoji.link + " Dettagli",
+              "url": service.baseUiUri+'FC/linee/'+linea.LINEA_ID,
+              "title": emo.emoji.link + " Dettagli",
               "webview_height_ratio": "tall"
-            }]
+            }]*/
+            "buttons": _orariButtons(linea.LINEA_ID, linea.strip_asc_direction, linea.strip_desc_direction, service.baseUiUri+'FC/linee/'+linea.LINEA_ID)
           })
 //                similars.push("Similar to " + res.results[i].title)
         }
@@ -159,7 +183,8 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
 
 bot.on('postback',  (payload, chat, data) => {
   const pl: string = payload.postback.payload
-  if (pl.startsWith("PB_UNALINEA_")) {
+
+  if (pl.startsWith("ON_CODLINEA_")) {
     displayOrari(chat, pl.substring(12))
     return;
   }  

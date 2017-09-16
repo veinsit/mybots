@@ -9,6 +9,7 @@ const client = new Client();
 
 // const baseUri = process.env.OPENDATAURIBASE
 export const baseUri = "http://servizi.startromagna.it/opendata/od/api/tpl/"
+export const baseUiUri = "http://servizi.startromagna.it/opendata/od/ui/tpl/"
 
 client.registerMethod("getLinee", baseUri + "${bacino}/linee?format=json", "GET");
 /*{

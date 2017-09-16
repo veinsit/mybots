@@ -13,12 +13,12 @@ exports.defineMenu = (bot) => {
                 {
                     type: 'postback',
                     title: 'Linea 1',
-                    payload: 'PB_UNALINEA_CE01'
+                    payload: 'ON_CODLINEA_CE01'
                 },
                 {
                     type: 'postback',
                     title: 'Linea 2',
-                    payload: 'PB_UNALINEA_CE02'
+                    payload: 'ON_CODLINEA_CE02'
                 }
             ]
         },
@@ -28,11 +28,15 @@ exports.defineMenu = (bot) => {
             call_to_actions: [{
                     type: 'postback',
                     title: ' Linea 7',
-                    payload: 'PB_UNALINEA_FO07'
+                    payload: 'ON_CODLINEA_FO07'
                 }, {
                     type: 'postback',
                     title: ' Linea 8',
-                    payload: 'PB_UNALINEA_FO08'
+                    payload: 'ON_CODLINEA_FO08'
+                }, {
+                    type: 'postback',
+                    title: ' Linea 92',
+                    payload: 'ON_CODLINEA_S092'
                 }]
         },
         {

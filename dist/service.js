@@ -7,6 +7,7 @@ const Client = NodeRestClient.Client;
 const client = new Client();
 // const baseUri = process.env.OPENDATAURIBASE
 exports.baseUri = "http://servizi.startromagna.it/opendata/od/api/tpl/";
+exports.baseUiUri = "http://servizi.startromagna.it/opendata/od/ui/tpl/";
 client.registerMethod("getLinee", exports.baseUri + "${bacino}/linee?format=json", "GET");
 /*{
     "Bacino": "FC",
