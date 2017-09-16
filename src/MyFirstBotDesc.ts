@@ -10,6 +10,7 @@ export const lineeMap = new Map<string, any[]>();
 
 export function start(_bot, done) {
     bot = _bot //TODO: Effetto collaterale !!!!!
+    bot.deletePersistentMenu()
 
     service.methods.getLinee({ path: { bacino: 'FC' } }, (data:any[], response) => {
         
