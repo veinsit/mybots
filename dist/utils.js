@@ -13,6 +13,11 @@ exports.postbackEvent = (token, callback) => ({
     event: 'postback:' + token,
     callback
 });
+// Calculates the days difference between two dates
+function getDaysDifference(date1, date2) {
+    let timeDiff = Math.abs(date2.getTime() - date1.getTime());
+    return Math.ceil(timeDiff / (1000 * 3600 * 24));
+}
 // prove js
 /*
 export var avar = []
