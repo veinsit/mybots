@@ -23,7 +23,6 @@ require("./MyFirstBotDesc").start(bot, (linee:any[]) => {
 */
 
 
-
 // https://github.com/sotirelisc/tvakis
 // https://www.messenger.com/t/thecvbot
 
