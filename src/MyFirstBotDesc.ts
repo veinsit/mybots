@@ -248,11 +248,13 @@ const botOnPostback = (chat, postbackPayload: string) => {
         orari.botOnPostback_OrarioLinea_convo(chat, linee.filter(it => it.LINEA_ID === codLinea)[0], AorD)
         return;
     }
+
     if (postbackPayload.startsWith("ON_CODLINEA_")) {
         const codLinea = postbackPayload.substring(12)
         orari.botOnPostback_OrarioLinea_convo(chat, linee.filter(it => it.LINEA_ID === codLinea)[0], undefined)
         return;
     }
+    
     if (postbackPayload==='NEXT_PAGE_CORSE') {
         orari.on_postback_NEXT_PAGE_CORSE(chat) 
         return;
