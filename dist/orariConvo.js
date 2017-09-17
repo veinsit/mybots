@@ -49,7 +49,11 @@ const convo_showPage = (convo) => {
         });
     } //end for
     const noNextPage = page => ((page + 1) * quanteInsieme >= result.corse.length);
-    convo.sendListTemplate(els, noNextPage(page) ? undefined : utils.singlePostbackBtn("Ancora", "NEXT_PAGE_CORSE"), { typing: true });
+    convo.sendListTemplate(els, noNextPage(page) ? undefined : utils.singlePostbackBtn("Ancora", "NEXT_PAGE_CORSE"), { typing: true }).then(() => {
+        if (noNextPage(page)) {
+            utils.sayThenEnd(convo, "Conversazione terminata");
+        }
+    });
 };
 const convo_Orari = (convo, linea) => {
     const AorD_text = convo.get("direzione");
@@ -82,20 +86,21 @@ const convo_Orari = (convo, linea) => {
         // question : string or object or function(convo)
         convo => { convo_showPage(convo); }, // produce i postback NEXT_PAGE_CORSE e ON_CORSA_XXX
         // answer : The answer function will be called whenever the user replies to the question with a text message or quick reply.
-        (payload, convo, data) => { }, 
+        (payload, convo, data) => { utils.sayThenEnd(convo, "Conversazione terminata"); }, 
         // callbacks
         [
             utils.postbackEvent('NEXT_PAGE_CORSE', (payload, convo) => {
                 var newPage = 1 + convo.get("page");
-                if (newPage * quanteInsieme >= result.corse.length) {
-                    utils.sayThenEnd(convo, "Non ci sono più corse.\nAbbiamo terminato la conversazione sulla linea " + linea.display_name);
-                }
-                else {
-                    convo.set("page", newPage);
-                    utils.sayThenDo(convo, `Pagina ${newPage}`, (_convo) => convo_showPage(_convo));
-                    // convo_showPage(convo);
-                }
-            }),
+                /* se arrivo qui c'è sicuramente la prox. pagina
+                if (newPage*quanteInsieme >= result.corse.length) {
+                    utils.sayThenEnd(convo,
+                        "Non ci sono più corse.\nAbbiamo terminato la conversazione sulla linea "+linea.display_name)
+                } else { */
+                convo.set("page", newPage);
+                utils.sayThenDo(convo, `Pagina ${newPage}`, (_convo) => convo_showPage(_convo));
+                // convo_showPage(convo);
+            }
+            /*}*/ ),
         ]);
         //--------------------- end convo ask
     }); // end getCorseOggi

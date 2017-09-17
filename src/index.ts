@@ -1,3 +1,5 @@
+'use strict'
+ 
 /*
 
 const BootBot = require('../lib/MyBootBot');
@@ -20,10 +22,11 @@ require("./MyFirstBotDesc").start(bot, (linee:any[]) => {
 
 */
 
+
+
 // https://github.com/sotirelisc/tvakis
 // https://www.messenger.com/t/thecvbot
 
-'use strict'
 import utils   = require("./utils")
 import service = require("./service")
 // Load emojis
@@ -40,11 +43,19 @@ const bot = new BootBot({
   appSecret: process.env.APPSEC
 })
 
-
-// Load Persistent Menu, Greeting Text and set GetStarted Button
 import menuAssets = require('./assets/menu')
 //bot.module(menuAssets)
 menuAssets.defineMenu(bot)
+
+require("./MyFirstBotDesc").start(bot, (linee:any[]) => {
+  // così non rinfresca più le linee
+  // fare un restart dell'app per il refresh delle linee
+  console.log(`Caricate ${linee.length} linee `)
+  bot.start(process.env.PORT || 3000);
+});
+
+/*
+// Load Persistent Menu, Greeting Text and set GetStarted Button
 
 bot.setGetStartedButton((payload, chat) => {
   chat.sendTypingIndicator(500).then(() => showIntro(chat))
@@ -122,7 +133,7 @@ const searchLinea = (chat, askedLinea) => {
                   parte: item.ORA_INIZIO_STR,
                   arriva: item.ORA_FINE_STR,
               }
-          })*/
+          })*---/
       }
 
       if (res.results.length === 0) {
@@ -150,7 +161,7 @@ const searchLinea = (chat, askedLinea) => {
               "url": service.baseUiUri+'FC/linee/'+linea.LINEA_ID,
               "title": emo.emoji.link + " Dettagli",
               "webview_height_ratio": "tall"
-            }]*/
+            }]---/
             "buttons": _orariButtons(linea.LINEA_ID, linea.strip_asc_direction, linea.strip_desc_direction, service.baseUiUri+'FC/linee/'+linea.LINEA_ID)
           })
 //                similars.push("Similar to " + res.results[i].title)
@@ -173,7 +184,7 @@ const displayOrari = (chat, LINEA_ID) => {
   chat.say("Ecco gli orari della linea "+LINEA_ID)
 }  
 
-/*
+
 bot.on('postback:HELP_PAYLOAD', (payload, chat) => {
   showHelp(chat)
 })
@@ -192,11 +203,6 @@ bot.on('postback',  (payload, chat, data) => {
 });
 
 bot.start(process.env.PORT || 3000)
-*/
-require("./MyFirstBotDesc").start(bot, (linee:any[]) => {
-  // così non rinfresca più le linee
-  // fare un restart dell'app per il refresh delle linee
-  console.log(`Caricate ${linee.length} linee `)
-  bot.start(process.env.PORT || 3000);
-});
 
+
+*/

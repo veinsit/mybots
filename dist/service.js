@@ -21,7 +21,7 @@ client.registerMethod("getLinee", exports.baseUri + "${bacino}/linee?format=json
     "asc_note": "",
     "desc_note": ""
   }*/
-client.registerMethod("getCorseOggi", exports.baseUri + "${bacino}/linee/${linea}/corse/giorno/0?format=json", "GET");
+client.registerMethod("getCorseOggi", exports.baseUri + "${bacino}/linee/${linea}/corse/giorno/1?format=json", "GET");
 /*
 { Bacino: 'FC',
 CODICEVALIDITA: 28901,
