@@ -10,7 +10,7 @@ export const sayThenDo  = (convo, text, action) => {
 }
 
 export const postbackEvent  = (token, callback) => ({
-    event : 'postback:'+token,
+    event : 'postback' + (token ? ':'+token : ''),
     callback
   });
 

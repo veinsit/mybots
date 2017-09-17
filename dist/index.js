@@ -145,7 +145,7 @@ const searchLinea = (chat, askedLinea) => {
                     chat.sendTypingIndicator(1500).then(() => {
                         chat.say({
                             text: "Scegli!",
-                            quickReplies: movies.map(it => it.LINEA_ID)
+                            quickReplies: movies.map(it => "== " + it.LINEA_ID)
                         });
                     });
                 });
@@ -156,18 +156,30 @@ const searchLinea = (chat, askedLinea) => {
 const displayOrari = (chat, LINEA_ID) => {
     chat.say("Ecco gli orari della linea " + LINEA_ID);
 };
+/*
 bot.on('postback:HELP_PAYLOAD', (payload, chat) => {
-    showHelp(chat);
-});
+  showHelp(chat)
+})
+
 bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
-    showAbout(chat);
+  showAbout(chat)
+})
+
+bot.on('postback',  (payload, chat, data) => {
+  const pl: string = payload.postback.payload
+
+  if (pl.startsWith("ON_CODLINEA_")) {
+    displayOrari(chat, pl.substring(12))
+    return;
+  }
 });
-bot.on('postback', (payload, chat, data) => {
-    const pl = payload.postback.payload;
-    if (pl.startsWith("ON_CODLINEA_")) {
-        displayOrari(chat, pl.substring(12));
-        return;
-    }
+
+bot.start(process.env.PORT || 3000)
+*/
+require("./MyFirstBotDesc").start(bot, (linee) => {
+    // così non rinfresca più le linee
+    // fare un restart dell'app per il refresh delle linee
+    console.log(`Caricate ${linee.length} linee `);
+    bot.start(process.env.PORT || 3000);
 });
-bot.start(process.env.PORT || 3000);
 //# sourceMappingURL=index.js.map

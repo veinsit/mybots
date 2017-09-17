@@ -10,7 +10,7 @@ exports.sayThenDo = (convo, text, action) => {
         action && action(convo);
 };
 exports.postbackEvent = (token, callback) => ({
-    event: 'postback:' + token,
+    event: 'postback' + (token ? ':' + token : ''),
     callback
 });
 // Calculates the days difference between two dates
