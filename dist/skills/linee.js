@@ -32,10 +32,6 @@ exports.onMessage = (chat, text) => {
     }
     return false;
 };
-//---------------------------------------------- end exports
-//----------------------------- esempio google static map
-//var fs = require('fs');
-const gm = require('google-static-map').set(process.env.GOOGLE_STATICMAP_APIKEY);
 function getLineeMap(callback) {
     const lineeMap = new Map();
     getLinee('FC', linee => {
@@ -80,7 +76,8 @@ exports.searchLinea = (chat, askedLinea) => {
                 movies.push({
                     "title": ("Linea " + linea.display_name),
                     "subtitle": linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note),
-                    "image_url": mapUrl("Cesena"),
+                    // https://developers.google.com/maps/documentation/static-maps/intro
+                    "image_url": utils.gStatMapUrl("center=Cesena,Italia&zoom=10&size=120x120"),
                     //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
                     /*
                     "buttons": [{
@@ -111,14 +108,6 @@ exports.searchLinea = (chat, askedLinea) => {
         }
     }); // end getLinee
 };
-const style = `style=element:labels|visibility:off&style=element:geometry.stroke|visibility:off&style=feature:landscape|element:geometry|saturation:-100&style=feature:water|saturation:-100|invert_lightness:true`;
-//const mapUrl = (center) => `https://maps.googleapis.com/maps/api/staticmap?center=${center}&size=200x200&${style}&key=`+process.env.GOOGLE_STATICMAP_APIKEY
-const mapUrl = (center) => gm()
-    .zoom(5)
-    .resolution('200x200')
-    .mapType('roadmap')
-    .address('Piazza Saffi, Forlì, Italia')
-    .url();
 const scegliAorD = (chat, LINEA_ID) => {
     const qr = ["Ascen", "Discen"];
     chat.conversation(convo => {

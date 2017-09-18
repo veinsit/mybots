@@ -32,9 +32,10 @@ import tpl = require("./skills/linee")
 
 const BootBot = require('../lib/MyBootBot')
 
-if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC) {
+if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC || !process.env.GOOGLE_STATICMAP_APIKEY) {
   require('./env.js')
 }
+
 const bot = new BootBot({
   accessToken: process.env.ATOK,
   verifyToken: process.env.VTOK,

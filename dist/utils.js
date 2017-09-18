@@ -20,6 +20,11 @@ function getDaysDifference(date1, date2) {
     let timeDiff = Math.abs(date2.getTime() - date1.getTime());
     return Math.ceil(timeDiff / (1000 * 3600 * 24));
 }
+exports.getDaysDifference = getDaysDifference;
+function gStatMapUrl(params) {
+    return 'https://maps.googleapis.com/maps/api/staticmap?' + params + '&key=' + process.env.GOOGLE_STATICMAP_APIKEY;
+}
+exports.gStatMapUrl = gStatMapUrl;
 // prove js
 /*
 export var avar = []

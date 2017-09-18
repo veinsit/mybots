@@ -27,7 +27,7 @@ require("./MyFirstBotDesc").start(bot, (linee:any[]) => {
 const emo = require("./assets/emoji");
 const tpl = require("./skills/linee");
 const BootBot = require('../lib/MyBootBot');
-if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC) {
+if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC || !process.env.GOOGLE_STATICMAP_APIKEY) {
     require('./env.js');
 }
 const bot = new BootBot({

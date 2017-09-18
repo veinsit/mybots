@@ -19,12 +19,14 @@ export const postbackEvent  = (token, callback) => ({
 
 
   // Calculates the days difference between two dates
-function getDaysDifference(date1, date2) {
+export function getDaysDifference(date1, date2) {
     let timeDiff = Math.abs(date2.getTime() - date1.getTime());
     return Math.ceil(timeDiff / (1000 * 3600 * 24));
   }
   
-
+export function gStatMapUrl(params:string) : string {
+    return 'https://maps.googleapis.com/maps/api/staticmap?'+params+'&key='+process.env.GOOGLE_STATICMAP_APIKEY
+}
 // prove js
 /*
 export var avar = []
