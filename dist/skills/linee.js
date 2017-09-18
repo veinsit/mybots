@@ -73,11 +73,12 @@ exports.searchLinea = (chat, askedLinea) => {
             for (let i = 0; i < movies_to_get; i++) {
                 // let release_date = new Date(res.results[i].release_date)
                 const linea = res.results[i];
+                const center = mapCenter(linea);
                 movies.push({
                     "title": ("Linea " + linea.display_name),
                     "subtitle": linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note),
                     // https://developers.google.com/maps/documentation/static-maps/intro
-                    "image_url": utils.gStatMapUrl("center=Cesena,Italia&zoom=10&size=120x120"),
+                    "image_url": utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=90x90`),
                     //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
                     /*
                     "buttons": [{
@@ -161,4 +162,30 @@ const displayOrariPage = (chat, LINEA_ID, AorD, page) => {
         noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `TPL_PAGE_CORSE_${LINEA_ID}_${AorD}_${page + 1}`), { typing: true });
     }); // end getCorseOggi
 };
+//=================================================================================
+//            helpers
+//=================================================================================
+function getCU(linea) {
+    if (linea.Bacino === 'FC') {
+        if (linea.LINEA_ID.indexOf("CE") >= 0)
+            return 'CE';
+        if (linea.LINEA_ID.indexOf("FO") >= 0)
+            return 'FO';
+        if (linea.LINEA_ID.indexOf("CO") >= 0)
+            return 'CO';
+        return undefined;
+    }
+    return undefined; //TODO completare
+}
+function mapCenter(linea) {
+    const cu = getCU(linea);
+    if (cu === 'CE')
+        return { center: "Cesena,Italy", zoom: 8 };
+    if (cu === 'FO')
+        return { center: "Forli,Italy", zoom: 8 };
+    if (cu === 'CO')
+        return { center: "Cesenatico,Italy", zoom: 8 };
+    if (cu === undefined)
+        return { center: "Forlimpopoli,Italy", zoom: 4 };
+}
 //# sourceMappingURL=linee.js.map

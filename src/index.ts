@@ -76,6 +76,14 @@ bot.on('message', (payload, chat) => {
   }
 })
 
+bot.on('postback',  (payload, chat, data) => {
+  const pl: string = payload.postback.payload
+
+  if (pl.startsWith(tpl.PB_TPL))
+    tpl.onPostback(pl, chat, data); 
+});
+
+
 const showIntro = (chat) => {
   chat.getUserProfile().then((user) => {
     chat.say("Salve, " + user.first_name + "! " + emoji.emoji.waving + "\n\n" +
@@ -102,14 +110,6 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
 })
 
 
-bot.on('postback',  (payload, chat, data) => {
-  const pl: string = payload.postback.payload
-
-  if (pl.startsWith(tpl.PB_TPL))
-    tpl.onPostback(payload, chat, data); 
-});
-
-  
 bot.start(process.env.PORT || 3000)
 
 
