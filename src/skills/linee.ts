@@ -222,8 +222,8 @@ function getCU(linea:any) : string {
 
 function mapCenter(linea:any) : any {
     const cu = getCU(linea);
-    if (cu==='CE') return {center : "Cesena,Italy", zoom:8 }
-    if (cu==='FO') return {center : "Forli,Italy", zoom:8 }
-    if (cu==='CO') return {center : "Cesenatico,Italy", zoom:8 }
+    if (cu==='CE') return {center : "Cesena,Italy", zoom:10 }
+    if (cu==='FO') return {center : "Forli,Italy", zoom:10 }
+    if (cu==='CO') return {center : "Cesenatico,Italy", zoom:12 }
     if (cu===undefined) return {center : "Forlimpopoli,Italy", zoom:4 }
 }

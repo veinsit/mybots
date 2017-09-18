@@ -6,6 +6,8 @@ import e = require('./emoji')
 
 //module.exports = (bot) => {
 export const defineMenu = (bot) => {
+  bot.deletePersistentMenu()
+  /*
     bot.setPersistentMenu([
       {
     title: e.emoji.tv + ' linee Cesena',
@@ -57,6 +59,7 @@ export const defineMenu = (bot) => {
           payload: 'HELP_PAYLOAD'
         }]
   }], false)
+  */
 
   bot.setGreetingText("Orari trasporto pubblico Forlì-Cesena" + e.emoji.popcorn + 
       "\n\nClicca per iniziare" + e.emoji.down)

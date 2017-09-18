@@ -7,9 +7,9 @@ const l = s => console.log(s)
 const Client = NodeRestClient.Client;
 const client = new Client();
 
-// const baseUri = process.env.OPENDATAURIBASE
-export const baseUri = "http://servizi.startromagna.it/opendata/od/api/tpl/"
-export const baseUiUri = "http://servizi.startromagna.it/opendata/od/ui/tpl/"
+const baseUri = process.env.OPENDATAURIBASE
+
+export const baseUiUri = baseUri.replace('/api/', '/ui/');
 
 client.registerMethod("getLinee", baseUri + "${bacino}/linee?format=json", "GET");
 /*{
@@ -25,7 +25,7 @@ client.registerMethod("getLinee", baseUri + "${bacino}/linee?format=json", "GET"
 	"desc_note": ""
   }*/
     
-client.registerMethod("getCorseOggi", baseUri + "${bacino}/linee/${linea}/corse/giorno/1?format=json", "GET");
+client.registerMethod("getCorseOggi", baseUri + "${bacino}/linee/${linea}/corse/giorno/0?format=json", "GET");
         /*
 { Bacino: 'FC',
   CODICEVALIDITA: 28901,
