@@ -70,7 +70,10 @@ bot.on('message', (payload, chat) => {
     if (tpl.onMessage(chat, text)) {
         // guà gestito
     }
-    else {
+    else if (prove.onMessage(chat, text)) {
+      // guà gestito
+  }
+  else {
       // searchTv(chat, text)
       chat.say("Per ora capisco solo 'linea XXXX'")
     }
