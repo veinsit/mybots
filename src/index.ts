@@ -87,6 +87,7 @@ bot.on('postback',  (payload, chat, data) => {
 });
 
 
+
 const showIntro = (chat) => {
   chat.getUserProfile().then((user) => {
     chat.say("Salve, " + user.first_name + "! " + emoji.emoji.waving + "\n\n" +
