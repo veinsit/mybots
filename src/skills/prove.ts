@@ -14,20 +14,20 @@ export const onPostback = (pl: string, chat, data): boolean => {
     }
 }
 export const onMessage = (chat, text): boolean => {
-    if (text.startsWith("pag ")) {
-        displayPage(chat, 0)
+    if (text.startsWith("pagg")) {
+        displayPage(chat, parseInt(text.substring(4)))
         return true;
     }
-    if (text.startsWith("prom ")) {
-        displayPage2(chat, 0)
+    if (text.startsWith("prom")) {
+        displayPage2(chat, parseInt(text.substring(4)))
         return true;
     }
     return false;
 }
 
-const displayPage2 = (chat, start: number) => {
+const displayPage2 = (chat, page: number) => {
     getCorseOggiPromise()
-    .then( (data, response) => showFrom(chat, data.filter(it => it.VERSO === 'As'), start))
+    .then( (data, response) => showFrom(chat, data.filter(it => it.VERSO === 'As'), page))
 }
 
 import BP = require('bluebird')
@@ -44,12 +44,14 @@ const getCorseOggiPromise = function () {
 }
 
 
-function showFrom(chat, corse: any[], start:number) {
+function showFrom(chat, corse: any[], page:number) {
+    const quanteInsieme = 4;
+    
     // Puoi inviare da un minimo di 2 a un massimo di 4 elementi.
     // L'aggiunta di un pulsante a ogni elemento è facoltativa. Puoi avere solo 1 pulsante per elemento.
     // Puoi avere solo 1 pulsante globale.
     let els = []
-    for (var i = start; i < Math.min(start+4, corse.length); i++) {
+    for (var i = 0; i < Math.min(quanteInsieme, corse.length); i++) {
         var corsa = corse[i]
         els.push({
             "title": `${i+1}) partenza ${corsa.parte}`,
@@ -59,12 +61,12 @@ function showFrom(chat, corse: any[], start:number) {
         })
     }//end for  
 
-    const noNextPage = () => start+4 >= corse.length
-
+    const noNextPage = () => corse.length < quanteInsieme
+    
     // emetti max 4 elementi
     chat.sendListTemplate(
         els,                                                      // PAGE_CORSE_F127_As_2
-        noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `PRV_SHOWPAGE_${start + 4}`),
+        noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `PRV_SHOWPAGE_${page+1}`),
         { typing: true }
     )
 

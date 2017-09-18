@@ -14,19 +14,19 @@ exports.onPostback = (pl, chat, data) => {
     }
 };
 exports.onMessage = (chat, text) => {
-    if (text.startsWith("pag ")) {
-        displayPage(chat, 0);
+    if (text.startsWith("pagg")) {
+        displayPage(chat, parseInt(text.substring(4)));
         return true;
     }
-    if (text.startsWith("prom ")) {
-        displayPage2(chat, 0);
+    if (text.startsWith("prom")) {
+        displayPage2(chat, parseInt(text.substring(4)));
         return true;
     }
     return false;
 };
-const displayPage2 = (chat, start) => {
+const displayPage2 = (chat, page) => {
     getCorseOggiPromise()
-        .then((data, response) => showFrom(chat, data.filter(it => it.VERSO === 'As'), start));
+        .then((data, response) => showFrom(chat, data.filter(it => it.VERSO === 'As'), page));
 };
 const BP = require("bluebird");
 const getCorseOggiPromise = function () {
@@ -41,12 +41,13 @@ const getCorseOggiPromise = function () {
         });
     });
 };
-function showFrom(chat, corse, start) {
+function showFrom(chat, corse, page) {
+    const quanteInsieme = 4;
     // Puoi inviare da un minimo di 2 a un massimo di 4 elementi.
     // L'aggiunta di un pulsante a ogni elemento è facoltativa. Puoi avere solo 1 pulsante per elemento.
     // Puoi avere solo 1 pulsante globale.
     let els = [];
-    for (var i = start; i < Math.min(start + 4, corse.length); i++) {
+    for (var i = 0; i < Math.min(quanteInsieme, corse.length); i++) {
         var corsa = corse[i];
         els.push({
             "title": `${i + 1}) partenza ${corsa.parte}`,
@@ -55,10 +56,10 @@ function showFrom(chat, corse, start) {
             "buttons": [] //utils.singlePostbackBtn("Dettaglio","TPL_ON_CORSA_"+corsa.CORSA),
         });
     } //end for  
-    const noNextPage = () => start + 4 >= corse.length;
+    const noNextPage = () => corse.length < quanteInsieme;
     // emetti max 4 elementi
     chat.sendListTemplate(els, // PAGE_CORSE_F127_As_2
-    noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `PRV_SHOWPAGE_${start + 4}`), { typing: true });
+    noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `PRV_SHOWPAGE_${page + 1}`), { typing: true });
 }
 const displayPage = (chat, page) => {
     const quanteInsieme = 4;
