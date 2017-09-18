@@ -137,10 +137,10 @@ export const searchLinea = (chat, askedLinea) => {
   const mapUrl = (center) => gm()
         .zoom( 5 )
         .resolution( '200x200' )
-        .maptype( 'roadmap' )
+        .mapType( 'roadmap' )
         .address('Piazza Saffi, Forlì, Italia')
         .url()
-        
+
   const scegliAorD = (chat, LINEA_ID) => {
     const qr = [ "Ascen", "Discen" ];
     chat.conversation(convo => {
