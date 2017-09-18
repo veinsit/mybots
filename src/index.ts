@@ -29,6 +29,7 @@ require("./MyFirstBotDesc").start(bot, (linee:any[]) => {
 import emo = require('./assets/emoji')
 
 import tpl = require("./skills/linee")
+import prove = require("./skills/prove")
 
 const BootBot = require('../lib/MyBootBot')
 
@@ -81,6 +82,8 @@ bot.on('postback',  (payload, chat, data) => {
 
   if (pl.startsWith(tpl.PB_TPL))
     tpl.onPostback(pl, chat, data); 
+  else if (pl.startsWith(prove.PB_PROVE))
+    prove.onPostback(pl, chat, data); 
 });
 
 

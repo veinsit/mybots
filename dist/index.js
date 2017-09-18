@@ -26,6 +26,7 @@ require("./MyFirstBotDesc").start(bot, (linee:any[]) => {
 // Load emojis
 const emo = require("./assets/emoji");
 const tpl = require("./skills/linee");
+const prove = require("./skills/prove");
 const BootBot = require('../lib/MyBootBot');
 if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC || !process.env.GOOGLE_STATICMAP_APIKEY) {
     require('./env.js');
@@ -67,6 +68,8 @@ bot.on('postback', (payload, chat, data) => {
     const pl = payload.postback.payload;
     if (pl.startsWith(tpl.PB_TPL))
         tpl.onPostback(pl, chat, data);
+    else if (pl.startsWith(prove.PB_PROVE))
+        prove.onPostback(pl, chat, data);
 });
 const showIntro = (chat) => {
     chat.getUserProfile().then((user) => {

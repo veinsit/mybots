@@ -1,2 +1,0 @@
-agency_id,agency_name,agency_url,agency_timezone,agency_lang,agency_phone
-"START Romagna","Start Romagna Bacino di Forlì-Cesena","http://www.startromagna.it","Europe/Rome","it","199.115577"
