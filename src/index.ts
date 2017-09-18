@@ -109,7 +109,5 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
   showAbout(chat)
 })
 
-
 bot.start(process.env.PORT || 3000)
-
 
