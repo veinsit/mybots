@@ -4,6 +4,7 @@ const utils = require("../utils");
 const service = require("../service");
 // Load emojis
 let emo = require('../assets/emoji');
+//=======================================================  exports
 exports.PB_TPL = 'TPL_';
 exports.onPostback = (pl, chat, data) => {
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
@@ -26,38 +27,41 @@ exports.onPostback = (pl, chat, data) => {
 exports.onMessage = (chat, text) => {
     if (text.startsWith("linea ")) {
         let askedLinea = text.substring(6, text.length);
-        searchLinea(chat, askedLinea);
+        exports.searchLinea(chat, askedLinea);
         return true;
     }
     return false;
 };
-const _orariButtons = (codLinea, atext, dtext, url) => [
-    {
-        "type": "postback",
-        "title": "verso " + atext,
-        "payload": "TPL_ORARI_As_" + codLinea
-    },
-    {
-        "type": "postback",
-        "title": "verso " + dtext,
-        "payload": "TPL_ORARI_Di_" + codLinea
-    },
-    {
-        "type": "web_url",
-        "url": url || "http://www.startromagna.it",
-        "title": "Sito"
-    }
-];
-const searchLinea = (chat, askedLinea) => {
+//---------------------------------------------- end exports
+//----------------------------- esempio google static map
+//var fs = require('fs');
+const gm = require('google-static-map').set(process.env.GOOGLE_STATICMAP_APIKEY);
+function getLineeMap(callback) {
+    const lineeMap = new Map();
+    getLinee('FC', linee => {
+        // definisci lineeMap
+        for (let linea of linee) {
+            const numLinea = linea.display_name;
+            if (lineeMap.has(numLinea))
+                lineeMap.set(numLinea, [...(lineeMap.get(numLinea)), linea]);
+            else
+                lineeMap.set(numLinea, [linea]);
+        }
+        callback(lineeMap);
+    });
+}
+exports.getLineeMap = getLineeMap;
+function getLinee(bacino, callback) {
+    service.methods.getLinee({ path: { bacino } }, (data, response) => {
+        callback(data); // data è un array di linee
+    });
+}
+exports.getLinee = getLinee;
+//-------------------------------------------------------------------
+exports.searchLinea = (chat, askedLinea) => {
     service.methods.getLinee({ path: { bacino: 'FC' } }, function (data, response) {
         var res = {
-            results: data.filter(it => it.display_name === askedLinea) /* .map(function (item) {
-                  return {
-                      corsa: item.DESC_PERCORSO,
-                      parte: item.ORA_INIZIO_STR,
-                      arriva: item.ORA_FINE_STR,
-                  }
-              })*/
+            results: data.filter(it => it.display_name === askedLinea)
         };
         if (res.results.length === 0) {
             chat.say(`Non ho trovato la linea ${askedLinea}` + emo.emoji.not_found);
@@ -76,7 +80,7 @@ const searchLinea = (chat, askedLinea) => {
                 movies.push({
                     "title": ("Linea " + linea.display_name),
                     "subtitle": linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note),
-                    // IMMAGINE DELLA LINEA : "image_url":service.baseUiUri+'FC/linee/'+linea.LINEA_ID,
+                    "image_url": mapUrl("Cesena"),
                     //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
                     /*
                     "buttons": [{
@@ -86,7 +90,11 @@ const searchLinea = (chat, askedLinea) => {
                       "webview_height_ratio": "tall"
                     }]*/
                     // producono ORARI_XX_YYYY
-                    "buttons": _orariButtons(linea.LINEA_ID, linea.strip_asc_direction, linea.strip_desc_direction, service.baseUiUri + 'FC/linee/' + linea.LINEA_ID)
+                    "buttons": [
+                        utils.postbackBtn("verso " + linea.strip_asc_direction, "TPL_ORARI_As_" + linea.LINEA_ID),
+                        utils.postbackBtn("verso " + linea.strip_desc_direction, "TPL_ORARI_Di_" + linea.LINEA_ID),
+                        utils.weburlBtn("Sito", service.baseUiUri + 'FC/linee/' + linea.LINEA_ID)
+                    ]
                 });
                 //                similars.push("Similar to " + res.results[i].title)
             }
@@ -103,6 +111,14 @@ const searchLinea = (chat, askedLinea) => {
         }
     }); // end getLinee
 };
+const style = `style=element:labels|visibility:off&style=element:geometry.stroke|visibility:off&style=feature:landscape|element:geometry|saturation:-100&style=feature:water|saturation:-100|invert_lightness:true`;
+//const mapUrl = (center) => `https://maps.googleapis.com/maps/api/staticmap?center=${center}&size=200x200&${style}&key=`+process.env.GOOGLE_STATICMAP_APIKEY
+const mapUrl = (center) => gm()
+    .zoom(5)
+    .resolution('200x200')
+    .maptype('roadmap')
+    .address('Piazza Saffi, Forlì, Italia')
+    .url();
 const scegliAorD = (chat, LINEA_ID) => {
     const qr = ["Ascen", "Discen"];
     chat.conversation(convo => {
