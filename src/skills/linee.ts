@@ -54,18 +54,65 @@ export const onMessage = (chat, text): boolean => {
     }
     return searchLinea(chat, text);
 }
-//---------------------------------------------- end exports
+
+var sqlite3 = require('sqlite3').verbose();
+
+
+export const onLocationReceived = (chat, coords) => {
+    var db = new sqlite3.Database('dist/db/database.sqlite3');
+
+    //    db.serialize(function() {
+    let dist: number = 9e6
+    let nearestStop;
+    let queryLineePassanti;
+    let lineePassanti = []
+
+    // These two queries will run sequentially.
+    db.each("SELECT stop_id,stop_name,stop_lat,stop_lon FROM stops",
+        function (err, row) {
+            let d = utils.distance(coords.lat, coords.long, row.stop_lat, row.stop_lon);
+            if (d < dist) { dist = d; nearestStop = row; }
+        },
+        function () {
+            queryLineePassanti = "SELECT a.route_id FROM trips a WHERE a.trip_id IN (SELECT b.trip_id FROM stop_times b WHERE b.stop_id='" + nearestStop.stop_id + "') GROUP BY a.route_id"
+
+            db.each(queryLineePassanti,
+                function (err, row) { // chiamata per ogni riga
+                    if (err)
+                        console.log("query err: " + err)
+                    row && lineePassanti.push(row.route_id)
+                },
+                function () { // chiamata al completamento
+                    chat.say(`La fermata più vicina è ${nearestStop.stop_name} a ${dist.toFixed(0)} metri in linea d'aria`, {typing:true})
+                        .then(() => {
+                            chat.say({
+                                text: 'Ci passano queste linee:',
+                                quickReplies: lineePassanti// .map(l=>linee.filter(x=>x.LINEA_ID===l)),
+                            })
+                        });
+                }
+
+            );// end run 
+            db.close();
+        }
+    ); // end each
+    //    });// end serialize
+}
 
 let linee = []
 
 // inizializza var globale 'linee'
-export const init = () => 
-service.getLinee('FC')
-.then(function (_linee) {
-    _linee.forEach(l => redefDisplayName(l)) // ridefinisce il display_name, se non presente
-    linee = _linee;
-    //console.log(linee.map(l=>l.display_name))
-}, (err) => console.log(err))
+export const init = () =>
+    service.getLinee('FC')
+        .then(function (_linee) {
+            _linee.forEach(l => redefDisplayName(l)) // ridefinisce il display_name, se non presente
+            linee = _linee;
+            //console.log(linee.map(l=>l.display_name))
+        }, (err) => console.log(err)
+        );
+
+//---------------------------------------------- end exports
+
 
 function redefDisplayName(l) {
     let n: string = l.display_name
@@ -149,51 +196,52 @@ export const searchLinea = (chat, askedLinea): boolean => {
     if (res.results.length === 0) {
         // prova a cercare anche tra i codici linea
         res.results = linee.filter(it => it.LINEA_ID === askedLinea)
-        if (res.results.length === 0) 
+        if (res.results.length === 0)
             return false;
 
-    } else {
-        let movies_to_get = res.results.length
-        // Show 7 (or less) relevant movies
-        if (movies_to_get > 7) {
-            movies_to_get = 7
-        }
+    } //else {
 
-        let movies = [] // movies = linee
-        //              let similars = []
-        for (let i = 0; i < movies_to_get; i++) {
-            // let release_date = new Date(res.results[i].release_date)
-            const linea = res.results[i]
-            const center = mapCenter(linea)
-            movies.push({
-                "title": ("Linea " + linea.display_name),
-                "subtitle": getSubtitle(linea),//
-                // https://developers.google.com/maps/documentation/static-maps/intro
-                "image_url": utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=80x40`),
-                //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
-                /*
-                "buttons": [{
-                  "type": "web_url",
-                  "url": service.baseUiUri+'FC/linee/'+linea.LINEA_ID,
-                  "title": emo.emoji.link + " Dettagli",
-                  "webview_height_ratio": "tall"
-                }]*/
-                // producono ORARI_XX_YYYY
-                "buttons": [
-                    utils.postbackBtn(linea.strip_asc_direction  ? 
-                        "verso " + linea.strip_asc_direction : "Ascendente", 
-                        "TPL_ORARI_As_" + linea.LINEA_ID
-                    ),
-                    utils.postbackBtn(linea.strip_desc_direction ? 
-                        "verso " + linea.strip_desc_direction : "Discendente", 
-                        "TPL_ORARI_Di_" + linea.LINEA_ID
-                    ),
-                    utils.weburlBtn("Sito", service.baseUiUri + 'FC/linee/' + linea.LINEA_ID)
-                ]
-            })
-        }
-        chat.say("Ecco le linee che ho trovato!").then(() => {
-            chat.sendGenericTemplate(movies) /*.then(() => {
+    let movies_to_get = res.results.length
+    // Show 7 (or less) relevant movies
+    if (movies_to_get > 7) {
+        movies_to_get = 7
+    }
+
+    let movies = [] // movies = linee
+    //              let similars = []
+    for (let i = 0; i < movies_to_get; i++) {
+        // let release_date = new Date(res.results[i].release_date)
+        const linea = res.results[i]
+        const center = mapCenter(linea)
+        movies.push({
+            "title": ("Linea " + linea.display_name),
+            "subtitle": getSubtitle(linea),//
+            // https://developers.google.com/maps/documentation/static-maps/intro
+            "image_url": utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=80x40`),
+            //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
+            /*
+            "buttons": [{
+              "type": "web_url",
+              "url": service.baseUiUri+'FC/linee/'+linea.LINEA_ID,
+              "title": emo.emoji.link + " Dettagli",
+              "webview_height_ratio": "tall"
+            }]*/
+            // producono ORARI_XX_YYYY
+            "buttons": [
+                utils.postbackBtn(linea.strip_asc_direction ?
+                    "verso " + linea.strip_asc_direction : "Ascendente",
+                    "TPL_ORARI_As_" + linea.LINEA_ID
+                ),
+                utils.postbackBtn(linea.strip_desc_direction ?
+                    "verso " + linea.strip_desc_direction : "Discendente",
+                    "TPL_ORARI_Di_" + linea.LINEA_ID
+                ),
+                utils.weburlBtn("Sito", service.baseUiUri + 'FC/linee/' + linea.LINEA_ID)
+            ]
+        })
+    }
+    chat.say("Ecco le linee che ho trovato!").then(() => {
+        chat.sendGenericTemplate(movies) /*.then(() => {
               chat.sendTypingIndicator(1500).then(() => {
                 chat.say({
                   text: "Scegli!",
@@ -201,10 +249,10 @@ export const searchLinea = (chat, askedLinea): boolean => {
                 })
               })
             })*/
-        })
+    })
 
-        return true;
-    }
+    return true;
+    //    }
     //   }) // end getLinee
 }
 
@@ -223,9 +271,9 @@ const scegliAorD = (chat, LINEA_ID) => {
             (payload, convo) => {
                 const text = payload.message.text;
                 convo.end()
-                .then(() => 
-                    displayOrariPage(chat, LINEA_ID, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0)
-                )
+                    .then(() =>
+                        displayOrariPage(chat, LINEA_ID, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0)
+                    )
             },
             [{
                 event: 'quick_reply',
@@ -233,7 +281,7 @@ const scegliAorD = (chat, LINEA_ID) => {
                     const text = payload.message.text;
                     // convo.say(`Thanks for choosing one of the options. Your favorite color is ${text}`);
                     convo.end()
-                        .then(() => 
+                        .then(() =>
                             displayOrariPage(chat, LINEA_ID, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0)
                         )
                 }
@@ -273,7 +321,7 @@ const onResultCorse = (data, chat, LINEA_ID, AorD, page) => {
             "title": `${i}) partenza ${corsa.parte}`,
             "subtitle": corsa.DESC_PERCORSO + "  arriva alle " + corsa.arriva,
             //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
-            "buttons": utils.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + LINEA_ID + "_" +corsa.CORSA),
+            "buttons": utils.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + LINEA_ID + "_" + corsa.CORSA),
         })
     }//end for  
 
