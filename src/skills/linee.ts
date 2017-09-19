@@ -146,7 +146,7 @@ export const searchLinea = (chat, askedLinea) : boolean => {
           results: linee.filter(it => it.display_name===askedLinea) 
         }
         console.log("filtrate linee "+res.results.map(x=>x.LINEA_ID))
-        
+
         if (res.results.length === 0) {
             return false;
 //          chat.say(`Non ho trovato la linea ${askedLinea}` + emo.emoji.not_found)
@@ -202,7 +202,7 @@ export const searchLinea = (chat, askedLinea) : boolean => {
   }
 
 function getSubtitle(linea) {
-    return (linea.asc_direction!=null && linea.asc_direction-length > 0) ?
+    return (linea.asc_direction!=null && linea.asc_direction.length > 0) ?
         linea.asc_direction + (linea.asc_note && "\n(*) "+linea.asc_note)
         : linea.name;
 }

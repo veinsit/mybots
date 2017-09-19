@@ -191,7 +191,7 @@ exports.searchLinea = (chat, askedLinea) => {
     //   }) // end getLinee
 };
 function getSubtitle(linea) {
-    return (linea.asc_direction != null && linea.asc_direction - length > 0) ?
+    return (linea.asc_direction != null && linea.asc_direction.length > 0) ?
         linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note)
         : linea.name;
 }
