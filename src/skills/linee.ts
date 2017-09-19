@@ -47,18 +47,16 @@ export const onPostback = (pl:string, chat, data) : boolean => {
 
 export const onMessage =  (chat, text) : boolean =>  {
     if (text.startsWith("linea ")) {
-        let askedLinea = text.substring(6, text.length)
-        searchLinea(chat, askedLinea)
-        return true;
+        text = text.substring(6)
     }
-    return false;
+    return searchLinea(chat, text);
 }
 //---------------------------------------------- end exports
 
 let linee = []
 
 // inizializza var globale 'linee'
-getLineeP('FC').then(function(_linee) {
+export const init = () => getLineeP('FC').then(function(_linee) {
     _linee.forEach((l) => { redefDisplayName(l) }) // ridefinisce il display_name, se non presente
     linee = _linee;
     //console.log(linee.map(l=>l.display_name))
@@ -141,15 +139,17 @@ export function getLinee(bacino, callback: (linee:any[]) => any) {
 //-------------------------------------------------------------------
 
 
-export const searchLinea = (chat, askedLinea) => {
+export const searchLinea = (chat, askedLinea) : boolean => {
 //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
       
         var res = {
           results: linee.filter(it => it.display_name===askedLinea) 
         }
-  
+        console.log("filtrate linee "+res.results.map(x=>x.LINEA_ID))
+        
         if (res.results.length === 0) {
-          chat.say(`Non ho trovato la linea ${askedLinea}` + emo.emoji.not_found)
+            return false;
+//          chat.say(`Non ho trovato la linea ${askedLinea}` + emo.emoji.not_found)
         } else {
           let movies_to_get = res.results.length
           // Show 7 (or less) relevant movies
@@ -195,6 +195,8 @@ export const searchLinea = (chat, askedLinea) => {
               })
             })*/
           })
+
+          return true; // non verrà processato ????
         }
  //   }) // end getLinee
   }
@@ -295,5 +297,5 @@ function mapCenter(linea:any) : any {
     if (cu==='CE') return {center : "Cesena,Italy", zoom:10 }
     if (cu==='FO') return {center : "Forli,Italy", zoom:10 }
     if (cu==='CO') return {center : "Cesenatico,Italy", zoom:12 }
-    if (cu===undefined) return {center : "Forlimpopoli,Italy", zoom:4 }
+    if (cu===undefined) return {center : "Forlimpopoli,Italy", zoom:7 }
 }

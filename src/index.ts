@@ -84,6 +84,7 @@ bot.on('message', (payload, chat) => {
 
 bot.on('postback',  (payload, chat, data) => {
   const pl: string = payload.postback.payload
+  console.log("on postback : "+pl)
 
   if (pl.startsWith(tpl.PB_TPL))
     tpl.onPostback(pl, chat, data); 
@@ -118,5 +119,7 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
   showAbout(chat)
 })
 
-bot.start(process.env.PORT || 3000)
+tpl.init().then(()=>
+  bot.start(process.env.PORT || 3000)
+)
 

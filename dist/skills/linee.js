@@ -44,16 +44,14 @@ exports.onPostback = (pl, chat, data) => {
 };
 exports.onMessage = (chat, text) => {
     if (text.startsWith("linea ")) {
-        let askedLinea = text.substring(6, text.length);
-        exports.searchLinea(chat, askedLinea);
-        return true;
+        text = text.substring(6);
     }
-    return false;
+    return exports.searchLinea(chat, text);
 };
 //---------------------------------------------- end exports
 let linee = [];
 // inizializza var globale 'linee'
-getLineeP('FC').then(function (_linee) {
+exports.init = () => getLineeP('FC').then(function (_linee) {
     _linee.forEach((l) => { redefDisplayName(l); }); // ridefinisce il display_name, se non presente
     linee = _linee;
     //console.log(linee.map(l=>l.display_name))
@@ -139,8 +137,10 @@ exports.searchLinea = (chat, askedLinea) => {
     var res = {
         results: linee.filter(it => it.display_name === askedLinea)
     };
+    console.log("filtrate linee " + res.results.map(x => x.LINEA_ID));
     if (res.results.length === 0) {
-        chat.say(`Non ho trovato la linea ${askedLinea}` + emo.emoji.not_found);
+        return false;
+        //          chat.say(`Non ho trovato la linea ${askedLinea}` + emo.emoji.not_found)
     }
     else {
         let movies_to_get = res.results.length;
@@ -186,6 +186,7 @@ exports.searchLinea = (chat, askedLinea) => {
               })
             })*/
         });
+        return true; // non verrà processato ????
     }
     //   }) // end getLinee
 };
@@ -271,6 +272,6 @@ function mapCenter(linea) {
     if (cu === 'CO')
         return { center: "Cesenatico,Italy", zoom: 12 };
     if (cu === undefined)
-        return { center: "Forlimpopoli,Italy", zoom: 4 };
+        return { center: "Forlimpopoli,Italy", zoom: 7 };
 }
 //# sourceMappingURL=linee.js.map

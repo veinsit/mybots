@@ -70,6 +70,7 @@ bot.on('message', (payload, chat) => {
 });
 bot.on('postback', (payload, chat, data) => {
     const pl = payload.postback.payload;
+    console.log("on postback : " + pl);
     if (pl.startsWith(tpl.PB_TPL))
         tpl.onPostback(pl, chat, data);
     else if (pl.startsWith(prove.PB_PROVE))
@@ -95,5 +96,5 @@ bot.on('postback:HELP_PAYLOAD', (payload, chat) => {
 bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
     showAbout(chat);
 });
-bot.start(process.env.PORT || 3000);
+tpl.init().then(() => bot.start(process.env.PORT || 3000));
 //# sourceMappingURL=index.js.map
