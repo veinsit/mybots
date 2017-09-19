@@ -102,14 +102,12 @@ bot.on('postback', (payload, chat, data) => {
 const showIntro = (chat) => {
     chat.getUserProfile()
         .then((user) => {
-        chat.say({
-            text: "Salve, " + user.first_name + "! " + emoji.emoji.waving + "\n\n" +
-                'Puoi dirmi:\n' +
-                '- una linea (es. 92, 5A, 127, ..)\n' +
-                '- la tua posizione: provalo !!\n\n' +
-                'Scegli uno degli esempi, o inizia direttamente',
+        chat.say("Salve, " + user.first_name + "! " + emoji.emoji.waving + "\n\nPuoi dirmi:\n")
+            .then(() => chat.say('- una linea (es. 92, 5A, 127, ..),\n- oppure inviarmi la tua posizione: provalo !!\n\n')
+            .then(() => chat.say({
+            text: 'Scegli uno degli esempi, o inizia direttamente',
             quickReplies: ['linea 2', '5A', '92', { "content_type": "location" }]
-        });
+        })));
     });
 };
 const showAbout = (chat) => {

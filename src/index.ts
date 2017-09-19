@@ -1,8 +1,8 @@
 'use strict'
 
-if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC 
+if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC
   || !process.env.GOOGLE_STATICMAP_APIKEY || !process.env.OPENDATAURIBASE) {
- require('dotenv').config()
+  require('dotenv').config()
 }
 
 /*
@@ -62,27 +62,27 @@ const poster_url = "https://image.tmdb.org/t/p/w640"
 
 bot.on('message', (payload, chat) => {
   const fid = payload.sender.id
-  console.log("sender.id = "+fid)
+  console.log("sender.id = " + fid)
   const text = payload.message.text.toLowerCase()
 
-  if (    text == "hi" || text == "hey" || text == "hello"
-       || text == "ciao" || text == "salve"
-       || text == "help" || text == "aiuto" || text == "start"
-       || text == "parla" || text == "chat" || text == "inizia"
-      ) {
+  if (text == "hi" || text == "hey" || text == "hello"
+    || text == "ciao" || text == "salve"
+    || text == "help" || text == "aiuto" || text == "start"
+    || text == "parla" || text == "chat" || text == "inizia"
+  ) {
     chat.sendTypingIndicator(500)
-    .then(() =>
-      showIntro(chat)
-    )
+      .then(() =>
+        showIntro(chat)
+      )
   } else {
 
     if (tpl.onMessage(chat, text)) {
-        // guà gestito
+      // guà gestito
     }
     else if (prove.onMessage(chat, text)) {
       // guà gestito
-  }
-  else {
+    }
+    else {
       // searchTv(chat, text)
       chat.say("Per ora capisco solo 'linea XXXX'")
     }
@@ -106,43 +106,44 @@ bot.on('message', (payload, chat) => {
 ]
 */
 bot.on('attachment', (payload, chat) => {
-  console.log('An attachment was received!:'+payload);
+  console.log('An attachment was received!:' + payload);
   chat.say(JSON.stringify(payload))
 });
 
-bot.on('postback',  (payload, chat, data) => {
+bot.on('postback', (payload, chat, data) => {
   const pl: string = payload.postback.payload
-  console.log("on postback : "+pl)
+  console.log("on postback : " + pl)
 
   if (pl.startsWith(tpl.PB_TPL))
-    tpl.onPostback(pl, chat, data); 
+    tpl.onPostback(pl, chat, data);
   else if (pl.startsWith(prove.PB_PROVE))
-    prove.onPostback(pl, chat, data); 
+    prove.onPostback(pl, chat, data);
 });
 
 
 
 const showIntro = (chat) => {
   chat.getUserProfile()
-  .then((user) => {
-    chat.say({
-      text:
-      "Salve, " + user.first_name + "! " + emoji.emoji.waving + "\n\n" +
-      'Puoi dirmi:\n'+
-      '- una linea (es. 92, 5A, 127, ..)\n'+
-      '- la tua posizione: provalo !!\n\n'+
-      'Scegli uno degli esempi, o inizia direttamente',
-      quickReplies: ['linea 2', '5A', '92', { "content_type":"location" }]
+    .then((user) => {
+      chat.say("Salve, " + user.first_name + "! " + emoji.emoji.waving + "\n\nPuoi dirmi:\n")
+        .then(() =>
+          chat.say('- una linea (es. 92, 5A, 127, ..),\n- oppure inviarmi la tua posizione: provalo !!\n\n')
+            .then(() =>
+              chat.say({
+                text: 'Scegli uno degli esempi, o inizia direttamente',
+                quickReplies: ['linea 2', '5A', '92', { "content_type": "location" }]
+              })
+            ))
     })
-  })
 }
+
 const showAbout = (chat) => {
   chat.say(emoji.heart + "Mi chiamo ... e sono ....")
 }
 
 const showHelp = (chat) => {
   const help_msg = emo.emoji.heart + "help help help 1" +
-    "\n" + emo.emoji.tv + "help help help 2" 
+    "\n" + emo.emoji.tv + "help help help 2"
   chat.say(help_msg)
 }
 
@@ -156,7 +157,7 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
 })
 
 tpl.init()
-.then(()=>
-  bot.start(process.env.PORT || 3000)
-)
+  .then(() =>
+    bot.start(process.env.PORT || 3000)
+  )
 
