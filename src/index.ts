@@ -1,5 +1,10 @@
 'use strict'
- 
+
+if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC 
+  || !process.env.GOOGLE_STATICMAP_APIKEY || !process.env.OPENDATAURIBASE) {
+ require('dotenv').config()
+}
+
 /*
 
 const BootBot = require('../lib/MyBootBot');
@@ -33,9 +38,6 @@ import prove = require("./skills/prove")
 
 const BootBot = require('../lib/MyBootBot')
 
-if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC || !process.env.GOOGLE_STATICMAP_APIKEY) {
-  require('./env.js')
-}
 
 const bot = new BootBot({
   accessToken: process.env.ATOK,

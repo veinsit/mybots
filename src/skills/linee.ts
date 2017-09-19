@@ -1,8 +1,28 @@
+'use strict';
+
+if ( !process.env.OPENDATAURIBASE) {
+    require('dotenv').config()
+}
 import utils   = require("../utils")
 import service = require("../service")
 // Load emojis
 let emo = require('../assets/emoji')
 
+/*
+class Linea {
+    constructor(l:any) {
+        this.Bacino = l.Bacino,
+        this.LINEA_ID = l.Bacino ,
+        this.name = l.name ,
+        this.display_name = l.display_name ,
+        this.asc_direction = l.asc_direction ,
+        this.desc_direction = l.desc_direction ,
+        this.strip_asc_direction = l.strip_asc_direction ,
+        this.strip_desc_direction = l.strip_desc_direction ,
+        this.asc_note = l.asc_note ,
+        this.desc_note = l.desc_note
+    }
+}*/
 //=======================================================  exports
 export const PB_TPL = 'TPL_';
 export const onPostback = (pl:string, chat, data) : boolean => {
@@ -35,36 +55,79 @@ export const onMessage =  (chat, text) : boolean =>  {
 }
 //---------------------------------------------- end exports
 
-//----------------------------- esempio google static map
-//var fs = require('fs');
-//const gm = require('google-static-map').set(process.env.GOOGLE_STATICMAP_APIKEY);
-/* 
-var stream = gm()
-  .zoom( 5 )
-  .resolution( '200x200' )
-  .maptype( 'roadmap' )
-  .address('Piazza Saffi, Forlì, Italia')
-  .staticMap()
-  .done();
- 
-stream.pipe(fs.createWriteStream('test.png'));
-*///-------------------------------------------------------
+let linee = []
+
+// inizializza var globale 'linee'
+getLineeP('FC').then(function(_linee) {
+    _linee.forEach((l) => { redefDisplayName(l) }) // ridefinisce il display_name, se non presente
+    linee = _linee;
+    //console.log(linee.map(l=>l.display_name))
+})
+
+function redefDisplayName(l) {
+    let n:string = l.display_name
+    // se display_name null, prendi da name
+    if (n===undefined ||n===null || n.length===0) {
+        if (l.Bacino==='FC') {
+            n = l.name.toUpperCase()
+            if (n.startsWith("LINEA "))
+                n = n.substring(6)
+            // n= FOA1, FOA5, FOS1, FOS2,  CEA1, S092, SA96 
+            if (n.startsWith("FO") || n.startsWith("CE") || n.startsWith("S0"))
+                n = n.substring(2)
+            if (n==='A1') n= '1A'
+            else if (n==="B1") n= '1B'
+            else if (n==="A5") n= '5A'
+            else if (n==="SA96") n= '96A'
+            else if (n.startsWith('S') || n.endsWith("'")) {} // scolastici S1, S2 , ...
+            else if (n.endsWith('CO')) n = n.substring(0, n.length-2)
+            /*
+            else {
+                try {
+                    n = parseInt(n).toString()
+                }
+                catch {
+                    // tengo n così com'è
+                } 
+            }*/
+        }
+
+
+    } // end n undefined
+    if (n.startsWith("NAVE"))
+        n='Navetta'
+    console.log(`${l.LINEA_ID} --> ${n}`)
+    l.display_name = n
+}
+
+export function getLineeP(bacino)  : Promise<any[]> {
+    return new Promise (function(resolve,reject) {
+        service.methods.getLinee({path: {bacino}}, (data:any[], response) => {
+            resolve(data) // data è un array di linee
+        })       
+    })
+}
 
 //============================ precaricamento delle linee (NON USATA)
+/*
+// lineeMap non serve più perché nel nuovo PAT non ho più il display_name
 type LineeMapCallback = (m:Map<string, any[]>) => any
-export function getLineeMap(callback: LineeMapCallback) {
-    const lineeMap = new Map<string, any[]>();
-    getLinee( 'FC', linee => {
-        // definisci lineeMap
-        for (let linea of linee) {
-            const numLinea = linea.display_name
+export function getLineeMap() : Promise<Map<string, any[]>> {
 
-            if (lineeMap.has(numLinea))
-                lineeMap.set(numLinea, [...(lineeMap.get(numLinea)), linea])
-            else
-                lineeMap.set(numLinea, [linea])
-        }
-        callback(lineeMap)
+    return new Promise (function(resolve,reject) {
+        const lineeMap = new Map<string, any[]>();
+        getLinee( 'FC', linee => {
+            // definisci lineeMap
+            for (let linea of linee) {
+                const numLinea = linea.display_name // non più valorizzato
+    
+                if (lineeMap.has(numLinea))
+                    lineeMap.set(numLinea, [...(lineeMap.get(numLinea)), linea])
+                else
+                    lineeMap.set(numLinea, [linea])
+            }
+            resolve(lineeMap) // callback(lineeMap)
+        })
     })
 }
 
@@ -73,15 +136,16 @@ export function getLinee(bacino, callback: (linee:any[]) => any) {
         callback(data) // data è un array di linee
     })
 }
+*/
 
 //-------------------------------------------------------------------
 
 
 export const searchLinea = (chat, askedLinea) => {
-    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
+//    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
       
         var res = {
-          results: data.filter(it => it.display_name===askedLinea) 
+          results: linee.filter(it => it.display_name===askedLinea) 
         }
   
         if (res.results.length === 0) {
@@ -101,9 +165,9 @@ export const searchLinea = (chat, askedLinea) => {
             const center = mapCenter(linea)
             movies.push({
               "title": ("Linea " + linea.display_name),
-              "subtitle": linea.asc_direction+ (linea.asc_note && "\n(*) "+linea.asc_note),
+              "subtitle": getSubtitle(linea),//
               // https://developers.google.com/maps/documentation/static-maps/intro
-              "image_url":utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=90x90`),
+              "image_url":utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
               //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
               /*
               "buttons": [{
@@ -132,8 +196,14 @@ export const searchLinea = (chat, askedLinea) => {
             })*/
           })
         }
-    }) // end getLinee
+ //   }) // end getLinee
   }
+
+function getSubtitle(linea) {
+    return (linea.asc_direction!=null && linea.asc_direction-length > 0) ?
+        linea.asc_direction + (linea.asc_note && "\n(*) "+linea.asc_note)
+        : linea.name;
+}
 
   const scegliAorD = (chat, LINEA_ID) => {
     const qr = [ "Ascen", "Discen" ];
