@@ -34,6 +34,7 @@ require("./MyFirstBotDesc").start(bot, (linee:any[]) => {
 import emo = require('./assets/emoji')
 
 import tpl = require("./skills/linee")
+import loc = require("./skills/location")
 import prove = require("./skills/prove")
 
 const BootBot = require('../lib/MyBootBot')
@@ -106,8 +107,9 @@ bot.on('message', (payload, chat) => {
 ]
 */
 bot.on('attachment', (payload, chat) => {
-  console.log('Attacment:' + JSON.stringify(payload));
-  //chat.say(JSON.stringify(payload))
+  console.log('Att:' + JSON.stringify(payload.message.attachments[0]));
+  if (payload.message.attachments[0])
+    loc.onLocationReceived(chat, payload.message.attachments[0].payload.coordinates)
 });
 
 bot.on('postback', (payload, chat, data) => {
