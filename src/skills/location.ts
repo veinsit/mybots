@@ -34,6 +34,7 @@ export const onLocationReceivedOLD = (chat, coords) => {
 */
 export const onLocationReceived = (chat, coords) => {
     var db = new sqlite3.Database('dist/db/database.sqlite3');
+
     db.serialize(function() {
         let dist: number = 9e6
         let nearestStop;
@@ -53,7 +54,9 @@ export const onLocationReceived = (chat, coords) => {
 
         db.each(queryLineePassanti, 
             function (err, row) { // chiamata per ogni riga
-                lineePassanti.push(row.route_id)
+                if (err)
+                    console.log("query err: "+err)
+                row && lineePassanti.push(row.route_id)
             },
             function () { // chiamata al completamento
                 chat.say(`La fermata più vicina è ${nearestStop.stop_name} a ${dist.toFixed(0)} metri in linea d'aria`)

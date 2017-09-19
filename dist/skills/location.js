@@ -48,7 +48,9 @@ exports.onLocationReceived = (chat, coords) => {
             queryLineePassanti = "SELECT a.route_id FROM trips a WHERE a.trip_id IN (SELECT b.trip_id FROM stop_times b WHERE b.stop_id='" + nearestStop.stop_id + "') GROUP BY a.route_id";
         }); // end each
         db.each(queryLineePassanti, function (err, row) {
-            lineePassanti.push(row.route_id);
+            if (err)
+                console.log("query err: " + err);
+            row && lineePassanti.push(row.route_id);
         }, function () {
             chat.say(`La fermata più vicina è ${nearestStop.stop_name} a ${dist.toFixed(0)} metri in linea d'aria`)
                 .then(() => {
