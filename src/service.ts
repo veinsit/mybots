@@ -74,10 +74,9 @@ export function getPassaggiCorsa(bacino, linea, corsa)  : Promise<any[]> {
 
 function httpResolveOrReject(data,response, resolve, reject) {
   console.log("response.status = "+response.status)
-  if (response.status==='200')
+  //if (response.status==='200')
     resolve(data) // data è un array di linee
-  else
-    reject(response.status)
+  //else reject(response.status)
 }
 
 export const methods = client.methods;

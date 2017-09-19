@@ -66,10 +66,9 @@ function getPassaggiCorsa(bacino, linea, corsa) {
 exports.getPassaggiCorsa = getPassaggiCorsa;
 function httpResolveOrReject(data, response, resolve, reject) {
     console.log("response.status = " + response.status);
-    if (response.status === '200')
-        resolve(data); // data è un array di linee
-    else
-        reject(response.status);
+    //if (response.status==='200')
+    resolve(data); // data è un array di linee
+    //else reject(response.status)
 }
 exports.methods = client.methods;
 //# sourceMappingURL=service.js.map
