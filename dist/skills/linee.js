@@ -53,11 +53,12 @@ exports.onMessage = (chat, text) => {
 //---------------------------------------------- end exports
 let linee = [];
 // inizializza var globale 'linee'
-exports.init = () => service.getLinee('FC').then(function (_linee) {
+exports.init = () => service.getLinee('FC')
+    .then(function (_linee) {
     _linee.forEach(l => redefDisplayName(l)); // ridefinisce il display_name, se non presente
     linee = _linee;
     //console.log(linee.map(l=>l.display_name))
-});
+}, (err) => console.log(err));
 function redefDisplayName(l) {
     let n = l.display_name;
     // se display_name null, prendi da name

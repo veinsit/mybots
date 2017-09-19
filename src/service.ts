@@ -31,8 +31,8 @@ client.registerMethod("getLinee", baseUri + "${bacino}/linee?format=json", "GET"
   }*/
 export function getLinee(bacino)  : Promise<any[]> {
     return new Promise (function(resolve,reject) {
-        client.methods.getLinee({path: {bacino}}, (data:any[], response) => {
-          httpResolveOrReject(data,response, resolve, reject)
+        client.methods.getLinee({path: {bacino:bacino}}, (data:any[], response) => {
+          httpResolveOrReject(data, response, resolve, reject)
         })       
     })
 }  
@@ -73,7 +73,8 @@ export function getPassaggiCorsa(bacino, linea, corsa)  : Promise<any[]> {
 
 
 function httpResolveOrReject(data,response, resolve, reject) {
-  if (response.status===200)
+  console.log("response.status = "+response.status)
+  if (response.status==='200')
     resolve(data) // data è un array di linee
   else
     reject(response.status)

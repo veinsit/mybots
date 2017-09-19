@@ -126,5 +126,6 @@ bot.on('postback:HELP_PAYLOAD', (payload, chat) => {
 bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
     showAbout(chat);
 });
-tpl.init().then(() => bot.start(process.env.PORT || 3000));
+tpl.init()
+    .then(() => bot.start(process.env.PORT || 3000));
 //# sourceMappingURL=index.js.map

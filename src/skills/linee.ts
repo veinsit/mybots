@@ -59,11 +59,13 @@ export const onMessage = (chat, text): boolean => {
 let linee = []
 
 // inizializza var globale 'linee'
-export const init = () => service.getLinee('FC').then(function (_linee) {
+export const init = () => 
+service.getLinee('FC')
+.then(function (_linee) {
     _linee.forEach(l => redefDisplayName(l)) // ridefinisce il display_name, se non presente
     linee = _linee;
     //console.log(linee.map(l=>l.display_name))
-})
+}, (err) => console.log(err))
 
 function redefDisplayName(l) {
     let n: string = l.display_name

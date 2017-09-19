@@ -155,7 +155,8 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
   showAbout(chat)
 })
 
-tpl.init().then(()=>
+tpl.init()
+.then(()=>
   bot.start(process.env.PORT || 3000)
 )
 
