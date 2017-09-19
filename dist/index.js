@@ -88,8 +88,8 @@ bot.on('message', (payload, chat) => {
 ]
 */
 bot.on('attachment', (payload, chat) => {
-    console.log('An attachment was received!:' + payload);
-    chat.say(JSON.stringify(payload));
+    console.log('Attacment:' + JSON.stringify(payload));
+    //chat.say(JSON.stringify(payload))
 });
 bot.on('postback', (payload, chat, data) => {
     const pl = payload.postback.payload;
