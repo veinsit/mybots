@@ -25,6 +25,26 @@ function gStatMapUrl(params) {
     return 'https://maps.googleapis.com/maps/api/staticmap?' + params + '&key=' + process.env.GOOGLE_STATICMAP_APIKEY;
 }
 exports.gStatMapUrl = gStatMapUrl;
+/*
+export function omStatMapUrl(params:string) : string {
+    return "https://open.mapquestapi.com/staticmap/v4/getplacemap?key="+process.env.MAPQUEST_KEY+"&location=Los+Angeles,CA&size=600,400&zoom=9&showicon=red_1-1";
+}
+*/
+function distance(lat1, lon1, lat2, lon2) {
+    var R = 6371e3; // metres
+    var fi1 = toRadians(lat1);
+    var fi2 = toRadians(lat2);
+    var dfi = toRadians(lat2 - lat1);
+    var dl = toRadians(lon2 - lon1);
+    var a = Math.sin(dfi / 2) * Math.sin(dfi / 2) +
+        Math.cos(fi1) * Math.cos(fi2) *
+            Math.sin(dl / 2) * Math.sin(dl / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+exports.distance = distance;
+function toRadians(deg) {
+    return deg * 2 * Math.PI / 360;
+}
 // prove js
 /*
 export var avar = []

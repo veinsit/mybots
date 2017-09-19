@@ -1,9 +1,6 @@
 'use strict';
 
-if ( !process.env.OPENDATAURIBASE) {
-    require('dotenv').config()
-}
-import utils   = require("../utils")
+import utils = require("../utils")
 import service = require("../service")
 // Load emojis
 let emo = require('../assets/emoji')
@@ -25,27 +22,33 @@ class Linea {
 }*/
 //=======================================================  exports
 export const PB_TPL = 'TPL_';
-export const onPostback = (pl:string, chat, data) : boolean => {
+export const onPostback = (pl: string, chat, data): boolean => {
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
         scegliAorD(chat, pl.substring(16))
         return true;
-      }  
-      if (pl.startsWith("TPL_ORARI_")) {
+    }
+    if (pl.startsWith("TPL_ORARI_")) {
         const AorD = pl.substring(10, 12)  // As or Di
         const codLinea = pl.substring(13)
         displayOrariPage(chat, codLinea, AorD, 0)
         return true;
-     }
-     if (pl.startsWith("TPL_PAGE_CORSE_")) { // 15 PAGE_CORSE_F127_As_2
-      const match = /(.*)_(As|Di)_([0-9]+)/.exec(pl.substring(15))
-    
-      displayOrariPage(chat, match[1], match[2], parseInt(match[3]))
-      return true;
+    }
+    if (pl.startsWith("TPL_PAGE_CORSE_")) { // 15 PAGE_CORSE_F127_As_2
+        const match = /(.*)_(As|Di)_([0-9]+)/.exec(pl.substring(15))
+
+        displayOrariPage(chat, match[1], match[2], parseInt(match[3]))
+        return true;
+    }
+    if (pl.startsWith("TPL_ON_CORSA_")) { // 13 TPL_ON_CORSA_F127_XXXX
+        const match = /(.*)_(.*)/.exec(pl.substring(13))
+
+        displayCorsa(chat, match[1], match[2])
+        return true;
     }
     return false;
 }
 
-export const onMessage =  (chat, text) : boolean =>  {
+export const onMessage = (chat, text): boolean => {
     if (text.startsWith("linea ")) {
         text = text.substring(6)
     }
@@ -56,29 +59,29 @@ export const onMessage =  (chat, text) : boolean =>  {
 let linee = []
 
 // inizializza var globale 'linee'
-export const init = () => getLineeP('FC').then(function(_linee) {
-    _linee.forEach((l) => { redefDisplayName(l) }) // ridefinisce il display_name, se non presente
+export const init = () => service.getLinee('FC').then(function (_linee) {
+    _linee.forEach(l => redefDisplayName(l)) // ridefinisce il display_name, se non presente
     linee = _linee;
     //console.log(linee.map(l=>l.display_name))
 })
 
 function redefDisplayName(l) {
-    let n:string = l.display_name
+    let n: string = l.display_name
     // se display_name null, prendi da name
-    if (n===undefined ||n===null || n.length===0) {
-        if (l.Bacino==='FC') {
+    if (n === undefined || n === null || n.length === 0) {
+        if (l.Bacino === 'FC') {
             n = l.name.toUpperCase()
             if (n.startsWith("LINEA "))
                 n = n.substring(6)
             // n= FOA1, FOA5, FOS1, FOS2,  CEA1, S092, SA96 
             if (n.startsWith("FO") || n.startsWith("CE") || n.startsWith("S0"))
                 n = n.substring(2)
-            if (n==='A1') n= '1A'
-            else if (n==="B1") n= '1B'
-            else if (n==="A5") n= '5A'
-            else if (n==="SA96") n= '96A'
-            else if (n.startsWith('S') || n.endsWith("'")) {} // scolastici S1, S2 , ...
-            else if (n.endsWith('CO')) n = n.substring(0, n.length-2)
+            if (n === 'A1') n = '1A'
+            else if (n === "B1") n = '1B'
+            else if (n === "A5") n = '5A'
+            else if (n === "SA96") n = '96A'
+            else if (n.startsWith('S') || n.endsWith("'")) { } // scolastici S1, S2 , ...
+            else if (n.endsWith('CO')) n = n.substring(0, n.length - 2)
             /*
             else {
                 try {
@@ -93,18 +96,12 @@ function redefDisplayName(l) {
 
     } // end n undefined
     if (n.startsWith("NAVE"))
-        n='Navetta'
+        n = 'Navetta'
     console.log(`${l.LINEA_ID} --> ${n}`)
     l.display_name = n
 }
 
-export function getLineeP(bacino)  : Promise<any[]> {
-    return new Promise (function(resolve,reject) {
-        service.methods.getLinee({path: {bacino}}, (data:any[], response) => {
-            resolve(data) // data è un array di linee
-        })       
-    })
-}
+
 
 //============================ precaricamento delle linee (NON USATA)
 /*
@@ -139,53 +136,61 @@ export function getLinee(bacino, callback: (linee:any[]) => any) {
 //-------------------------------------------------------------------
 
 
-export const searchLinea = (chat, askedLinea) : boolean => {
-//    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
-      
-        var res = {
-          results: linee.filter(it => it.display_name===askedLinea) 
-        }
-        console.log("filtrate linee "+res.results.map(x=>x.LINEA_ID))
+export const searchLinea = (chat, askedLinea): boolean => {
+    //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
 
-        if (res.results.length === 0) {
+    var res = {
+        results: linee.filter(it => it.display_name === askedLinea)
+    }
+    console.log("filtrate linee " + res.results.map(x => x.LINEA_ID))
+
+    if (res.results.length === 0) {
+        // prova a cercare anche tra i codici linea
+        res.results = linee.filter(it => it.LINEA_ID === askedLinea)
+        if (res.results.length === 0) 
             return false;
-//          chat.say(`Non ho trovato la linea ${askedLinea}` + emo.emoji.not_found)
-        } else {
-          let movies_to_get = res.results.length
-          // Show 7 (or less) relevant movies
-          if (movies_to_get > 7) {
+
+    } else {
+        let movies_to_get = res.results.length
+        // Show 7 (or less) relevant movies
+        if (movies_to_get > 7) {
             movies_to_get = 7
-          }
-  
-          let movies = [] // movies = linee
-  //              let similars = []
-          for (let i = 0; i < movies_to_get; i++) {
+        }
+
+        let movies = [] // movies = linee
+        //              let similars = []
+        for (let i = 0; i < movies_to_get; i++) {
             // let release_date = new Date(res.results[i].release_date)
             const linea = res.results[i]
             const center = mapCenter(linea)
             movies.push({
-              "title": ("Linea " + linea.display_name),
-              "subtitle": getSubtitle(linea),//
-              // https://developers.google.com/maps/documentation/static-maps/intro
-              "image_url":utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
-              //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
-              /*
-              "buttons": [{
-                "type": "web_url",
-                "url": service.baseUiUri+'FC/linee/'+linea.LINEA_ID,
-                "title": emo.emoji.link + " Dettagli",
-                "webview_height_ratio": "tall"
-              }]*/
-              // producono ORARI_XX_YYYY
-              "buttons": [
-                utils.postbackBtn("verso " + linea.strip_asc_direction , "TPL_ORARI_As_" + linea.LINEA_ID),
-                utils.postbackBtn("verso " + linea.strip_desc_direction, "TPL_ORARI_Di_" + linea.LINEA_ID),
-                utils.weburlBtn("Sito", service.baseUiUri+'FC/linee/'+linea.LINEA_ID)
-              ]
+                "title": ("Linea " + linea.display_name),
+                "subtitle": getSubtitle(linea),//
+                // https://developers.google.com/maps/documentation/static-maps/intro
+                "image_url": utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=80x40`),
+                //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
+                /*
+                "buttons": [{
+                  "type": "web_url",
+                  "url": service.baseUiUri+'FC/linee/'+linea.LINEA_ID,
+                  "title": emo.emoji.link + " Dettagli",
+                  "webview_height_ratio": "tall"
+                }]*/
+                // producono ORARI_XX_YYYY
+                "buttons": [
+                    utils.postbackBtn(linea.strip_asc_direction  ? 
+                        "verso " + linea.strip_asc_direction : "Ascendente", 
+                        "TPL_ORARI_As_" + linea.LINEA_ID
+                    ),
+                    utils.postbackBtn(linea.strip_desc_direction ? 
+                        "verso " + linea.strip_desc_direction : "Discendente", 
+                        "TPL_ORARI_Di_" + linea.LINEA_ID
+                    ),
+                    utils.weburlBtn("Sito", service.baseUiUri + 'FC/linee/' + linea.LINEA_ID)
+                ]
             })
-  //                similars.push("Similar to " + res.results[i].title)
-          }
-          chat.say("Ecco le linee che ho trovato!").then(() => {
+        }
+        chat.say("Ecco le linee che ho trovato!").then(() => {
             chat.sendGenericTemplate(movies) /*.then(() => {
               chat.sendTypingIndicator(1500).then(() => {
                 chat.say({
@@ -194,96 +199,114 @@ export const searchLinea = (chat, askedLinea) : boolean => {
                 })
               })
             })*/
-          })
+        })
 
-          return true; // non verrà processato ????
-        }
- //   }) // end getLinee
-  }
+        return true;
+    }
+    //   }) // end getLinee
+}
 
 function getSubtitle(linea) {
-    return (linea.asc_direction!=null && linea.asc_direction.length > 0) ?
-        linea.asc_direction + (linea.asc_note && "\n(*) "+linea.asc_note)
+    return (linea.asc_direction != null && linea.asc_direction.length > 0) ?
+        linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note)
         : linea.name;
 }
 
-  const scegliAorD = (chat, LINEA_ID) => {
-    const qr = [ "Ascen", "Discen" ];
+const scegliAorD = (chat, LINEA_ID) => {
+    const qr = ["Ascen", "Discen"];
     chat.conversation(convo => {
         // tutto dentro la convo 
-          convo.ask(
-            { text: 'In quale direzione ?', quickReplies: qr }, 
+        convo.ask(
+            { text: 'In quale direzione ?', quickReplies: qr },
             (payload, convo) => {
                 const text = payload.message.text;
-                convo.end().then(() => displayOrariPage(chat, LINEA_ID, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0))
+                convo.end()
+                .then(() => 
+                    displayOrariPage(chat, LINEA_ID, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0)
+                )
             },
             [{
-              event: 'quick_reply',
-              callback: (payload, convo) => {
-                  const text = payload.message.text;
-                // convo.say(`Thanks for choosing one of the options. Your favorite color is ${text}`);
-                convo.end().then(() => displayOrariPage(chat, LINEA_ID, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0))
-              }
-            }  
-        ]); 
+                event: 'quick_reply',
+                callback: (payload, convo) => {
+                    const text = payload.message.text;
+                    // convo.say(`Thanks for choosing one of the options. Your favorite color is ${text}`);
+                    convo.end()
+                        .then(() => 
+                            displayOrariPage(chat, LINEA_ID, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0)
+                        )
+                }
+            }
+            ]);
     });
 }
 
-const displayOrariPage = (chat, LINEA_ID, AorD, page:number)  => {
-  const quanteInsieme=4;
-  
-      var args = { path: { bacino: 'FC', linea: LINEA_ID } }
-      service.methods.getCorseOggi(args, function (data, response) {
-  
-        var result = {
-            corse: data.filter(it => it.VERSO === AorD)
-                      .slice(page*quanteInsieme, (page+1)*quanteInsieme)
-                      .map(function (item) {
+const displayOrariPage = (chat, LINEA_ID, AorD, page: number) => {
+    service.getCorseOggi('FC', LINEA_ID)
+        .then((data) =>
+            onResultCorse(data, chat, LINEA_ID, AorD, page)
+        )
+};
+
+const onResultCorse = (data, chat, LINEA_ID, AorD, page) => {
+    const quanteInsieme = 4;
+    var result = {
+        corse: data.filter(it => it.VERSO === AorD)
+            .slice(page * quanteInsieme, (page + 1) * quanteInsieme)
+            .map(function (item) {
                 return {
-                    CORSA:item.CORSA,
+                    CORSA: item.CORSA,
                     DESC_PERCORSO: item.DESC_PERCORSO,
                     parte: item.ORA_INIZIO_STR,
                     arriva: item.ORA_FINE_STR,
                 }
             })
-        }
-        // Puoi inviare da un minimo di 2 a un massimo di 4 elementi.
-        // L'aggiunta di un pulsante a ogni elemento è facoltativa. Puoi avere solo 1 pulsante per elemento.
-        // Puoi avere solo 1 pulsante globale.
-        let els = []
-        for (var i = 0; i<Math.min(quanteInsieme, result.corse.length); i++) {
-            var corsa = result.corse[i]
-            els.push({
-                "title": `${i}) partenza ${corsa.parte}`,
-                "subtitle": corsa.DESC_PERCORSO + "  arriva alle " + corsa.arriva,
-                //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
-                "buttons": utils.singlePostbackBtn("Dettaglio","TPL_ON_CORSA_"+corsa.CORSA),
-            })
-        }//end for  
+    }
+    // Puoi inviare da un minimo di 2 a un massimo di 4 elementi.
+    // L'aggiunta di un pulsante a ogni elemento è facoltativa. Puoi avere solo 1 pulsante per elemento.
+    // Puoi avere solo 1 pulsante globale.
+    let els = []
+    for (var i = 0; i < Math.min(quanteInsieme, result.corse.length); i++) {
+        var corsa = result.corse[i]
+        els.push({
+            "title": `${i}) partenza ${corsa.parte}`,
+            "subtitle": corsa.DESC_PERCORSO + "  arriva alle " + corsa.arriva,
+            //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
+            "buttons": utils.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + LINEA_ID + "_" +corsa.CORSA),
+        })
+    }//end for  
 
-        const noNextPage = ()=>result.corse.length<quanteInsieme
-        
-            // emetti max 4 elementi
-            chat.sendListTemplate(
-                els,                                                      // PAGE_CORSE_F127_As_2
-                noNextPage() ? undefined : utils.singlePostbackBtn("Ancora",`TPL_PAGE_CORSE_${LINEA_ID}_${AorD}_${page+1}`), 
-                { typing: true }
-            )    
+    const noNextPage = () => result.corse.length < quanteInsieme
 
-      }) // end getCorseOggi
-  };
-  
- 
+    // emetti max 4 elementi
+    chat.sendListTemplate(
+        els,                                                      // PAGE_CORSE_F127_As_2
+        noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `TPL_PAGE_CORSE_${LINEA_ID}_${AorD}_${page + 1}`),
+        { typing: true }
+    )
+
+}
+
+const displayCorsa = (chat, LINEA_ID, corsa_id) => {
+    service.getCorseOggi('FC', LINEA_ID)
+        .then((data) =>
+            onResultPassaggi(data, chat, LINEA_ID, corsa_id)
+        )
+};
+
+const onResultPassaggi = (data, chat, LINEA_ID, corsa_id) => {
+    chat.say(`Qui dovrei mostrarti i passaggi della corsa ${corsa_id} della linea ${LINEA_ID}`)
+}
+
 //=================================================================================
 //            helpers
 //=================================================================================
-function getCU(linea:any) : string {
-    if (linea.Bacino==='FC') {
-        if (linea.LINEA_ID.indexOf("CE")>=0)
+function getCU(linea: any): string {
+    if (linea.Bacino === 'FC') {
+        if (linea.LINEA_ID.indexOf("CE") >= 0)
             return 'CE'
-        if (linea.LINEA_ID.indexOf("FO")>=0)
+        if (linea.LINEA_ID.indexOf("FO") >= 0)
             return 'FO'
-        if (linea.LINEA_ID.indexOf("CO")>=0)
+        if (linea.LINEA_ID.indexOf("CO") >= 0)
             return 'CO'
 
         return undefined
@@ -292,10 +315,10 @@ function getCU(linea:any) : string {
     return undefined;  //TODO completare
 }
 
-function mapCenter(linea:any) : any {
+function mapCenter(linea: any): any {
     const cu = getCU(linea);
-    if (cu==='CE') return {center : "Cesena,Italy", zoom:10 }
-    if (cu==='FO') return {center : "Forli,Italy", zoom:10 }
-    if (cu==='CO') return {center : "Cesenatico,Italy", zoom:12 }
-    if (cu===undefined) return {center : "Forlimpopoli,Italy", zoom:7 }
+    if (cu === 'CE') return { center: "Cesena,Italy", zoom: 11 }
+    if (cu === 'FO') return { center: "Forli,Italy", zoom: 11 }
+    if (cu === 'CO') return { center: "Cesenatico,Italy", zoom: 13 }
+    if (cu === undefined) return { center: "Forlimpopoli,Italy", zoom: 8 }
 }

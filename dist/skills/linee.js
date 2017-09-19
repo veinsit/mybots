@@ -1,8 +1,5 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
-if (!process.env.OPENDATAURIBASE) {
-    require('dotenv').config();
-}
 const utils = require("../utils");
 const service = require("../service");
 // Load emojis
@@ -40,6 +37,11 @@ exports.onPostback = (pl, chat, data) => {
         displayOrariPage(chat, match[1], match[2], parseInt(match[3]));
         return true;
     }
+    if (pl.startsWith("TPL_ON_CORSA_")) {
+        const match = /(.*)_(.*)/.exec(pl.substring(13));
+        displayCorsa(chat, match[1], match[2]);
+        return true;
+    }
     return false;
 };
 exports.onMessage = (chat, text) => {
@@ -51,8 +53,8 @@ exports.onMessage = (chat, text) => {
 //---------------------------------------------- end exports
 let linee = [];
 // inizializza var globale 'linee'
-exports.init = () => getLineeP('FC').then(function (_linee) {
-    _linee.forEach((l) => { redefDisplayName(l); }); // ridefinisce il display_name, se non presente
+exports.init = () => service.getLinee('FC').then(function (_linee) {
+    _linee.forEach(l => redefDisplayName(l)); // ridefinisce il display_name, se non presente
     linee = _linee;
     //console.log(linee.map(l=>l.display_name))
 });
@@ -94,14 +96,6 @@ function redefDisplayName(l) {
     console.log(`${l.LINEA_ID} --> ${n}`);
     l.display_name = n;
 }
-function getLineeP(bacino) {
-    return new Promise(function (resolve, reject) {
-        service.methods.getLinee({ path: { bacino } }, (data, response) => {
-            resolve(data); // data è un array di linee
-        });
-    });
-}
-exports.getLineeP = getLineeP;
 //============================ precaricamento delle linee (NON USATA)
 /*
 // lineeMap non serve più perché nel nuovo PAT non ho più il display_name
@@ -139,8 +133,10 @@ exports.searchLinea = (chat, askedLinea) => {
     };
     console.log("filtrate linee " + res.results.map(x => x.LINEA_ID));
     if (res.results.length === 0) {
-        return false;
-        //          chat.say(`Non ho trovato la linea ${askedLinea}` + emo.emoji.not_found)
+        // prova a cercare anche tra i codici linea
+        res.results = linee.filter(it => it.LINEA_ID === askedLinea);
+        if (res.results.length === 0)
+            return false;
     }
     else {
         let movies_to_get = res.results.length;
@@ -158,7 +154,7 @@ exports.searchLinea = (chat, askedLinea) => {
                 "title": ("Linea " + linea.display_name),
                 "subtitle": getSubtitle(linea),
                 // https://developers.google.com/maps/documentation/static-maps/intro
-                "image_url": utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
+                "image_url": utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=80x40`),
                 //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
                 /*
                 "buttons": [{
@@ -169,12 +165,13 @@ exports.searchLinea = (chat, askedLinea) => {
                 }]*/
                 // producono ORARI_XX_YYYY
                 "buttons": [
-                    utils.postbackBtn("verso " + linea.strip_asc_direction, "TPL_ORARI_As_" + linea.LINEA_ID),
-                    utils.postbackBtn("verso " + linea.strip_desc_direction, "TPL_ORARI_Di_" + linea.LINEA_ID),
+                    utils.postbackBtn(linea.strip_asc_direction ?
+                        "verso " + linea.strip_asc_direction : "Ascendente", "TPL_ORARI_As_" + linea.LINEA_ID),
+                    utils.postbackBtn(linea.strip_desc_direction ?
+                        "verso " + linea.strip_desc_direction : "Discendente", "TPL_ORARI_Di_" + linea.LINEA_ID),
                     utils.weburlBtn("Sito", service.baseUiUri + 'FC/linee/' + linea.LINEA_ID)
                 ]
             });
-            //                similars.push("Similar to " + res.results[i].title)
         }
         chat.say("Ecco le linee che ho trovato!").then(() => {
             chat.sendGenericTemplate(movies); /*.then(() => {
@@ -186,7 +183,7 @@ exports.searchLinea = (chat, askedLinea) => {
               })
             })*/
         });
-        return true; // non verrà processato ????
+        return true;
     }
     //   }) // end getLinee
 };
@@ -201,52 +198,62 @@ const scegliAorD = (chat, LINEA_ID) => {
         // tutto dentro la convo 
         convo.ask({ text: 'In quale direzione ?', quickReplies: qr }, (payload, convo) => {
             const text = payload.message.text;
-            convo.end().then(() => displayOrariPage(chat, LINEA_ID, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0));
+            convo.end()
+                .then(() => displayOrariPage(chat, LINEA_ID, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0));
         }, [{
                 event: 'quick_reply',
                 callback: (payload, convo) => {
                     const text = payload.message.text;
                     // convo.say(`Thanks for choosing one of the options. Your favorite color is ${text}`);
-                    convo.end().then(() => displayOrariPage(chat, LINEA_ID, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0));
+                    convo.end()
+                        .then(() => displayOrariPage(chat, LINEA_ID, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0));
                 }
             }
         ]);
     });
 };
 const displayOrariPage = (chat, LINEA_ID, AorD, page) => {
+    service.getCorseOggi('FC', LINEA_ID)
+        .then((data) => onResultCorse(data, chat, LINEA_ID, AorD, page));
+};
+const onResultCorse = (data, chat, LINEA_ID, AorD, page) => {
     const quanteInsieme = 4;
-    var args = { path: { bacino: 'FC', linea: LINEA_ID } };
-    service.methods.getCorseOggi(args, function (data, response) {
-        var result = {
-            corse: data.filter(it => it.VERSO === AorD)
-                .slice(page * quanteInsieme, (page + 1) * quanteInsieme)
-                .map(function (item) {
-                return {
-                    CORSA: item.CORSA,
-                    DESC_PERCORSO: item.DESC_PERCORSO,
-                    parte: item.ORA_INIZIO_STR,
-                    arriva: item.ORA_FINE_STR,
-                };
-            })
-        };
-        // Puoi inviare da un minimo di 2 a un massimo di 4 elementi.
-        // L'aggiunta di un pulsante a ogni elemento è facoltativa. Puoi avere solo 1 pulsante per elemento.
-        // Puoi avere solo 1 pulsante globale.
-        let els = [];
-        for (var i = 0; i < Math.min(quanteInsieme, result.corse.length); i++) {
-            var corsa = result.corse[i];
-            els.push({
-                "title": `${i}) partenza ${corsa.parte}`,
-                "subtitle": corsa.DESC_PERCORSO + "  arriva alle " + corsa.arriva,
-                //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
-                "buttons": utils.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + corsa.CORSA),
-            });
-        } //end for  
-        const noNextPage = () => result.corse.length < quanteInsieme;
-        // emetti max 4 elementi
-        chat.sendListTemplate(els, // PAGE_CORSE_F127_As_2
-        noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `TPL_PAGE_CORSE_${LINEA_ID}_${AorD}_${page + 1}`), { typing: true });
-    }); // end getCorseOggi
+    var result = {
+        corse: data.filter(it => it.VERSO === AorD)
+            .slice(page * quanteInsieme, (page + 1) * quanteInsieme)
+            .map(function (item) {
+            return {
+                CORSA: item.CORSA,
+                DESC_PERCORSO: item.DESC_PERCORSO,
+                parte: item.ORA_INIZIO_STR,
+                arriva: item.ORA_FINE_STR,
+            };
+        })
+    };
+    // Puoi inviare da un minimo di 2 a un massimo di 4 elementi.
+    // L'aggiunta di un pulsante a ogni elemento è facoltativa. Puoi avere solo 1 pulsante per elemento.
+    // Puoi avere solo 1 pulsante globale.
+    let els = [];
+    for (var i = 0; i < Math.min(quanteInsieme, result.corse.length); i++) {
+        var corsa = result.corse[i];
+        els.push({
+            "title": `${i}) partenza ${corsa.parte}`,
+            "subtitle": corsa.DESC_PERCORSO + "  arriva alle " + corsa.arriva,
+            //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
+            "buttons": utils.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + LINEA_ID + "_" + corsa.CORSA),
+        });
+    } //end for  
+    const noNextPage = () => result.corse.length < quanteInsieme;
+    // emetti max 4 elementi
+    chat.sendListTemplate(els, // PAGE_CORSE_F127_As_2
+    noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `TPL_PAGE_CORSE_${LINEA_ID}_${AorD}_${page + 1}`), { typing: true });
+};
+const displayCorsa = (chat, LINEA_ID, corsa_id) => {
+    service.getCorseOggi('FC', LINEA_ID)
+        .then((data) => onResultPassaggi(data, chat, LINEA_ID, corsa_id));
+};
+const onResultPassaggi = (data, chat, LINEA_ID, corsa_id) => {
+    chat.say(`Qui dovrei mostrarti i passaggi della corsa ${corsa_id} della linea ${LINEA_ID}`);
 };
 //=================================================================================
 //            helpers
@@ -266,12 +273,12 @@ function getCU(linea) {
 function mapCenter(linea) {
     const cu = getCU(linea);
     if (cu === 'CE')
-        return { center: "Cesena,Italy", zoom: 10 };
+        return { center: "Cesena,Italy", zoom: 11 };
     if (cu === 'FO')
-        return { center: "Forli,Italy", zoom: 10 };
+        return { center: "Forli,Italy", zoom: 11 };
     if (cu === 'CO')
-        return { center: "Cesenatico,Italy", zoom: 12 };
+        return { center: "Cesenatico,Italy", zoom: 13 };
     if (cu === undefined)
-        return { center: "Forlimpopoli,Italy", zoom: 7 };
+        return { center: "Forlimpopoli,Italy", zoom: 8 };
 }
 //# sourceMappingURL=linee.js.map

@@ -52,8 +52,11 @@ bot.on('message', (payload, chat) => {
     console.log("sender.id = " + fid);
     const text = payload.message.text.toLowerCase();
     if (text == "hi" || text == "hey" || text == "hello"
-        || text == "ciao" || text == "salve") {
-        chat.sendTypingIndicator(500).then(() => showIntro(chat));
+        || text == "ciao" || text == "salve"
+        || text == "help" || text == "aiuto" || text == "start"
+        || text == "parla" || text == "chat" || text == "inizia") {
+        chat.sendTypingIndicator(500)
+            .then(() => showIntro(chat));
     }
     else {
         if (tpl.onMessage(chat, text)) {
@@ -68,6 +71,26 @@ bot.on('message', (payload, chat) => {
         }
     }
 });
+// usato per la posizione
+/*
+"attachments": [
+{
+  "title": "Facebook HQ",
+  "url": "https://www.facebook.com/l.php?u=https%....5-7Ocxrmg",
+  "type": "location",
+  "payload": {
+    "coordinates": {
+      "lat": 37.483872693672,
+      "long": -122.14900441942
+    }
+  }
+}
+]
+*/
+bot.on('attachment', (payload, chat) => {
+    console.log('An attachment was received!:' + payload);
+    chat.say(JSON.stringify(payload));
+});
 bot.on('postback', (payload, chat, data) => {
     const pl = payload.postback.payload;
     console.log("on postback : " + pl);
@@ -77,9 +100,16 @@ bot.on('postback', (payload, chat, data) => {
         prove.onPostback(pl, chat, data);
 });
 const showIntro = (chat) => {
-    chat.getUserProfile().then((user) => {
-        chat.say("Salve, " + user.first_name + "! " + emoji.emoji.waving + "\n\n" +
-            "Dimmi quale linea ti interessa:\nScrivi la parola 'linea ' seguita dal numero della linea.");
+    chat.getUserProfile()
+        .then((user) => {
+        chat.say({
+            text: "Salve, " + user.first_name + "! " + emoji.emoji.waving + "\n\n" +
+                'Puoi dirmi:\n' +
+                '- una linea (es. 92, 5A, 127, ..)\n' +
+                '- la tua posizione: provalo !!\n\n' +
+                'Scegli uno degli esempi, o inizia direttamente',
+            quickReplies: ['linea 2', '5A', '92', { "content_type": "location" }]
+        });
     });
 };
 const showAbout = (chat) => {
