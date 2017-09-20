@@ -4,33 +4,13 @@ if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC
     || !process.env.GOOGLE_STATICMAP_APIKEY || !process.env.OPENDATAURIBASE) {
     require('dotenv').config();
 }
-/*
-
-const BootBot = require('../lib/MyBootBot');
-
-const bot = new BootBot({
-  accessToken: process.env.ATOK || "fake",
-  verifyToken: process.env.VTOK || "fake",
-  appSecret: process.env.APPSEC || "fake",
-  //  botPort: process.env.BOTPORT,
-  //  botTunnelSubDomain: process.env.BOTTUN
-});
-
-
-require("./MyFirstBotDesc").start(bot, (linee:any[]) => {
-  // così non rinfresca più le linee
-  // fare un restart dell'app per il refresh delle linee
-  console.log(`Caricate ${linee.length} linee `)
-  bot.start(process.env.PORT || 3000);
-});
-
-*/
 // https://github.com/sotirelisc/tvakis
 // https://www.messenger.com/t/thecvbot
 // Load emojis
 const emo = require("./assets/emoji");
 const tpl = require("./skills/linee");
 const prove = require("./skills/prove");
+const skills = [tpl, prove];
 const BootBot = require('../lib/MyBootBot');
 const bot = new BootBot({
     accessToken: process.env.ATOK,
@@ -47,28 +27,23 @@ bot.setGetStartedButton((payload, chat) => {
 // Load emojis
 let emoji = require('./assets/emoji');
 const poster_url = "https://image.tmdb.org/t/p/w640";
+const startKeys = ['hello', 'hi', 'hey', 'ehi', 'start', 'inizia', 'ciao', 'salve', 'chat', 'parla'];
 bot.on('message', (payload, chat) => {
     const fid = payload.sender.id;
     console.log("sender.id = " + fid);
     const text = payload.message.text.toLowerCase();
-    if (text == "hi" || text == "hey" || text == "hello"
-        || text == "ciao" || text == "salve"
-        || text == "help" || text == "aiuto" || text == "start"
-        || text == "parla" || text == "chat" || text == "inizia") {
+    if (startKeys.filter(it => it === text).length > 0) {
         chat.sendTypingIndicator(500)
             .then(() => showIntro(chat));
+        return;
     }
-    else {
-        if (tpl.onMessage(chat, text)) {
-            // guà gestito
-        }
-        else if (prove.onMessage(chat, text)) {
-            // guà gestito
-        }
-        else {
-            // searchTv(chat, text)
-            chat.say("Per ora capisco solo 'linea XXXX'");
-        }
+    let gestitoDaModulo = false;
+    for (let s of skills) {
+        if (gestitoDaModulo = s.onMessage(chat, text))
+            break;
+    }
+    if (!gestitoDaModulo) {
+        chat.say("Non ho capito ...");
     }
 });
 // usato per la posizione
@@ -95,10 +70,11 @@ bot.on('attachment', (payload, chat) => {
 bot.on('postback', (payload, chat, data) => {
     const pl = payload.postback.payload;
     console.log("on postback : " + pl);
-    if (pl.startsWith(tpl.PB_TPL))
-        tpl.onPostback(pl, chat, data);
-    else if (pl.startsWith(prove.PB_PROVE))
-        prove.onPostback(pl, chat, data);
+    let gestitoDaModulo = false;
+    for (let s of skills) {
+        if (gestitoDaModulo = s.onPostback(pl, chat, data))
+            break;
+    }
 });
 const showIntro = (chat) => {
     chat.getUserProfile()

@@ -20,6 +20,11 @@ class Linea {
         this.desc_note = l.desc_note
     }
 }*/
+
+
+// var. globale inizializzata dalla init()
+let linee = []
+
 //=======================================================  exports
 export const PB_TPL = 'TPL_';
 export const onPostback = (pl: string, chat, data): boolean => {
@@ -57,7 +62,7 @@ export const onMessage = (chat, text): boolean => {
 
 var sqlite3 = require('sqlite3').verbose();
 
-
+const _mark = (la,lo,label,color) => `&markers=color:${color}%7Clabel:${label.substring(0,1)}%7C${la},${lo}`;
 export const onLocationReceived = (chat, coords) => {
     var db = new sqlite3.Database('dist/db/database.sqlite3');
 
@@ -84,12 +89,18 @@ export const onLocationReceived = (chat, coords) => {
                 },
                 function () { // chiamata al completamento
                     chat.say(`La fermata più vicina è ${nearestStop.stop_name} a ${dist.toFixed(0)} metri in linea d'aria`, {typing:true})
-                        .then(() => {
-                            chat.say({
-                                text: 'Ci passano queste linee:',
-                                quickReplies: lineePassanti// .map(l=>linee.filter(x=>x.LINEA_ID===l)),
-                            })
-                        });
+                    .then(() => {
+                        const m1 = _mark(coords.lat, coords.lon, 'P', 'blue')
+                        const m2 = _mark(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red')
+                        chat.sendAttachment('image', utils.gStatMapUrl(`center=${coords.lat},${coords.long}${m1}${m2}&size=100x50`), undefined, {typing:true})
+                        
+                    })
+                    .then(() => {
+                        chat.say({
+                            text: 'Ci passano le linee '+lineePassanti.join(', '),
+                            quickReplies: lineePassanti// .map(l=>linee.filter(x=>x.LINEA_ID===l)),
+                        })
+                    });
                 }
 
             );// end run 
@@ -99,21 +110,20 @@ export const onLocationReceived = (chat, coords) => {
     //    });// end serialize
 }
 
-let linee = []
-
 // inizializza var globale 'linee'
 export const init = () =>
     service.getLinee('FC')
-        .then(function (_linee) {
-            _linee.forEach(l => redefDisplayName(l)) // ridefinisce il display_name, se non presente
+        .then( _linee => {
             linee = _linee;
-            //console.log(linee.map(l=>l.display_name))
-        }, (err) => console.log(err)
+            linee.forEach(l => redefDisplayName(l)) // ridefinisce il display_name, se non presente
+                //console.log(linee.map(l=>l.display_name))
+            }, 
+            (err) => console.log(err)  // rejected
         );
 
 //---------------------------------------------- end exports
 
-
+// ridefinisce il display_name quando non è definito
 function redefDisplayName(l) {
     let n: string = l.display_name
     // se display_name null, prendi da name
@@ -188,36 +198,34 @@ export function getLinee(bacino, callback: (linee:any[]) => any) {
 export const searchLinea = (chat, askedLinea): boolean => {
     //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
 
-    var res = {
-        results: linee.filter(it => it.display_name === askedLinea)
-    }
-    console.log("filtrate linee " + res.results.map(x => x.LINEA_ID))
+    let results =linee.filter(it => it.display_name === askedLinea)
 
-    if (res.results.length === 0) {
+    if (results.length === 0) {
         // prova a cercare anche tra i codici linea
-        res.results = linee.filter(it => it.LINEA_ID === askedLinea)
-        if (res.results.length === 0)
+        results = linee.filter(it => it.LINEA_ID === askedLinea)
+        if (results.length === 0)
             return false;
 
-    } //else {
+    } 
 
-    let movies_to_get = res.results.length
+    console.log(`searchLinea ${askedLinea} : ${results}`)
+    let nresults = results.length
     // Show 7 (or less) relevant movies
-    if (movies_to_get > 7) {
-        movies_to_get = 7
+    if (nresults > 7) {
+        nresults = 7
     }
 
-    let movies = [] // movies = linee
-    //              let similars = []
-    for (let i = 0; i < movies_to_get; i++) {
+    let items = [] // items = linee
+    
+    for (let i = 0; i < nresults; i++) {
         // let release_date = new Date(res.results[i].release_date)
-        const linea = res.results[i]
+        const linea = results[i]
         const center = mapCenter(linea)
-        movies.push({
-            "title": ("Linea " + linea.display_name),
-            "subtitle": getSubtitle(linea),//
+        items.push({
+            title: ("Linea " + linea.display_name),
+            subtitle: getSubtitle(linea),//
             // https://developers.google.com/maps/documentation/static-maps/intro
-            "image_url": utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=80x40`),
+            image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=80x40`),
             //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
             /*
             "buttons": [{
@@ -227,7 +235,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
               "webview_height_ratio": "tall"
             }]*/
             // producono ORARI_XX_YYYY
-            "buttons": [
+            buttons: [
                 utils.postbackBtn(linea.strip_asc_direction ?
                     "verso " + linea.strip_asc_direction : "Ascendente",
                     "TPL_ORARI_As_" + linea.LINEA_ID
@@ -241,7 +249,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
         })
     }
     chat.say("Ecco le linee che ho trovato!").then(() => {
-        chat.sendGenericTemplate(movies) /*.then(() => {
+        chat.sendGenericTemplate(items) /*.then(() => {
               chat.sendTypingIndicator(1500).then(() => {
                 chat.say({
                   text: "Scegli!",
@@ -252,8 +260,6 @@ export const searchLinea = (chat, askedLinea): boolean => {
     })
 
     return true;
-    //    }
-    //   }) // end getLinee
 }
 
 function getSubtitle(linea) {
