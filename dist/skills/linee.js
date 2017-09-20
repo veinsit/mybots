@@ -75,30 +75,23 @@ exports.onLocationReceived = (chat, coords) => {
                 console.log("query err: " + err);
             row && lineePassanti.push(row.route_id);
         }, function () {
-            chat.say(`La fermata più vicina è ${nearestStop.stop_name} a ${dist.toFixed(0)} metri in linea d'aria`, { typing: true })
-                .then(() => {
-                const m1 = _mark(coords.lat, coords.lon, 'P', 'blue');
-                const m2 = _mark(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red');
-                chat.sendAttachment('image', utils.gStatMapUrl(`center=${coords.lat},${coords.long}${m1}${m2}&size=100x50`), undefined, { typing: true });
-            })
-                .then(() => {
-                chat.say({
-                    text: 'Ci passano le linee ' + lineePassanti.join(', '),
-                    quickReplies: lineePassanti // .map(l=>linee.filter(x=>x.LINEA_ID===l)),
-                });
-            });
+            if (dist > 8000)
+                chat.say(`Mi dispiace, non c'è nessuna fermata nel raggio di 8 Km`, { typing: true });
+            else
+                sayNearestStop(chat, coords, nearestStop, lineePassanti, dist);
         }); // end run 
         db.close();
     }); // end each
     //    });// end serialize
 };
 // inizializza var globale 'linee'
-exports.init = () => service.getLinee('FC')
+exports.init = (callback) => service.getLinee('FC')
     .then(_linee => {
     linee = _linee;
     linee.forEach(l => redefDisplayName(l)); // ridefinisce il display_name, se non presente
     //console.log(linee.map(l=>l.display_name))
-}, (err) => console.log(err) // rejected
+    callback && callback(linee, undefined);
+}, (err) => { console.log(err); callback && callback(undefined, err); } // rejected
 );
 //---------------------------------------------- end exports
 // ridefinisce il display_name quando non è definito
@@ -124,15 +117,14 @@ function redefDisplayName(l) {
             else if (n.startsWith('S') || n.endsWith("'")) { } // scolastici S1, S2 , ...
             else if (n.endsWith('CO'))
                 n = n.substring(0, n.length - 2);
-            /*
             else {
                 try {
-                    n = parseInt(n).toString()
+                    n = parseInt(n).toString(); // serve per trasformare '01' in '1'
                 }
-                catch {
+                catch (_a) {
                     // tengo n così com'è
                 }
-            }*/
+            }
         }
     } // end n undefined
     if (n.startsWith("NAVE"))
@@ -296,6 +288,20 @@ const onResultPassaggi = (data, chat, LINEA_ID, corsa_id) => {
 //=================================================================================
 //            helpers
 //=================================================================================
+function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
+    chat.say(`La fermata più vicina è ${nearestStop.stop_name} a ${dist.toFixed(0)} metri in linea d'aria`, { typing: true })
+        .then(() => {
+        const m1 = _mark(coords.lat, coords.lon, 'P', 'blue');
+        const m2 = _mark(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red');
+        chat.sendAttachment('image', utils.gStatMapUrl(`zoom=12&size=100x50&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, { typing: true });
+    })
+        .then(() => {
+        setTimeout(() => chat.say({
+            text: 'Ci passano le linee ' + lineePassanti.join(', '),
+            quickReplies: lineePassanti // .map(l=>linee.filter(x=>x.LINEA_ID===l)),
+        }), 3000);
+    });
+}
 function getCU(linea) {
     if (linea.Bacino === 'FC') {
         if (linea.LINEA_ID.indexOf("CE") >= 0)
