@@ -14,9 +14,9 @@ let emo = require('../assets/emoji');
 class Linea {
     constructor(l:any) {
         this.Bacino = l.Bacino,
-        this.LINEA_ID = l.Bacino ,
+        this.route_id = l.Bacino ,
         this.name = l.name ,
-        this.display_name = l.display_name ,
+        this.route_id = l.route_id ,
         this.asc_direction = l.asc_direction ,
         this.desc_direction = l.desc_direction ,
         this.strip_asc_direction = l.strip_asc_direction ,
@@ -95,16 +95,16 @@ exports.onLocationReceived = (chat, coords) => {
 exports.init = (callback) => service.getLinee('FC')
     .then(_linee => {
     linee = _linee;
-    linee.forEach(l => redefDisplayName(l)); // ridefinisce il display_name, se non presente
-    //console.log(linee.map(l=>l.display_name))
+    //            linee.forEach(l => redefDisplayName(l)) // ridefinisce il route_id, se non presente
+    //console.log(linee.map(l=>l.route_id))
     callback && callback(linee, undefined);
 }, (err) => { console.log(err); callback && callback(undefined, err); } // rejected
 );
 //---------------------------------------------- end exports
-// ridefinisce il display_name quando non è definito
+// ridefinisce il route_id quando non è definito
 function redefDisplayName(l) {
-    let n = l.route_short_name; // l.display_name
-    // se display_name null, prendi da name
+    let n = l.route_short_name; // l.route_id
+    // se route_id null, prendi da name
     if (n === undefined || n === null || n.length === 0) {
         if (l.Bacino === 'FC') {
             n = l.name.toUpperCase();
@@ -136,16 +136,12 @@ function redefDisplayName(l) {
     } // end n undefined
     if (n.startsWith("NAVE"))
         n = 'Navetta';
-    console.log(`${l.LINEA_ID} --> ${n}`);
-    l.display_name = n;
-    l.LINEA_ID = l.route_id;
-    l.asc_direction = l.route_id + "_As";
-    l.desc_direction = l.route_id + "_Di";
-    l.name = l.route_long_name;
+    console.log(`${l.route_id} --> ${n}`);
+    l.route_id = n;
 }
 //============================ precaricamento delle linee (NON USATA)
 /*
-// lineeMap non serve più perché nel nuovo PAT non ho più il display_name
+// lineeMap non serve più perché nel nuovo PAT non ho più il route_id
 type LineeMapCallback = (m:Map<string, any[]>) => any
 export function getLineeMap() : Promise<Map<string, any[]>> {
 
@@ -154,7 +150,7 @@ export function getLineeMap() : Promise<Map<string, any[]>> {
         getLinee( 'FC', linee => {
             // definisci lineeMap
             for (let linea of linee) {
-                const numLinea = linea.display_name // non più valorizzato
+                const numLinea = linea.route_id // non più valorizzato
     
                 if (lineeMap.has(numLinea))
                     lineeMap.set(numLinea, [...(lineeMap.get(numLinea)), linea])
@@ -175,12 +171,12 @@ export function getLinee(bacino, callback: (linee:any[]) => any) {
 //-------------------------------------------------------------------
 exports.testSearchLinea = (chat, askedLinea) => {
     //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
-    console.log(`searchLinea: searching for  display_name = ${askedLinea}`);
-    let results = linee.filter(it => it.display_name === askedLinea);
+    console.log(`searchLinea: searching for  route_id = ${askedLinea}`);
+    let results = linee.filter(it => it.route_id === askedLinea);
     if (results.length === 0) {
-        console.log(`searchLinea: not found! searching for LINEA_ID = ${askedLinea}`);
+        console.log(`searchLinea: not found! searching for route_id = ${askedLinea}`);
         // prova a cercare anche tra i codici linea
-        results = linee.filter(it => it.LINEA_ID === askedLinea);
+        results = linee.filter(it => it.route_id === askedLinea);
         if (results.length === 0) {
             return false;
         }
@@ -190,12 +186,12 @@ exports.testSearchLinea = (chat, askedLinea) => {
 };
 exports.searchLinea = (chat, askedLinea) => {
     //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
-    console.log(`searchLinea: searching for  display_name = ${askedLinea}`);
-    let results = linee.filter(it => it.display_name === askedLinea);
+    console.log(`searchLinea: searching for  route_id = ${askedLinea}`);
+    let results = linee.filter(it => it.route_id === askedLinea);
     if (results.length === 0) {
-        console.log(`searchLinea: not found! searching for LINEA_ID = ${askedLinea}`);
+        console.log(`searchLinea: not found! searching for route_id = ${askedLinea}`);
         // prova a cercare anche tra i codici linea
-        results = linee.filter(it => it.LINEA_ID === askedLinea);
+        results = linee.filter(it => it.route_id === askedLinea);
         if (results.length === 0) {
             return false;
         }
@@ -212,7 +208,7 @@ exports.searchLinea = (chat, askedLinea) => {
         const linea = results[i];
         const center = mapCenter(linea);
         items.push({
-            title: ("Linea " + linea.display_name),
+            title: ("Linea " + linea.route_id),
             subtitle: getSubtitle(linea),
             // https://developers.google.com/maps/documentation/static-maps/intro
             image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
@@ -220,17 +216,17 @@ exports.searchLinea = (chat, askedLinea) => {
             /*
             "buttons": [{
               "type": "web_url",
-              "url": service.baseUiUri+'FC/linee/'+linea.LINEA_ID,
+              "url": service.baseUiUri+'FC/linee/'+linea.route_id,
               "title": emo.emoji.link + " Dettagli",
               "webview_height_ratio": "tall"
             }]*/
             // producono ORARI_XX_YYYY
             buttons: [
                 utils.postbackBtn(linea.strip_asc_direction ?
-                    "verso " + linea.strip_asc_direction : "Ascendente", "TPL_ORARI_As_" + linea.LINEA_ID),
+                    "verso " + linea.strip_asc_direction : "Ascendente", "TPL_ORARI_As_" + linea.route_id),
                 utils.postbackBtn(linea.strip_desc_direction ?
-                    "verso " + linea.strip_desc_direction : "Discendente", "TPL_ORARI_Di_" + linea.LINEA_ID),
-                utils.weburlBtn("Sito", baseUiUri + 'FC/linee/' + linea.LINEA_ID)
+                    "verso " + linea.strip_desc_direction : "Discendente", "TPL_ORARI_Di_" + linea.route_id),
+                utils.weburlBtn("Sito", baseUiUri + 'FC/linee/' + linea.route_id)
             ]
         });
     }
@@ -239,7 +235,7 @@ exports.searchLinea = (chat, askedLinea) => {
               chat.sendTypingIndicator(1500).then(() => {
                 chat.say({
                   text: "Scegli!",
-                  quickReplies: movies.map(it=>"== "+it.LINEA_ID)
+                  quickReplies: movies.map(it=>"== "+it.route_id)
                 })
               })
             })*/
@@ -247,35 +243,34 @@ exports.searchLinea = (chat, askedLinea) => {
     return true;
 };
 function getSubtitle(linea) {
-    return (linea.asc_direction != null && linea.asc_direction.length > 0) ?
-        linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note)
-        : linea.name;
+    //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
+    return linea.route_long_name;
 }
-const scegliAorD = (chat, LINEA_ID) => {
+const scegliAorD = (chat, route_id) => {
     const qr = ["Ascen", "Discen"];
     chat.conversation(convo => {
         // tutto dentro la convo 
         convo.ask({ text: 'In quale direzione ?', quickReplies: qr }, (payload, convo) => {
             const text = payload.message.text;
             convo.end()
-                .then(() => displayOrariPage(chat, LINEA_ID, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0));
+                .then(() => displayOrariPage(chat, route_id, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0));
         }, [{
                 event: 'quick_reply',
                 callback: (payload, convo) => {
                     const text = payload.message.text;
                     // convo.say(`Thanks for choosing one of the options. Your favorite color is ${text}`);
                     convo.end()
-                        .then(() => displayOrariPage(chat, LINEA_ID, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0));
+                        .then(() => displayOrariPage(chat, route_id, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0));
                 }
             }
         ]);
     });
 };
-const displayOrariPage = (chat, LINEA_ID, AorD, page) => {
-    service.getCorseOggi('FC', LINEA_ID)
-        .then((data) => onResultCorse(data, chat, LINEA_ID, AorD, page));
+const displayOrariPage = (chat, route_id, AorD, page) => {
+    service.getCorseOggi('FC', route_id)
+        .then((data) => onResultCorse(data, chat, route_id, AorD, page));
 };
-const onResultCorse = (data, chat, LINEA_ID, AorD, page) => {
+const onResultCorse = (data, chat, route_id, AorD, page) => {
     const quanteInsieme = 4;
     var result = {
         corse: data.filter(it => it.VERSO === AorD)
@@ -299,20 +294,20 @@ const onResultCorse = (data, chat, LINEA_ID, AorD, page) => {
             "title": `${i}) partenza ${corsa.parte}`,
             "subtitle": corsa.DESC_PERCORSO + "  arriva alle " + corsa.arriva,
             //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
-            "buttons": utils.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + LINEA_ID + "_" + corsa.CORSA),
+            "buttons": utils.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + route_id + "_" + corsa.CORSA),
         });
     } //end for  
     const noNextPage = () => result.corse.length < quanteInsieme;
     // emetti max 4 elementi
     chat.sendListTemplate(els, // PAGE_CORSE_F127_As_2
-    noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `TPL_PAGE_CORSE_${LINEA_ID}_${AorD}_${page + 1}`), { typing: true });
+    noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `TPL_PAGE_CORSE_${route_id}_${AorD}_${page + 1}`), { typing: true });
 };
-const displayCorsa = (chat, LINEA_ID, corsa_id) => {
-    service.getCorseOggi('FC', LINEA_ID)
-        .then((data) => onResultPassaggi(data, chat, LINEA_ID, corsa_id));
+const displayCorsa = (chat, route_id, corsa_id) => {
+    service.getCorseOggi('FC', route_id)
+        .then((data) => onResultPassaggi(data, chat, route_id, corsa_id));
 };
-const onResultPassaggi = (data, chat, LINEA_ID, corsa_id) => {
-    chat.say(`Qui dovrei mostrarti i passaggi della corsa ${corsa_id} della linea ${LINEA_ID}`);
+const onResultPassaggi = (data, chat, route_id, corsa_id) => {
+    chat.say(`Qui dovrei mostrarti i passaggi della corsa ${corsa_id} della linea ${route_id}`);
 };
 //=================================================================================
 //            helpers
@@ -327,21 +322,21 @@ function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
         .then(() => {
         setTimeout(() => chat.say({
             text: 'Ci passano le linee ' + lineePassanti.join(', '),
-            quickReplies: lineePassanti // .map(l=>linee.filter(x=>x.LINEA_ID===l)),
+            quickReplies: lineePassanti // .map(l=>linee.filter(x=>x.route_id===l)),
         }), 3000);
     });
 }
 function getCU(linea) {
-    if (linea.Bacino === 'FC') {
-        if (linea.LINEA_ID.indexOf("CE") >= 0)
+    if (true || linea.Bacino === 'FC') {
+        if (linea.route_id.indexOf("CE") >= 0)
             return 'CE';
-        if (linea.LINEA_ID.indexOf("FO") >= 0)
+        if (linea.route_id.indexOf("FO") >= 0)
             return 'FO';
-        if (linea.LINEA_ID.indexOf("CO") >= 0)
+        if (linea.route_id.indexOf("CO") >= 0)
             return 'CO';
         return undefined;
     }
-    return undefined; //TODO completare
+    // return undefined;  //TODO completare
 }
 function mapCenter(linea) {
     const cu = getCU(linea);
