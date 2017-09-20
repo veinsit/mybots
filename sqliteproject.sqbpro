@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/Users/v.parma/DEV/nodejs/mybots/dist/db/databaseFC.sqlite3"/><window><current_tab id="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="826"/><expanded_item id="0" parent="-1"/><expanded_item id="1" parent="-1"/><expanded_item id="2" parent="-1"/><expanded_item id="3" parent="-1"/></tab_structure><tab_browse><current_table name="Localita"/><default_encoding codec=""/><browsetable_info data="AAAAAQAAABAATABvAGMAYQBsAGkAdABh8YpV0AAAAEUAAAAAAAAAAAAAAAAA/////w=="/></tab_browse><tab_sql><sql name="SQL 1">-- linee
+select route_id, route_short_name, route_long_name, route_type from routes;
+
+SELECT service_id from calendar_dates where date='20170920'   -- 216 servizi
+
+-- corse della linea 127 (direzione 0) di oggi  (trip_id è XXX_&lt;codicecorsamaior&gt;)
+select t.* from trips t where t.route_id='F127' and direction_id='0' and t.service_id in (SELECT service_id from calendar_dates where date='20170920' )
+
+-- dettaglio di una corsa
+select st.stop_sequence, st.trip_id, st.departure_time, s.stop_name, s.stop_lat, s.stop_lon
+from stop_times st 
+join stops s on st.stop_id=s.stop_id
+where st.trip_id='454_695642' order by st.departure_time </sql><current_tab id="0"/></tab_sql></sqlb_project>

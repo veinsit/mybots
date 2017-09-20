@@ -1,7 +1,14 @@
 'use strict';
-
+if ( !process.env.OPENDATAURIBASE) {
+    require('dotenv').config()
+  }
+ 
+  const baseUri = process.env.OPENDATAURIBASE
+  
+  const baseUiUri = baseUri.replace('/api/', '/ui/');
 import utils = require("../utils")
-import service = require("../service")
+//import service = require("../service")
+import service = require("../servicedb")
 // Load emojis
 let emo = require('../assets/emoji')
 
@@ -118,7 +125,7 @@ export const init = (callback?) =>
 
 // ridefinisce il display_name quando non è definito
 function redefDisplayName(l) {
-    let n: string = l.display_name
+    let n: string = l.route_short_name // l.display_name
     // se display_name null, prendi da name
     if (n === undefined || n === null || n.length === 0) {
         if (l.Bacino === 'FC') {
@@ -151,6 +158,10 @@ function redefDisplayName(l) {
         n = 'Navetta'
     console.log(`${l.LINEA_ID} --> ${n}`)
     l.display_name = n
+    l.LINEA_ID = l.route_id
+    l.asc_direction = l.route_id+"_As"
+    l.desc_direction = l.route_id+"_Di"
+    l.name = l.route_long_name
 }
 
 
@@ -239,7 +250,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
             title: ("Linea " + linea.display_name),
             subtitle: getSubtitle(linea),//
             // https://developers.google.com/maps/documentation/static-maps/intro
-            image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=80x40`),
+            image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
             //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
             /*
             "buttons": [{
@@ -258,7 +269,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
                     "verso " + linea.strip_desc_direction : "Discendente",
                     "TPL_ORARI_Di_" + linea.LINEA_ID
                 ),
-                utils.weburlBtn("Sito", service.baseUiUri + 'FC/linee/' + linea.LINEA_ID)
+                utils.weburlBtn("Sito", baseUiUri + 'FC/linee/' + linea.LINEA_ID)
             ]
         })
     }

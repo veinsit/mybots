@@ -137,7 +137,7 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
   showAbout(chat)
 })
 
-tpl.init( (linee, err) => {linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)})
+tpl.init( (linee, err) => { /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/})
   .then(() =>
     bot.start(process.env.PORT || 3000)
   )

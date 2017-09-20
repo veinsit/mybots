@@ -80,3 +80,4 @@ function httpResolveOrReject(data,response, resolve, reject) {
 }
 
 export const methods = client.methods;
+

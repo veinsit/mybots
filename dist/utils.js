@@ -45,6 +45,10 @@ exports.distance = distance;
 function toRadians(deg) {
     return deg * 2 * Math.PI / 360;
 }
+function pad2zero(n) {
+    return n > 9 ? n.toString() : '0' + n.toString();
+}
+exports.pad2zero = pad2zero;
 // prove js
 /*
 export var avar = []
