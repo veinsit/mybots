@@ -47,6 +47,7 @@ exports.onPostback = (pl, chat, data) => {
     return false;
 };
 exports.onMessage = (chat, text) => {
+    console.log("linee.ts: onMessage: " + text);
     if (text.startsWith("linea ")) {
         text = text.substring(6);
     }
@@ -162,14 +163,32 @@ export function getLinee(bacino, callback: (linee:any[]) => any) {
 }
 */
 //-------------------------------------------------------------------
-exports.searchLinea = (chat, askedLinea) => {
+exports.testSearchLinea = (chat, askedLinea) => {
     //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
+    console.log(`searchLinea: searching for  display_name = ${askedLinea}`);
     let results = linee.filter(it => it.display_name === askedLinea);
     if (results.length === 0) {
+        console.log(`searchLinea: not found! searching for LINEA_ID = ${askedLinea}`);
         // prova a cercare anche tra i codici linea
         results = linee.filter(it => it.LINEA_ID === askedLinea);
-        if (results.length === 0)
+        if (results.length === 0) {
             return false;
+        }
+    }
+    console.log(`searchLinea: FOUND!`);
+    return true;
+};
+exports.searchLinea = (chat, askedLinea) => {
+    //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
+    console.log(`searchLinea: searching for  display_name = ${askedLinea}`);
+    let results = linee.filter(it => it.display_name === askedLinea);
+    if (results.length === 0) {
+        console.log(`searchLinea: not found! searching for LINEA_ID = ${askedLinea}`);
+        // prova a cercare anche tra i codici linea
+        results = linee.filter(it => it.LINEA_ID === askedLinea);
+        if (results.length === 0) {
+            return false;
+        }
     }
     console.log(`searchLinea ${askedLinea} : ${results}`);
     let nresults = results.length;
@@ -293,7 +312,7 @@ function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
         .then(() => {
         const m1 = _mark(coords.lat, coords.lon, 'P', 'blue');
         const m2 = _mark(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red');
-        chat.sendAttachment('image', utils.gStatMapUrl(`zoom=10&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, { typing: true });
+        chat.sendAttachment('image', utils.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, { typing: true });
     })
         .then(() => {
         setTimeout(() => chat.say({

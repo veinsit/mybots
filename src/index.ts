@@ -42,8 +42,9 @@ const poster_url = "https://image.tmdb.org/t/p/w640"
 const startKeys = ['hello','hi','hey','ehi','start','inizia','ciao','salve','chat','parla']
 bot.on('message', (payload, chat) => {
   const fid = payload.sender.id
-  console.log("sender.id = " + fid)
   const text = payload.message.text.toLowerCase()
+  
+  console.log("sender.id = " + fid+"; text="+text)
 
   if (startKeys.filter(it=>it===text).length > 0) {
     chat.sendTypingIndicator(500)
