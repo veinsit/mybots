@@ -293,7 +293,7 @@ function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
         .then(() => {
         const m1 = _mark(coords.lat, coords.lon, 'P', 'blue');
         const m2 = _mark(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red');
-        chat.sendAttachment('image', utils.gStatMapUrl(`zoom=12&size=100x50&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, { typing: true });
+        chat.sendAttachment('image', utils.gStatMapUrl(`zoom=10&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, { typing: true });
     })
         .then(() => {
         setTimeout(() => chat.say({
