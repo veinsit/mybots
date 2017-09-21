@@ -148,7 +148,6 @@ exports.searchLinea = (chat, askedLinea) => {
         for (let i = 0; i < nresults; i++) {
             // let release_date = new Date(res.results[i].release_date)
             const linea = results[i];
-            const center = mapCenter(linea);
             service.getReducedLongestShape('FC', linea.route_id, 10)
                 .then((shape) => {
                 items.push(_lineaItem(linea, shape))
@@ -173,6 +172,7 @@ function _lineaItem(linea, shape) {
     let x = [];
     shape && shape.forEach(s => x.push(`${s.shape_pt_lat},${s.shape_pt_lon}`));
     shape && console.log(x.join('%7C'));
+    const center = mapCenter(linea);
     return {
         title: linea.getTitle(),
         subtitle: linea.getSubtitle(),

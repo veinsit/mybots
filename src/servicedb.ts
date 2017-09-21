@@ -128,8 +128,8 @@ export function getShape(bacino, shape_id)  : Promise<Shape[]> {
   return new Promise<Shape[]> (function(resolve,reject) {
     var db = new sqlite3.Database(dbName(bacino));
     db.all(q, function (err, rows) {
-        if (err) reject(err); else resolve( rows.map(r=>new Shape(r)));
-        db.close();
+      db.close();
+      if (err) reject(err); else resolve( rows.map(r=>new Shape(r)));
     }); // end each
   }) // end Promise  
 }  
@@ -138,7 +138,7 @@ export function getShape(bacino, shape_id)  : Promise<Shape[]> {
 function getLongestShape(bacino, route_id) : Promise<Shape[]> {
   //percorso più lungo di una linea
   
-  const q = `SELECT s.shape_id, count(*)as numPoints
+  const q = `SELECT s.shape_id, count(*) as numPoints
   FROM shapes s 
   WHERE s.shape_id in (SELECT t.shape_id from trips t where t.route_id='${route_id}')
   GROUP BY s.shape_id
@@ -173,8 +173,8 @@ function dbAllPromise(dbname:string, query:string) : Promise<any[]> {
   return new Promise (function(resolve,reject) {
     var db = new sqlite3.Database(dbname);
     db.all(query, function (err, rows) {
-        if (err) reject(err); else resolve(rows);
-        db.close();
+      db.close();
+      if (err) reject(err); else resolve(rows);
     }); // end each
   }) // end Promise
 }
