@@ -84,45 +84,12 @@ export const init = (callback?) =>
             (err) => {console.log(err);  callback && callback(undefined, err) }// rejected
         );
         */
-exports.init = (callback) => service.getLinee('FC', _linee => { linee = _linee; callback && callback(_linee, undefined); });
+exports.init = (callback) => service.getLinee('FC')
+    .then((rows) => {
+    linee = rows.map((row) => new service.Linea(row));
+    callback && callback(linee, undefined);
+});
 //---------------------------------------------- end exports
-// ridefinisce il route_id quando non è definito
-function redefDisplayName(l) {
-    let n = l.route_short_name; // l.route_id
-    // se route_id null, prendi da name
-    if (n === undefined || n === null || n.length === 0) {
-        if (l.Bacino === 'FC') {
-            n = l.name.toUpperCase();
-            if (n.startsWith("LINEA "))
-                n = n.substring(6);
-            // n= FOA1, FOA5, FOS1, FOS2,  CEA1, S092, SA96 
-            if (n.startsWith("FO") || n.startsWith("CE") || n.startsWith("S0"))
-                n = n.substring(2);
-            if (n === 'A1')
-                n = '1A';
-            else if (n === "B1")
-                n = '1B';
-            else if (n === "A5")
-                n = '5A';
-            else if (n === "SA96")
-                n = '96A';
-            else if (n.startsWith('S') || n.endsWith("'")) { } // scolastici S1, S2 , ..., 126'
-            else if (n.endsWith('CO'))
-                n = n.substring(0, n.length - 2);
-            else {
-                try {
-                    n = parseInt(n).toString(); // serve per trasformare '01' in '1'
-                }
-                catch (_a) {
-                    // tengo n così com'è
-                }
-            }
-        }
-    } // end n undefined
-    // if (n.startsWith("NAVE"))   n = 'Navetta'
-    console.log(`${l.route_id} --> ${n}`);
-    l.route_short_name = n;
-}
 //============================ precaricamento delle linee (NON USATA)
 /*
 // lineeMap non serve più perché nel nuovo PAT non ho più il route_id
@@ -176,8 +143,8 @@ exports.searchLinea = (chat, askedLinea) => {
     if (results.length === 0) {
         console.log(`searchLinea: not found! searching for route_id = ${askedLinea}`);
         // prova a cercare anche tra i codici linea
-        results = linee.filter(it => it.route_id === askedLinea);
-        if (results.length === 0) {
+        let results2 = linee.filter(it => it.route_id === askedLinea);
+        if (results2.length === 0) {
             console.log(`searchLinea: NOT FOUND!`);
             return false;
         }

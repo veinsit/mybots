@@ -14,19 +14,19 @@ const dbName = bacino => `dist/db/database${bacino}.sqlite3`
 
 export class Linea {
 
-  route_id:string; 
-  route_short_name:string; 
-  route_long_name:string; 
-  route_type:string; 
-
+  readonly route_id:string 
+  readonly route_short_name:string
+  readonly route_long_name:string
+  readonly route_type:string
+  
   display_name: string // es. 1,2, 96A, 127, ecc
-
-  constructor (rec) {
-    this.route_id =rec.route_id, this.route_short_name=rec.route_short_name, this.route_long_name=rec.route_short_name, this.route_type=rec.route_short_name
+  
+  constructor (rec:any) {
+//    this.route_id =rec.route_id, this.route_short_name=rec.route_short_name, this.route_long_name=rec.route_short_name, this.route_type=rec.route_short_name
 
     this.display_name = this._displayName(rec.route_id, rec.route_long_name)
   }
-
+  
   private _displayName(c:string, ln:string) : string {
 
     ln = ln.toUpperCase()
@@ -52,7 +52,7 @@ export class Linea {
   getOpendataUri() { return baseUiUri + 'FC/linee/' + this.route_id}
   getAscDir()      { return "Ascendente"}
   getDisDir()      { return "Discendente"}
-  getTitle = () => "Linea "+this.route_short_name+" ("+this.route_id+")"
+  getTitle = () => "Linea "+this.display_name+" ("+this.route_id+")"
   getSubtitle() {
     //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
     return this.route_long_name
@@ -60,14 +60,9 @@ export class Linea {
   static queryGetAll() : string { return "SELECT route_id, route_short_name, route_long_name, route_type FROM routes"}
 }
 
-export function getLinee(bacino, callback : (linee:Linea[])=>any) {
-  return dbAllPromise<Linea>(dbName(bacino), Linea.queryGetAll())
-    .then((recs:any[]) => 
-        callback(recs.map(l=>new Linea(l)))
-    );  
-}  
-function _getLinee(bacino)  : Promise<Linea[]> {
-  return dbAllPromise<Linea>(dbName(bacino), Linea.queryGetAll());  
+
+export function getLinee(bacino)  : Promise<any[]> {
+  return dbAllPromise(dbName(bacino), Linea.queryGetAll());  
 } 
 
 export function getCorseOggi(bacino, route_id, dir01?)  : Promise<any[]> {
@@ -107,8 +102,8 @@ export function getShape(bacino, shape_id)  : Promise<any[]> {
 }  
 
 
-function dbAllPromise<T>(dbname:string, query:string) : Promise<T[]> {
-  return new Promise<T[]> (function(resolve,reject) {
+function dbAllPromise(dbname:string, query:string) : Promise<any[]> {
+  return new Promise (function(resolve,reject) {
     var db = new sqlite3.Database(dbname);
     db.all(query, function (err, rows) {
         if (err) reject(err); else resolve(rows);

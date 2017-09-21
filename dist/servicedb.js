@@ -10,8 +10,8 @@ const utils = require("./utils");
 const dbName = bacino => `dist/db/database${bacino}.sqlite3`;
 class Linea {
     constructor(rec) {
-        this.getTitle = () => "Linea " + this.route_short_name + " (" + this.route_id + ")";
-        this.route_id = rec.route_id, this.route_short_name = rec.route_short_name, this.route_long_name = rec.route_short_name, this.route_type = rec.route_short_name;
+        //    this.route_id =rec.route_id, this.route_short_name=rec.route_short_name, this.route_long_name=rec.route_short_name, this.route_type=rec.route_short_name
+        this.getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")";
         this.display_name = this._displayName(rec.route_id, rec.route_long_name);
     }
     _displayName(c, ln) {
@@ -39,14 +39,10 @@ class Linea {
     static queryGetAll() { return "SELECT route_id, route_short_name, route_long_name, route_type FROM routes"; }
 }
 exports.Linea = Linea;
-function getLinee(bacino, callback) {
-    return dbAllPromise(dbName(bacino), Linea.queryGetAll())
-        .then((recs) => callback(recs.map(l => new Linea(l))));
-}
-exports.getLinee = getLinee;
-function _getLinee(bacino) {
+function getLinee(bacino) {
     return dbAllPromise(dbName(bacino), Linea.queryGetAll());
 }
+exports.getLinee = getLinee;
 function getCorseOggi(bacino, route_id, dir01) {
     const direction = dir01 ? ` and direction_id='${dir01}' ` : '';
     const d = (new Date()); // oggi
