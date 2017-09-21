@@ -185,15 +185,16 @@ export const searchLinea = (chat, askedLinea): boolean => {
         var linea = results[index];
 //        promises.push(
             service.getReducedLongestShape('FC', linea.route_id, 10)
-            .then(
-                (shape: Shape[]) => {items.push(_lineaItem(linea, shape)); console.log("Promise resolved for "+linea.route_id) }
-            )//end then
+            .then((shape: Shape[]) => {
+                    items.push( _lineaItem(linea, shape)); 
+                    console.log("Promise resolved for "+linea.route_id)
+            })//end then
             .then(()=> {
                 if (index < nresults-1) 
                     loop(index+1) 
                 else {
                     console.log("Promise.all resolved "+items.length);
-                    chat.say("Ecco le linee che ho trovato!").then(() => {
+                    chat && chat.say("Ecco le linee che ho trovato!").then(() => {
                         chat.sendGenericTemplate(items) /*.then(() => {
                             chat.sendTypingIndicator(1500).then(() => {
                                 chat.say({
@@ -228,12 +229,14 @@ export const searchLinea = (chat, askedLinea): boolean => {
     return true;
 }
 
-function _lineaItem(linea: Linea, shape?: Shape[]) {
+function _lineaItem(linea: Linea, shape: Shape[]) {
     let x: string[] = []
     const hasShape = (shape !== undefined && shape !== null && shape.length >= 4)
     console.log("_lineaItem : "+hasShape+" "+JSON.stringify(shape[0]))
     if (hasShape)
-        shape.forEach((sh) => x.push(`${sh.shape_pt_lat},${sh.shape_pt_lon}`))
+        for (let i=0; i<shape.length; i++)
+            x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`)
+
     // shape && console.log(x.join('%7C'))
     const center = mapCenter(linea)
     return {

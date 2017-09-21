@@ -12,19 +12,17 @@ if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC
 import emo = require('./assets/emoji')
 import tpl = require("./skills/linee")
 import prove = require("./skills/prove")
+import menuAssets = require('./assets/menu')
 
 const skills = [tpl, prove]
 
 const BootBot = require('../lib/MyBootBot')
-
-
 const bot = new BootBot({
   accessToken: process.env.ATOK,
   verifyToken: process.env.VTOK,
   appSecret: process.env.APPSEC
 })
 
-import menuAssets = require('./assets/menu')
 //bot.module(menuAssets)
 menuAssets.defineMenu(bot)
 

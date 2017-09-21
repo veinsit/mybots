@@ -103,4 +103,4 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
 });
 tpl.init((linee, err) => { })
     .then(() => bot.start(process.env.PORT || 3000));
-//# sourceMappingURL=index.js.map
+//# sourceMappingURL=index.1.js.map

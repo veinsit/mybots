@@ -165,13 +165,13 @@ export function getReducedLongestShape(bacino, route_id, n:number) : Promise<Sha
         if ( n>=shape.length)
           return shape;
 
-        let step = shape.length/(n+1);
+        let step = Math.floor(shape.length/(n+1));
         let new_shape : Shape[] = []
 
         for(let i=0; i<n+1; i++) {
            new_shape.push(shape[i*step])
         }
-        new_shape.push(shape[shape.length-1])
+        new_shape.push( shape[shape.length-1] )
         console.log("New shape: "+JSON.stringify(new_shape[0])) // prendo la 0 perché sono ordinate DESC
 
         return new_shape;

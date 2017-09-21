@@ -126,7 +126,7 @@ function getReducedLongestShape(bacino, route_id, n) {
         console.log("getLongestShape resolved: "); // prendo la 0 perché sono ordinate DESC
         if (n >= shape.length)
             return shape;
-        let step = shape.length / (n + 1);
+        let step = Math.floor(shape.length / (n + 1));
         let new_shape = [];
         for (let i = 0; i < n + 1; i++) {
             new_shape.push(shape[i * step]);
