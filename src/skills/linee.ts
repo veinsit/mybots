@@ -231,8 +231,9 @@ export const searchLinea = (chat, askedLinea): boolean => {
 function _lineaItem(linea: Linea, shape?: Shape[]) {
     let x: string[] = []
     const hasShape = (shape !== undefined && shape !== null && shape.length >= 4)
+    console.log("_lineaItem : "+hasShape+" "+JSON.stringify(shape[0]))
     if (hasShape)
-        shape.forEach((s) => x.push(`${s.shape_pt_lat},${s.shape_pt_lon}`))
+        shape.forEach((sh) => x.push(`${sh.shape_pt_lat},${sh.shape_pt_lon}`))
     // shape && console.log(x.join('%7C'))
     const center = mapCenter(linea)
     return {
