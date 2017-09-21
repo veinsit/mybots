@@ -1,15 +1,74 @@
 'use strict'
+if ( !process.env.OPENDATAURIBASE) {
+  require('dotenv').config()
+}
+
+const baseUri = process.env.OPENDATAURIBASE
+
+const baseUiUri = baseUri.replace('/api/', '/ui/');
+
 const sqlite3 = require('sqlite3').verbose();
 import utils = require("./utils")
 
 const dbName = bacino => `dist/db/database${bacino}.sqlite3`
 
-export function getLinee(bacino)  : Promise<any[]> {
-  const q = `select route_id, route_short_name, route_long_name, route_type 
-             from routes`;
+export class Linea {
 
-  return dbAllPromise(dbName(bacino), q);  
+  route_id:string; 
+  route_short_name:string; 
+  route_long_name:string; 
+  route_type:string; 
+
+  display_name: string // es. 1,2, 96A, 127, ecc
+
+  constructor (rec) {
+    this.route_id =rec.route_id, this.route_short_name=rec.route_short_name, this.route_long_name=rec.route_short_name, this.route_type=rec.route_short_name
+
+    this.display_name = this._displayName(rec.route_id, rec.route_long_name)
+  }
+
+  private _displayName(c:string, ln:string) : string {
+
+    ln = ln.toUpperCase()
+    if (!ln.startsWith('LINEA '))
+      return ln;
+    ln = ln.substring(6)
+
+    if(ln.startsWith('FOA'))
+     return parseInt(ln.substring(3)).toString()+'A'
+
+    if(ln.startsWith('FOS'))
+     return 'S'+parseInt(ln.substring(3)).toString()
+
+    if (ln.startsWith('FO')||ln.startsWith('CE')||ln.startsWith("S0")) 
+      return parseInt(ln.substring(2)).toString()
+
+    if (ln.endsWith('CO')) 
+      return ln.substring(0, ln.length - 2)
+
+    return ln;
+  }
+
+  getOpendataUri() { return baseUiUri + 'FC/linee/' + this.route_id}
+  getAscDir()      { return "Ascendente"}
+  getDisDir()      { return "Discendente"}
+  getTitle = () => "Linea "+this.route_short_name+" ("+this.route_id+")"
+  getSubtitle() {
+    //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
+    return this.route_long_name
+  }
+  static queryGetAll() : string { return "SELECT route_id, route_short_name, route_long_name, route_type FROM routes"}
+}
+
+export function getLinee(bacino, callback : (linee:Linea[])=>any) {
+  return dbAllPromise<Linea>(dbName(bacino), Linea.queryGetAll())
+    .then((recs:any[]) => 
+        callback(recs.map(l=>new Linea(l)))
+    );  
 }  
+function _getLinee(bacino)  : Promise<Linea[]> {
+  return dbAllPromise<Linea>(dbName(bacino), Linea.queryGetAll());  
+} 
 
 export function getCorseOggi(bacino, route_id, dir01?)  : Promise<any[]> {
 
@@ -48,8 +107,8 @@ export function getShape(bacino, shape_id)  : Promise<any[]> {
 }  
 
 
-function dbAllPromise(dbname:string, query:string) : Promise<any[]> {
-  return new Promise (function(resolve,reject) {
+function dbAllPromise<T>(dbname:string, query:string) : Promise<T[]> {
+  return new Promise<T[]> (function(resolve,reject) {
     var db = new sqlite3.Database(dbname);
     db.all(query, function (err, rows) {
         if (err) reject(err); else resolve(rows);

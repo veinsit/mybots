@@ -1,30 +1,10 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
-if (!process.env.OPENDATAURIBASE) {
-    require('dotenv').config();
-}
-const baseUri = process.env.OPENDATAURIBASE;
-const baseUiUri = baseUri.replace('/api/', '/ui/');
 const utils = require("../utils");
 //import service = require("../service")
 const service = require("../servicedb");
 // Load emojis
 let emo = require('../assets/emoji');
-/*
-class Linea {
-    constructor(l:any) {
-        this.Bacino = l.Bacino,
-        this.route_id = l.Bacino ,
-        this.name = l.name ,
-        this.route_id = l.route_id ,
-        this.asc_direction = l.asc_direction ,
-        this.desc_direction = l.desc_direction ,
-        this.strip_asc_direction = l.strip_asc_direction ,
-        this.strip_desc_direction = l.strip_desc_direction ,
-        this.asc_note = l.asc_note ,
-        this.desc_note = l.desc_note
-    }
-}*/
 // var. globale inizializzata dalla init()
 let linee = [];
 //=======================================================  exports
@@ -92,14 +72,19 @@ exports.onLocationReceived = (chat, coords) => {
     //    });// end serialize
 };
 // inizializza var globale 'linee'
-exports.init = (callback) => service.getLinee('FC')
-    .then(_linee => {
-    linee = _linee;
-    //            linee.forEach(l => redefDisplayName(l)) // ridefinisce il route_id, se non presente
-    //console.log(linee.map(l=>l.route_id))
-    callback && callback(linee, undefined);
-}, (err) => { console.log(err); callback && callback(undefined, err); } // rejected
-);
+/*
+export const init = (callback?) =>
+    service.getLinee('FC')
+        .then( (_linee: Linea[]) => {
+            linee = _linee;
+            linee.forEach(l => redefDisplayName(l)) // ridefinisce il route_id, se non presente
+            //console.log(linee.map(l=>l.route_id))
+            callback && callback(linee, undefined)
+            },
+            (err) => {console.log(err);  callback && callback(undefined, err) }// rejected
+        );
+        */
+exports.init = (callback) => service.getLinee('FC', _linee => { linee = _linee; callback && callback(_linee, undefined); });
 //---------------------------------------------- end exports
 // ridefinisce il route_id quando non è definito
 function redefDisplayName(l) {
@@ -121,7 +106,7 @@ function redefDisplayName(l) {
                 n = '5A';
             else if (n === "SA96")
                 n = '96A';
-            else if (n.startsWith('S') || n.endsWith("'")) { } // scolastici S1, S2 , ...
+            else if (n.startsWith('S') || n.endsWith("'")) { } // scolastici S1, S2 , ..., 126'
             else if (n.endsWith('CO'))
                 n = n.substring(0, n.length - 2);
             else {
@@ -134,10 +119,9 @@ function redefDisplayName(l) {
             }
         }
     } // end n undefined
-    if (n.startsWith("NAVE"))
-        n = 'Navetta';
+    // if (n.startsWith("NAVE"))   n = 'Navetta'
     console.log(`${l.route_id} --> ${n}`);
-    l.route_id = n;
+    l.route_short_name = n;
 }
 //============================ precaricamento delle linee (NON USATA)
 /*
@@ -171,13 +155,14 @@ export function getLinee(bacino, callback: (linee:any[]) => any) {
 //-------------------------------------------------------------------
 exports.testSearchLinea = (chat, askedLinea) => {
     //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
-    console.log(`searchLinea: searching for  route_id = ${askedLinea}`);
-    let results = linee.filter(it => it.route_id === askedLinea);
+    console.log(`searchLinea: searching for  route_short_name = ${askedLinea}`);
+    let results = linee.filter(it => it.display_name === askedLinea);
     if (results.length === 0) {
         console.log(`searchLinea: not found! searching for route_id = ${askedLinea}`);
         // prova a cercare anche tra i codici linea
         results = linee.filter(it => it.route_id === askedLinea);
         if (results.length === 0) {
+            console.log(`searchLinea: NOT FOUND!`);
             return false;
         }
     }
@@ -186,13 +171,14 @@ exports.testSearchLinea = (chat, askedLinea) => {
 };
 exports.searchLinea = (chat, askedLinea) => {
     //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
-    console.log(`searchLinea: searching for  route_id = ${askedLinea}`);
-    let results = linee.filter(it => it.route_id === askedLinea);
+    console.log(`searchLinea: searching for  route_short_name = ${askedLinea}`);
+    let results = linee.filter(it => it.display_name === askedLinea);
     if (results.length === 0) {
         console.log(`searchLinea: not found! searching for route_id = ${askedLinea}`);
         // prova a cercare anche tra i codici linea
         results = linee.filter(it => it.route_id === askedLinea);
         if (results.length === 0) {
+            console.log(`searchLinea: NOT FOUND!`);
             return false;
         }
     }
@@ -208,8 +194,8 @@ exports.searchLinea = (chat, askedLinea) => {
         const linea = results[i];
         const center = mapCenter(linea);
         items.push({
-            title: ("Linea " + linea.route_id),
-            subtitle: getSubtitle(linea),
+            title: linea.getTitle(),
+            subtitle: linea.getSubtitle(),
             // https://developers.google.com/maps/documentation/static-maps/intro
             image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
             //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
@@ -222,11 +208,9 @@ exports.searchLinea = (chat, askedLinea) => {
             }]*/
             // producono ORARI_XX_YYYY
             buttons: [
-                utils.postbackBtn(linea.strip_asc_direction ?
-                    "verso " + linea.strip_asc_direction : "Ascendente", "TPL_ORARI_As_" + linea.route_id),
-                utils.postbackBtn(linea.strip_desc_direction ?
-                    "verso " + linea.strip_desc_direction : "Discendente", "TPL_ORARI_Di_" + linea.route_id),
-                utils.weburlBtn("Sito", baseUiUri + 'FC/linee/' + linea.route_id)
+                utils.postbackBtn(linea.getAscDir(), "TPL_ORARI_As_" + linea.route_id),
+                utils.postbackBtn(linea.getDisDir(), "TPL_ORARI_Di_" + linea.route_id),
+                utils.weburlBtn("Sito", linea.getOpendataUri())
             ]
         });
     }
@@ -242,10 +226,6 @@ exports.searchLinea = (chat, askedLinea) => {
     });
     return true;
 };
-function getSubtitle(linea) {
-    //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
-    return linea.route_long_name;
-}
 const scegliAorD = (chat, route_id) => {
     const qr = ["Ascen", "Discen"];
     chat.conversation(convo => {

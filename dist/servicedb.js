@@ -1,14 +1,52 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
+if (!process.env.OPENDATAURIBASE) {
+    require('dotenv').config();
+}
+const baseUri = process.env.OPENDATAURIBASE;
+const baseUiUri = baseUri.replace('/api/', '/ui/');
 const sqlite3 = require('sqlite3').verbose();
 const utils = require("./utils");
 const dbName = bacino => `dist/db/database${bacino}.sqlite3`;
-function getLinee(bacino) {
-    const q = `select route_id, route_short_name, route_long_name, route_type 
-             from routes`;
-    return dbAllPromise(dbName(bacino), q);
+class Linea {
+    constructor(rec) {
+        this.getTitle = () => "Linea " + this.route_short_name + " (" + this.route_id + ")";
+        this.route_id = rec.route_id, this.route_short_name = rec.route_short_name, this.route_long_name = rec.route_short_name, this.route_type = rec.route_short_name;
+        this.display_name = this._displayName(rec.route_id, rec.route_long_name);
+    }
+    _displayName(c, ln) {
+        ln = ln.toUpperCase();
+        if (!ln.startsWith('LINEA '))
+            return ln;
+        ln = ln.substring(6);
+        if (ln.startsWith('FOA'))
+            return parseInt(ln.substring(3)).toString() + 'A';
+        if (ln.startsWith('FOS'))
+            return 'S' + parseInt(ln.substring(3)).toString();
+        if (ln.startsWith('FO') || ln.startsWith('CE') || ln.startsWith("S0"))
+            return parseInt(ln.substring(2)).toString();
+        if (ln.endsWith('CO'))
+            return ln.substring(0, ln.length - 2);
+        return ln;
+    }
+    getOpendataUri() { return baseUiUri + 'FC/linee/' + this.route_id; }
+    getAscDir() { return "Ascendente"; }
+    getDisDir() { return "Discendente"; }
+    getSubtitle() {
+        //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
+        return this.route_long_name;
+    }
+    static queryGetAll() { return "SELECT route_id, route_short_name, route_long_name, route_type FROM routes"; }
+}
+exports.Linea = Linea;
+function getLinee(bacino, callback) {
+    return dbAllPromise(dbName(bacino), Linea.queryGetAll())
+        .then((recs) => callback(recs.map(l => new Linea(l))));
 }
 exports.getLinee = getLinee;
+function _getLinee(bacino) {
+    return dbAllPromise(dbName(bacino), Linea.queryGetAll());
+}
 function getCorseOggi(bacino, route_id, dir01) {
     const direction = dir01 ? ` and direction_id='${dir01}' ` : '';
     const d = (new Date()); // oggi
