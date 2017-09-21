@@ -86,7 +86,7 @@ export const init = (callback?) =>
         */
 exports.init = (callback) => service.getLinee('FC')
     .then((rows) => {
-    linee = rows.map((row) => new service.Linea(row));
+    linee = rows.map((row) => new service.Linea('FC', row));
     callback && callback(linee, undefined);
 });
 //---------------------------------------------- end exports
@@ -121,19 +121,6 @@ export function getLinee(bacino, callback: (linee:any[]) => any) {
 */
 //-------------------------------------------------------------------
 exports.testSearchLinea = (chat, askedLinea) => {
-    //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
-    console.log(`searchLinea: searching for  route_short_name = ${askedLinea}`);
-    let results = linee.filter(it => it.display_name === askedLinea);
-    if (results.length === 0) {
-        console.log(`searchLinea: not found! searching for route_id = ${askedLinea}`);
-        // prova a cercare anche tra i codici linea
-        results = linee.filter(it => it.route_id === askedLinea);
-        if (results.length === 0) {
-            console.log(`searchLinea: NOT FOUND!`);
-            return false;
-        }
-    }
-    console.log(`searchLinea: FOUND!`);
     return true;
 };
 exports.searchLinea = (chat, askedLinea) => {
@@ -165,6 +152,7 @@ exports.searchLinea = (chat, askedLinea) => {
             .then((shape) => {
             let x = [];
             shape.forEach(s => x.push(`${s.shape_pt_lat},${s.shape_pt_lon}`));
+            console.log(x.join('%7C'));
             items.push({
                 title: linea.getTitle(),
                 subtitle: linea.getSubtitle(),
@@ -281,20 +269,8 @@ function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
         }), 3000);
     });
 }
-function getCU(linea) {
-    if (true || linea.Bacino === 'FC') {
-        if (linea.route_id.indexOf("CE") >= 0)
-            return 'CE';
-        if (linea.route_id.indexOf("FO") >= 0)
-            return 'FO';
-        if (linea.route_id.indexOf("CO") >= 0)
-            return 'CO';
-        return undefined;
-    }
-    // return undefined;  //TODO completare
-}
 function mapCenter(linea) {
-    const cu = getCU(linea);
+    const cu = linea.getCU();
     if (cu === 'CE')
         return { center: "Cesena,Italy", zoom: 11 };
     if (cu === 'FO')

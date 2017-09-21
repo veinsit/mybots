@@ -20,11 +20,13 @@ export class Linea {
   readonly route_type:string
 
   display_name: string // es. 1,2, 96A, 127, ecc
+  readonly bacino: string // es. 1,2, 96A, 127, ecc
   
-  constructor (rec:any) {
+  constructor (bacino, rec:any) {
 //    this.route_id =rec.route_id, this.route_short_name=rec.route_short_name, this.route_long_name=rec.route_short_name, this.route_type=rec.route_short_name
 
     this.display_name = this._displayName(rec.route_id, rec.route_long_name)
+    this.bacino = bacino
   }
   
   private _displayName(c:string, ln:string) : string {
@@ -56,6 +58,20 @@ export class Linea {
   getSubtitle() {
     //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
     return this.route_long_name
+  }
+
+  getCU(): string {
+    if (this.bacino === 'FC') {
+        if (this.route_id.indexOf("CE") >= 0)
+            return 'CE'
+        if (this.route_id.indexOf("FO") >= 0)
+            return 'FO'
+        if (this.route_id.indexOf("CO") >= 0)
+            return 'CO'
+
+        return undefined
+    }
+    return undefined
   }
   static queryGetAll() : string { return "SELECT route_id, route_short_name, route_long_name, route_type FROM routes"}
 }

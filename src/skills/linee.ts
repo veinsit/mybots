@@ -103,7 +103,7 @@ export const init = (callback?) =>
 export const init = (callback?) =>
     service.getLinee('FC')
         .then((rows:any[]) => {
-            linee = rows.map( (row) => new service.Linea(row) ); 
+            linee = rows.map( (row) => new service.Linea('FC', row) ); 
             callback && callback(linee, undefined)
         });
 //---------------------------------------------- end exports
@@ -142,22 +142,6 @@ export function getLinee(bacino, callback: (linee:any[]) => any) {
 
 //-------------------------------------------------------------------
 export const testSearchLinea = (chat, askedLinea): boolean => {
-    //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
-
-    console.log(`searchLinea: searching for  route_short_name = ${askedLinea}`)
-    let results = linee.filter(it => it.display_name === askedLinea)
-
-    if (results.length === 0) {
-        console.log(`searchLinea: not found! searching for route_id = ${askedLinea}`)
-        // prova a cercare anche tra i codici linea
-        results = linee.filter(it => it.route_id === askedLinea)
-        if (results.length === 0) {
-            console.log(`searchLinea: NOT FOUND!`)
-            return false;
-        }
-
-    } 
-    console.log(`searchLinea: FOUND!`)
     
     return true;
 }
@@ -167,7 +151,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
 
     let search = askedLinea.toUpperCase()
     console.log(`searchLinea: searching for  route_short_name = ${search}`)
-    let results = linee.filter(it => it.display_name === search)
+    let results : Linea[] = linee.filter(it => it.display_name === search)
 
     if (results.length === 0) {
         console.log(`searchLinea: not found! searching for route_id = ${search}`)
@@ -196,6 +180,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
         .then((shape:any[]) => {
             let x=[]
             shape.forEach(s => x.push(`${s.shape_pt_lat},${s.shape_pt_lon}`))
+            console.log(x.join('%7C'))
             items.push({
                 title: linea.getTitle(),
                 subtitle: linea.getSubtitle(),//
@@ -341,23 +326,9 @@ function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
     });
 }
 
-function getCU(linea: any): string {
-    if (true || linea.Bacino === 'FC') {
-        if (linea.route_id.indexOf("CE") >= 0)
-            return 'CE'
-        if (linea.route_id.indexOf("FO") >= 0)
-            return 'FO'
-        if (linea.route_id.indexOf("CO") >= 0)
-            return 'CO'
 
-        return undefined
-    }
-
-    // return undefined;  //TODO completare
-}
-
-function mapCenter(linea: any): any {
-    const cu = getCU(linea);
+function mapCenter(linea: Linea): any {
+    const cu = linea.getCU();
     if (cu === 'CE') return { center: "Cesena,Italy", zoom: 11 }
     if (cu === 'FO') return { center: "Forli,Italy", zoom: 11 }
     if (cu === 'CO') return { center: "Cesenatico,Italy", zoom: 13 }

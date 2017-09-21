@@ -9,10 +9,11 @@ const sqlite3 = require('sqlite3').verbose();
 const utils = require("./utils");
 const dbName = bacino => `dist/db/database${bacino}.sqlite3`;
 class Linea {
-    constructor(rec) {
+    constructor(bacino, rec) {
         //    this.route_id =rec.route_id, this.route_short_name=rec.route_short_name, this.route_long_name=rec.route_short_name, this.route_type=rec.route_short_name
         this.getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")";
         this.display_name = this._displayName(rec.route_id, rec.route_long_name);
+        this.bacino = bacino;
     }
     _displayName(c, ln) {
         ln = ln.toUpperCase();
@@ -35,6 +36,18 @@ class Linea {
     getSubtitle() {
         //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
         return this.route_long_name;
+    }
+    getCU() {
+        if (this.bacino === 'FC') {
+            if (this.route_id.indexOf("CE") >= 0)
+                return 'CE';
+            if (this.route_id.indexOf("FO") >= 0)
+                return 'FO';
+            if (this.route_id.indexOf("CO") >= 0)
+                return 'CO';
+            return undefined;
+        }
+        return undefined;
     }
     static queryGetAll() { return "SELECT route_id, route_short_name, route_long_name, route_type FROM routes"; }
 }
