@@ -137,57 +137,66 @@ exports.searchLinea = (chat, askedLinea) => {
             return false;
         }
     }
-    console.log(`searchLinea ${search} : ${results}`);
+    console.log(`searchLinea ${search} : OK`);
     let nresults = results.length;
     // Show 7 (or less) relevant movies
     if (nresults > 7) {
         nresults = 7;
     }
-    let items = []; // items = linee
-    for (let i = 0; i < nresults; i++) {
-        // let release_date = new Date(res.results[i].release_date)
-        const linea = results[i];
-        const center = mapCenter(linea);
-        service.getReducedLongestShape('FC', linea.route_id, 10)
-            .then((shape) => {
-            let x = [];
-            shape.forEach(s => x.push(`${s.shape_pt_lat},${s.shape_pt_lon}`));
-            console.log(x.join('%7C'));
-            items.push({
-                title: linea.getTitle(),
-                subtitle: linea.getSubtitle(),
-                // https://developers.google.com/maps/documentation/static-maps/intro
-                //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
-                image_url: utils.gStatMapUrl(`size=100x50&path=color:0x0000ff%7Cweight:4%7C${x.join('%7C')}`),
-                // path=color:0x0000ff|weight:5|40.737102,-73.990318|40.749825,-73.987963|40.752946,-73.987384
-                /*
-                "buttons": [{
-                "type": "web_url",
-                "url": service.baseUiUri+'FC/linee/'+linea.route_id,
-                "title": emo.emoji.link + " Dettagli",
-                "webview_height_ratio": "tall"
-                }]*/
-                // producono ORARI_XX_YYYY
-                buttons: [
-                    utils.postbackBtn(linea.getAscDir(), "TPL_ORARI_As_" + linea.route_id),
-                    utils.postbackBtn(linea.getDisDir(), "TPL_ORARI_Di_" + linea.route_id),
-                    utils.weburlBtn("Sito", linea.getOpendataUri())
-                ]
-            });
-        }); //end then
-    }
-    chat.say("Ecco le linee che ho trovato!").then(() => {
-        chat.sendGenericTemplate(items); /*.then(() => {
-              chat.sendTypingIndicator(1500).then(() => {
-                chat.say({
-                  text: "Scegli!",
-                  quickReplies: movies.map(it=>"== "+it.route_id)
-                })
-              })
-            })*/
+    const p = new Promise((resolve, rej) => {
+        let items = []; // items = linee
+        for (let i = 0; i < nresults; i++) {
+            // let release_date = new Date(res.results[i].release_date)
+            const linea = results[i];
+            const center = mapCenter(linea);
+            service.getReducedLongestShape('FC', linea.route_id, 10)
+                .then((shape) => {
+                items.push(_lineaItem(linea, shape))
+                    , (err) => { console.log("ERR prom shape rejected: " + err); items.push(_lineaItem(linea)); };
+            }); //end then
+        }
+        resolve(items);
     });
+    p.then((items) => chat.say("Ecco le linee che ho trovato!").then(() => {
+        chat.sendGenericTemplate(items); /*.then(() => {
+            chat.sendTypingIndicator(1500).then(() => {
+                chat.say({
+                text: "Scegli!",
+                quickReplies: movies.map(it=>"== "+it.route_id)
+                })
+            })
+            })*/
+    }));
     return true;
 };
+function _lineaItem(linea, shape) {
+    let x = [];
+    shape && shape.forEach(s => x.push(`${s.shape_pt_lat},${s.shape_pt_lon}`));
+    shape && console.log(x.join('%7C'));
+    return {
+        title: linea.getTitle(),
+        subtitle: linea.getSubtitle(),
+        // https://developers.google.com/maps/documentation/static-maps/intro
+        //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
+        image_url: shape
+            ? utils.gStatMapUrl(`size=100x50&path=color:0x0000ff%7Cweight:4%7C${x.join('%7C')}`)
+            : utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
+        // path=color:0x0000ff|weight:5|40.737102,-73.990318|40.749825,-73.987963|40.752946,-73.987384
+        /*
+        "buttons": [{
+        "type": "web_url",
+        "url": service.baseUiUri+'FC/linee/'+linea.route_id,
+        "title": emo.emoji.link + " Dettagli",
+        "webview_height_ratio": "tall"
+        }]*/
+        // producono ORARI_XX_YYYY
+        buttons: [
+            utils.postbackBtn(linea.getAscDir(), "TPL_ORARI_As_" + linea.route_id),
+            utils.postbackBtn(linea.getDisDir(), "TPL_ORARI_Di_" + linea.route_id),
+            utils.weburlBtn("Sito", linea.getOpendataUri())
+        ]
+    };
+}
 const scegliAorD = (chat, route_id) => {
     const qr = ["Ascen", "Discen"];
     chat.conversation(convo => {

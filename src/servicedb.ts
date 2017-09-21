@@ -107,18 +107,35 @@ export function getPassaggiCorsa(bacino, corsa)  : Promise<any[]> {
   return dbAllPromise(dbName(bacino), q);  
 }  
 
-export function getShape(bacino, shape_id)  : Promise<any[]> {
+export class Shape {
+  readonly shape_pt_lat : number
+  readonly shape_pt_lon : number
+  readonly shape_pt_seq : number
+
+  constructor (r) {
+    this.shape_pt_lat = r.shape_pt_lat
+    this.shape_pt_lon = r.shape_pt_lon
+    this.shape_pt_seq = r.shape_pt_seq
+  }
+}
+export function getShape(bacino, shape_id)  : Promise<Shape[]> {
 
   const q = `select shape_pt_lat, shape_pt_lon, CAST(shape_pt_sequence as INTEGER) as shape_pt_seq
   from shapes
   where shape_id = '${shape_id}'
   order by shape_pt_seq`
   
-  return dbAllPromise(dbName(bacino), q);  
+  return new Promise<Shape[]> (function(resolve,reject) {
+    var db = new sqlite3.Database(dbName(bacino));
+    db.all(q, function (err, rows) {
+        if (err) reject(err); else resolve( rows.map(r=>new Shape(r)));
+        db.close();
+    }); // end each
+  }) // end Promise  
 }  
 
 // percorso più lungo (nel senso cha ha più punti)
-function getLongestShape(bacino, route_id) : Promise<any[]> {
+function getLongestShape(bacino, route_id) : Promise<Shape[]> {
   //percorso più lungo di una linea
   
   const q = `SELECT s.shape_id, count(*)as numPoints
@@ -134,15 +151,15 @@ function getLongestShape(bacino, route_id) : Promise<any[]> {
 
 }
 // n = quanti punti oltre al primo e ultimo
-export function getReducedLongestShape(bacino, route_id, n:number) : Promise<any[]> {
+export function getReducedLongestShape(bacino, route_id, n:number) : Promise<Shape[]> {
 
     return getLongestShape(bacino, route_id)
-      .then(function(shape:any[]) {
+      .then(function(shape:Shape[]) : Shape[] {
         if ( n>=shape.length)
           return shape;
 
         let step = shape.length/(n+1);
-        let new_shape = []
+        let new_shape : Shape[] = []
         for(let i=0; i<n+1; i++) {
           new_shape.push(shape[i*step])
         }

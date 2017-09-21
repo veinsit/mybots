@@ -77,12 +77,29 @@ function getPassaggiCorsa(bacino, corsa) {
     return dbAllPromise(dbName(bacino), q);
 }
 exports.getPassaggiCorsa = getPassaggiCorsa;
+class Shape {
+    constructor(r) {
+        this.shape_pt_lat = r.shape_pt_lat;
+        this.shape_pt_lon = r.shape_pt_lon;
+        this.shape_pt_seq = r.shape_pt_seq;
+    }
+}
+exports.Shape = Shape;
 function getShape(bacino, shape_id) {
     const q = `select shape_pt_lat, shape_pt_lon, CAST(shape_pt_sequence as INTEGER) as shape_pt_seq
   from shapes
   where shape_id = '${shape_id}'
   order by shape_pt_seq`;
-    return dbAllPromise(dbName(bacino), q);
+    return new Promise(function (resolve, reject) {
+        var db = new sqlite3.Database(dbName(bacino));
+        db.all(q, function (err, rows) {
+            if (err)
+                reject(err);
+            else
+                resolve(rows.map(r => new Shape(r)));
+            db.close();
+        }); // end each
+    }); // end Promise  
 }
 exports.getShape = getShape;
 // percorso più lungo (nel senso cha ha più punti)
