@@ -137,35 +137,43 @@ exports.searchLinea = (chat, askedLinea) => {
     console.log(`searchLinea ${search} : OK`);
     let nresults = results.length;
     // Show 7 (or less) relevant movies
-    if (nresults > 7) {
-        nresults = 7;
+    if (nresults > 4) {
+        nresults = 4;
     }
     let items = []; // items = linee
     /// crea un array di Promise per ogni linea
-    let promises = [];
-    (function loop(index) {
-        //    for (var index = 0; index < results.length; index++) {
-        var linea = results[index];
-        promises.push(service.getReducedLongestShape('FC', linea.route_id, 10)
-            .then((shape) => { items.push(_lineaItem(linea, shape)); console.log("Promise resolved for " + linea.route_id); }, (err) => { items.push(_lineaItem(linea, undefined)); console.log("ERR prom shape rejected: " + err); }) //end then
-            .then(() => {
-            if (index < results.length)
-                loop(index + 1);
-            else {
-                console.log("Promise.all resolved " + items.length);
-                chat.say("Ecco le linee che ho trovato!").then(() => {
-                    chat.sendGenericTemplate(items); /*.then(() => {
-                        chat.sendTypingIndicator(1500).then(() => {
-                            chat.say({
-                            text: "Scegli!",
-                            quickReplies: movies.map(it=>"== "+it.route_id)
+    //   let promises : Promise<void>[] = [];
+    if (nresults > 0) {
+        (function loop(index) {
+            //    for (var index = 0; index < results.length; index++) {
+            var linea = results[index];
+            //        promises.push(
+            service.getReducedLongestShape('FC', linea.route_id, 10)
+                .then((shape) => { items.push(_lineaItem(linea, shape)); console.log("Promise resolved for " + linea.route_id); }) //end then
+                .then(() => {
+                if (index < nresults - 1)
+                    loop(index + 1);
+                else {
+                    console.log("Promise.all resolved " + items.length);
+                    chat.say("Ecco le linee che ho trovato!").then(() => {
+                        chat.sendGenericTemplate(items); /*.then(() => {
+                            chat.sendTypingIndicator(1500).then(() => {
+                                chat.say({
+                                text: "Scegli!",
+                                quickReplies: movies.map(it=>"== "+it.route_id)
+                                })
                             })
-                        })
-                        })*/
-                });
-            }
-        })); // end push
-    })(0);
+                            })*/
+                    });
+                }
+            })
+                .catch((err) => {
+                items.push(_lineaItem(linea, undefined));
+                console.log("ERR prom shape rejected: " + linea.route_id + " " + err);
+            });
+            //        )// end push
+        })(0);
+    }
     /*
 //    setTimeout(() =>
         Promise.all(promises).then(()=>{
