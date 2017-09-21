@@ -1,18 +1,18 @@
-'use strict';
+"use strict";
 
-import utils = require("../utils")
-//import service = require("../service")
-import service = require("../servicedb")
+import utils = require("../utils");
 
 // Load emojis
-let emo = require('../assets/emoji')
-type Linea = service.Linea
-type Shape = service.Shape
+import emo = require("../assets/emoji");
+
+import service = require("../servicedb");
+type Linea = service.Linea;
+type Shape = service.Shape;
 
 // var. globale inizializzata dalla init()
 let linee: Linea[] = []
 
-//=======================================================  exports
+// =======================================================  exports
 export const PB_TPL = 'TPL_';
 export const onPostback = (pl: string, chat, data): boolean => {
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
@@ -28,7 +28,7 @@ export const onPostback = (pl: string, chat, data): boolean => {
     if (pl.startsWith("TPL_PAGE_CORSE_")) { // 15 PAGE_CORSE_F127_As_2
         const match = /(.*)_(As|Di)_([0-9]+)/.exec(pl.substring(15))
 
-        displayOrariPage(chat, match[1], match[2], parseInt(match[3]))
+        displayOrariPage(chat, match[1], match[2], parseInt(match[3], 10))
         return true;
     }
     if (pl.startsWith("TPL_ON_CORSA_")) { // 13 TPL_ON_CORSA_F127_XXXX
@@ -209,17 +209,17 @@ export const searchLinea = (chat, askedLinea): boolean => {
 
 function _lineaItem(linea: Linea, shape?: Shape[]) {
     let x: string[] = []
-    const hasShape = (shape!==undefined && shape!==null && shape.length >= 4)
-    if (hasShape) 
-        shape.forEach(s => x.push(`${s.shape_pt_lat},${s.shape_pt_lon}`))
-    //shape && console.log(x.join('%7C'))
+    const hasShape = (shape !== undefined && shape !== null && shape.length >= 4)
+    if (hasShape)
+        shape.forEach((s) => x.push(`${s.shape_pt_lat},${s.shape_pt_lon}`))
+    // shape && console.log(x.join('%7C'))
     const center = mapCenter(linea)
     return {
         title: linea.getTitle(),
-        subtitle: linea.getSubtitle(),//
+        subtitle: linea.getSubtitle(),
         // https://developers.google.com/maps/documentation/static-maps/intro
         //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
-        image_url: utils.gStatMapUrl( !hasShape 
+        image_url: utils.gStatMapUrl( !hasShape
             ? `size=100x50&center=${center.center}&zoom=${center.zoom}`
             : `size=100x50&path=color:0x0000ff%7Cweight:2%7C${x.join('%7C')}`
           ),
@@ -242,8 +242,8 @@ function _lineaItem(linea: Linea, shape?: Shape[]) {
 }
 const scegliAorD = (chat, route_id) => {
     const qr = ["Ascen", "Discen"];
-    chat.conversation(convo => {
-        // tutto dentro la convo 
+    chat.conversation((convo) => {
+        // tutto dentro la convo
         convo.ask(
             { text: 'In quale direzione ?', quickReplies: qr },
             (payload, convo) => {
@@ -256,7 +256,7 @@ const scegliAorD = (chat, route_id) => {
             [{
                 event: 'quick_reply',
                 callback: (payload, convo) => {
-                    const text = payload.message.text;
+                    const text = payload.message.text; 
                     // convo.say(`Thanks for choosing one of the options. Your favorite color is ${text}`);
                     convo.end()
                         .then(() =>
@@ -277,8 +277,8 @@ const displayOrariPage = (chat, route_id, AorD, page: number) => {
 
 const onResultCorse = (data, chat, route_id, AorD, page) => {
     const quanteInsieme = 4;
-    var result = {
-        corse: data.filter(it => it.VERSO === AorD)
+    const result = {
+        corse: data.filter((it) => it.VERSO === AorD)
             .slice(page * quanteInsieme, (page + 1) * quanteInsieme)
             .map(function (item) {
                 return {
@@ -292,16 +292,16 @@ const onResultCorse = (data, chat, route_id, AorD, page) => {
     // Puoi inviare da un minimo di 2 a un massimo di 4 elementi.
     // L'aggiunta di un pulsante a ogni elemento è facoltativa. Puoi avere solo 1 pulsante per elemento.
     // Puoi avere solo 1 pulsante globale.
-    let els = []
-    for (var i = 0; i < Math.min(quanteInsieme, result.corse.length); i++) {
-        var corsa = result.corse[i]
+    const els = []
+    for (let i = 0; i < Math.min(quanteInsieme, result.corse.length); i++) {
+        const corsa = result.corse[i]
         els.push({
-            "title": `${i}) partenza ${corsa.parte}`,
-            "subtitle": corsa.DESC_PERCORSO + "  arriva alle " + corsa.arriva,
-            //"image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",          
-            "buttons": utils.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + route_id + "_" + corsa.CORSA),
+            title: `${i+1}) partenza ${corsa.parte}`,
+            subtitle: corsa.DESC_PERCORSO + "  arriva alle " + corsa.arriva,
+            // "image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",
+            buttons: utils.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + route_id + "_" + corsa.CORSA),
         })
-    }//end for  
+    } // end for
 
     const noNextPage = () => result.corse.length < quanteInsieme
 
@@ -325,11 +325,13 @@ const onResultPassaggi = (data, chat, route_id, corsa_id) => {
     chat.say(`Qui dovrei mostrarti i passaggi della corsa ${corsa_id} della linea ${route_id}`)
 }
 
-//=================================================================================
+// =================================================================================
 //            helpers
-//=================================================================================
+// =================================================================================
 function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
-    chat.say(`La fermata più vicina è ${nearestStop.stop_name} a ${dist.toFixed(0)} metri in linea d'aria`, { typing: true })
+    chat.say(`La fermata più vicina è ${nearestStop.stop_name}
+               a ${dist.toFixed(0)} metri in linea d'aria`, 
+               { typing: true })
         .then(() => {
             const m1 = _mark(coords.lat, coords.long, 'P', 'blue')
             const m2 = _mark(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red')
@@ -341,7 +343,7 @@ function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
             setTimeout(() =>
                 chat.say({
                     text: 'Ci passano le linee ' + lineePassanti.join(', '),
-                    quickReplies: lineePassanti// .map(l=>linee.filter(x=>x.route_id===l)),
+                    quickReplies: lineePassanti, // .map(l=>linee.filter(x=>x.route_id===l)),
                 }), 3000);
         });
 }
