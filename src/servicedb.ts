@@ -18,7 +18,7 @@ export class Linea {
   readonly route_short_name:string
   readonly route_long_name:string
   readonly route_type:string
-  
+
   display_name: string // es. 1,2, 96A, 127, ecc
   
   constructor (rec:any) {
@@ -101,6 +101,37 @@ export function getShape(bacino, shape_id)  : Promise<any[]> {
   return dbAllPromise(dbName(bacino), q);  
 }  
 
+// percorso più lungo (nel senso cha ha più punti)
+function getLongestShape(bacino, route_id) : Promise<any[]> {
+  //percorso più lungo di una linea
+  
+  const q = `SELECT s.shape_id, count(*)as numPoints
+  FROM shapes s 
+  WHERE s.shape_id in (SELECT t.shape_id from trips t where t.route_id='${route_id}')
+  GROUP BY s.shape_id
+  ORDER BY numPoints desc`
+
+  
+  return dbAllPromise(dbName(bacino), q)
+  .then((rows) => rows[0].shape_id)
+  .then((shape_id) => getShape(bacino, shape_id) )
+
+}
+// n = quanti punti oltre al primo e ultimo
+export function getReducedLongestShape(bacino, route_id, n:number) : Promise<any[]> {
+
+    return getLongestShape(bacino, route_id)
+      .then(function(shape:any[]) {
+        let step = shape.length/(n+1);
+        let new_shape = []
+        for(let i=0; i<n+1; i++) {
+          new_shape.push(shape[i*step])
+        }
+        new_shape.push(shape[shape.length-1])
+        
+        return new_shape;
+      })
+}
 
 function dbAllPromise(dbname:string, query:string) : Promise<any[]> {
   return new Promise (function(resolve,reject) {

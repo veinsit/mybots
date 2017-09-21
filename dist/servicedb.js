@@ -72,6 +72,32 @@ function getShape(bacino, shape_id) {
     return dbAllPromise(dbName(bacino), q);
 }
 exports.getShape = getShape;
+// percorso più lungo (nel senso cha ha più punti)
+function getLongestShape(bacino, route_id) {
+    //percorso più lungo di una linea
+    const q = `SELECT s.shape_id, count(*)as numPoints
+  FROM shapes s 
+  WHERE s.shape_id in (SELECT t.shape_id from trips t where t.route_id='${route_id}')
+  GROUP BY s.shape_id
+  ORDER BY numPoints desc`;
+    return dbAllPromise(dbName(bacino), q)
+        .then((rows) => rows[0].shape_id)
+        .then((shape_id) => getShape(bacino, shape_id));
+}
+// n = quanti punti oltre al primo e ultimo
+function getReducedLongestShape(bacino, route_id, n) {
+    return getLongestShape(bacino, route_id)
+        .then(function (shape) {
+        let step = shape.length / (n + 1);
+        let new_shape = [];
+        for (let i = 0; i < n + 1; i++) {
+            new_shape.push(shape[i * step]);
+        }
+        new_shape.push(shape[shape.length - 1]);
+        return new_shape;
+    });
+}
+exports.getReducedLongestShape = getReducedLongestShape;
 function dbAllPromise(dbname, query) {
     return new Promise(function (resolve, reject) {
         var db = new sqlite3.Database(dbname);

@@ -138,18 +138,19 @@ exports.testSearchLinea = (chat, askedLinea) => {
 };
 exports.searchLinea = (chat, askedLinea) => {
     //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
-    console.log(`searchLinea: searching for  route_short_name = ${askedLinea}`);
-    let results = linee.filter(it => it.display_name === askedLinea);
+    let search = askedLinea.toUpperCase();
+    console.log(`searchLinea: searching for  route_short_name = ${search}`);
+    let results = linee.filter(it => it.display_name === search);
     if (results.length === 0) {
-        console.log(`searchLinea: not found! searching for route_id = ${askedLinea}`);
+        console.log(`searchLinea: not found! searching for route_id = ${search}`);
         // prova a cercare anche tra i codici linea
-        let results2 = linee.filter(it => it.route_id === askedLinea);
-        if (results2.length === 0) {
+        results = linee.filter(it => it.route_id === search);
+        if (results.length === 0) {
             console.log(`searchLinea: NOT FOUND!`);
             return false;
         }
     }
-    console.log(`searchLinea ${askedLinea} : ${results}`);
+    console.log(`searchLinea ${search} : ${results}`);
     let nresults = results.length;
     // Show 7 (or less) relevant movies
     if (nresults > 7) {
@@ -160,26 +161,32 @@ exports.searchLinea = (chat, askedLinea) => {
         // let release_date = new Date(res.results[i].release_date)
         const linea = results[i];
         const center = mapCenter(linea);
-        items.push({
-            title: linea.getTitle(),
-            subtitle: linea.getSubtitle(),
-            // https://developers.google.com/maps/documentation/static-maps/intro
-            image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
-            //"subtitle": linea.strip_asc_direction+"\n"+linea.strip_desc_direction,
-            /*
-            "buttons": [{
-              "type": "web_url",
-              "url": service.baseUiUri+'FC/linee/'+linea.route_id,
-              "title": emo.emoji.link + " Dettagli",
-              "webview_height_ratio": "tall"
-            }]*/
-            // producono ORARI_XX_YYYY
-            buttons: [
-                utils.postbackBtn(linea.getAscDir(), "TPL_ORARI_As_" + linea.route_id),
-                utils.postbackBtn(linea.getDisDir(), "TPL_ORARI_Di_" + linea.route_id),
-                utils.weburlBtn("Sito", linea.getOpendataUri())
-            ]
-        });
+        service.getReducedLongestShape('FC', linea.route_id, 10)
+            .then((shape) => {
+            let x = [];
+            shape.forEach(s => x.push(`${s.shape_pt_lat},${s.shape_pt_lon}`));
+            items.push({
+                title: linea.getTitle(),
+                subtitle: linea.getSubtitle(),
+                // https://developers.google.com/maps/documentation/static-maps/intro
+                //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
+                image_url: utils.gStatMapUrl(`size=100x50&path=color:0x0000ff%7Cweight:4%7C${x.join('%7C')}`),
+                // path=color:0x0000ff|weight:5|40.737102,-73.990318|40.749825,-73.987963|40.752946,-73.987384
+                /*
+                "buttons": [{
+                "type": "web_url",
+                "url": service.baseUiUri+'FC/linee/'+linea.route_id,
+                "title": emo.emoji.link + " Dettagli",
+                "webview_height_ratio": "tall"
+                }]*/
+                // producono ORARI_XX_YYYY
+                buttons: [
+                    utils.postbackBtn(linea.getAscDir(), "TPL_ORARI_As_" + linea.route_id),
+                    utils.postbackBtn(linea.getDisDir(), "TPL_ORARI_Di_" + linea.route_id),
+                    utils.weburlBtn("Sito", linea.getOpendataUri())
+                ]
+            });
+        }); //end then
     }
     chat.say("Ecco le linee che ho trovato!").then(() => {
         chat.sendGenericTemplate(items); /*.then(() => {
@@ -264,7 +271,8 @@ function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
         .then(() => {
         const m1 = _mark(coords.lat, coords.lon, 'P', 'blue');
         const m2 = _mark(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red');
-        chat.sendAttachment('image', utils.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, { typing: true });
+        //        chat.sendAttachment('image', utils.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, {typing:true})
+        chat.sendAttachment('image', utils.gStatMapUrl(`size=160x160${m1}${m2}`), undefined, { typing: true });
     })
         .then(() => {
         setTimeout(() => chat.say({
