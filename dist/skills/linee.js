@@ -169,15 +169,17 @@ exports.searchLinea = (chat, askedLinea) => {
 };
 function _lineaItem(linea, shape) {
     let x = [];
-    shape && shape.forEach(s => x.push(`${s.shape_pt_lat},${s.shape_pt_lon}`));
-    shape && console.log(x.join('%7C'));
+    const hasShape = (shape !== undefined && shape !== null && shape.length >= 4);
+    if (hasShape)
+        shape.forEach(s => x.push(`${s.shape_pt_lat},${s.shape_pt_lon}`));
+    //shape && console.log(x.join('%7C'))
     const center = mapCenter(linea);
     return {
         title: linea.getTitle(),
         subtitle: linea.getSubtitle(),
         // https://developers.google.com/maps/documentation/static-maps/intro
         //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
-        image_url: utils.gStatMapUrl(shape === undefined
+        image_url: utils.gStatMapUrl(!hasShape
             ? `size=100x50&center=${center.center}&zoom=${center.zoom}`
             : `size=100x50&path=color:0x0000ff%7Cweight:2%7C${x.join('%7C')}`),
         // path=color:0x0000ff|weight:5|40.737102,-73.990318|40.749825,-73.987963|40.752946,-73.987384

@@ -209,15 +209,17 @@ export const searchLinea = (chat, askedLinea): boolean => {
 
 function _lineaItem(linea: Linea, shape?: Shape[]) {
     let x: string[] = []
-    shape && shape.forEach(s => x.push(`${s.shape_pt_lat},${s.shape_pt_lon}`))
-    shape && console.log(x.join('%7C'))
+    const hasShape = (shape!==undefined && shape!==null && shape.length >= 4)
+    if (hasShape) 
+        shape.forEach(s => x.push(`${s.shape_pt_lat},${s.shape_pt_lon}`))
+    //shape && console.log(x.join('%7C'))
     const center = mapCenter(linea)
     return {
         title: linea.getTitle(),
         subtitle: linea.getSubtitle(),//
         // https://developers.google.com/maps/documentation/static-maps/intro
         //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
-        image_url: utils.gStatMapUrl( shape===undefined 
+        image_url: utils.gStatMapUrl( !hasShape 
             ? `size=100x50&center=${center.center}&zoom=${center.zoom}`
             : `size=100x50&path=color:0x0000ff%7Cweight:2%7C${x.join('%7C')}`
           ),
