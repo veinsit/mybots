@@ -101,6 +101,8 @@ function getLongestShape(bacino, route_id) {
 function getReducedLongestShape(bacino, route_id, n) {
     return getLongestShape(bacino, route_id)
         .then(function (shape) {
+        if (n >= shape.length)
+            return shape;
         let step = shape.length / (n + 1);
         let new_shape = [];
         for (let i = 0; i < n + 1; i++) {

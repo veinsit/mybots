@@ -178,7 +178,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
         const center = mapCenter(linea)
         service.getReducedLongestShape('FC', linea.route_id, 10)
         .then((shape:any[]) => {
-            let x=[]
+            let x:string[] = []
             shape.forEach(s => x.push(`${s.shape_pt_lat},${s.shape_pt_lon}`))
             console.log(x.join('%7C'))
             items.push({

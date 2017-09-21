@@ -138,6 +138,9 @@ export function getReducedLongestShape(bacino, route_id, n:number) : Promise<any
 
     return getLongestShape(bacino, route_id)
       .then(function(shape:any[]) {
+        if ( n>=shape.length)
+          return shape;
+          
         let step = shape.length/(n+1);
         let new_shape = []
         for(let i=0; i<n+1; i++) {
