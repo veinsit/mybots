@@ -149,10 +149,11 @@ exports.searchLinea = (chat, askedLinea) => {
     for (var index = 0; index < results.length; index++) {
         var linea = results[index];
         promises.push(service.getReducedLongestShape('FC', linea.route_id, 10)
-            .then((shape) => { items.push(_lineaItem(linea, shape)); }, (err) => { items.push(_lineaItem(linea)); console.log("ERR prom shape rejected: " + err); }) //end then        
+            .then((shape) => { items.push(_lineaItem(linea, shape)); console.log("Promise resolved for " + linea.route_id); }, (err) => { items.push(_lineaItem(linea, undefined)); console.log("ERR prom shape rejected: " + err); }) //end then        
         ); // end push
     }
     Promise.all(promises).then(() => {
+        console.log("Promise.all resolved " + items.length);
         chat.say("Ecco le linee che ho trovato!").then(() => {
             chat.sendGenericTemplate(items); /*.then(() => {
                 chat.sendTypingIndicator(1500).then(() => {
@@ -163,7 +164,7 @@ exports.searchLinea = (chat, askedLinea) => {
                 })
                 })*/
         });
-    });
+    }, (err) => console.log("ERR Promise.all: " + err));
     return true;
 };
 function _lineaItem(linea, shape) {
@@ -176,9 +177,9 @@ function _lineaItem(linea, shape) {
         subtitle: linea.getSubtitle(),
         // https://developers.google.com/maps/documentation/static-maps/intro
         //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
-        image_url: shape
-            ? utils.gStatMapUrl(`size=100x50&path=color:0x0000ff%7Cweight:4%7C${x.join('%7C')}`)
-            : utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
+        image_url: utils.gStatMapUrl(shape === undefined
+            ? `size=100x50&center=${center.center}&zoom=${center.zoom}`
+            : `size=100x50&path=color:0x0000ff%7Cweight:2%7C${x.join('%7C')}`),
         // path=color:0x0000ff|weight:5|40.737102,-73.990318|40.749825,-73.987963|40.752946,-73.987384
         /*
         "buttons": [{

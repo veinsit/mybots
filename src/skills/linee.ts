@@ -182,13 +182,14 @@ export const searchLinea = (chat, askedLinea): boolean => {
         promises.push(
             service.getReducedLongestShape('FC', linea.route_id, 10)
             .then(
-                (shape: Shape[]) => {items.push(_lineaItem(linea, shape)) },
-                      (err)      => {items.push(_lineaItem(linea)       ); console.log("ERR prom shape rejected: " + err);  }
+                (shape: Shape[]) => {items.push(_lineaItem(linea, shape)); console.log("Promise resolved for "+linea.route_id) },
+                      (err)      => {items.push(_lineaItem(linea, undefined)       ); console.log("ERR prom shape rejected: " + err);  }
             )//end then        
         )// end push
     }
 
-    Promise.all(promises).then(()=>{
+    Promise.all(promises).then(()=>{ 
+        console.log("Promise.all resolved "+items.length);
         chat.say("Ecco le linee che ho trovato!").then(() => {
             chat.sendGenericTemplate(items) /*.then(() => {
                 chat.sendTypingIndicator(1500).then(() => {
@@ -198,8 +199,11 @@ export const searchLinea = (chat, askedLinea): boolean => {
                     })
                 })
                 })*/
-        })
-    })
+            })
+        },
+        (err) => console.log("ERR Promise.all: "+err)
+    )
+
     return true;
 }
 
@@ -213,9 +217,10 @@ function _lineaItem(linea: Linea, shape?: Shape[]) {
         subtitle: linea.getSubtitle(),//
         // https://developers.google.com/maps/documentation/static-maps/intro
         //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
-        image_url: shape
-            ? utils.gStatMapUrl(`size=100x50&path=color:0x0000ff%7Cweight:4%7C${x.join('%7C')}`)
-            : utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
+        image_url: utils.gStatMapUrl( shape===undefined 
+            ? `size=100x50&center=${center.center}&zoom=${center.zoom}`
+            : `size=100x50&path=color:0x0000ff%7Cweight:2%7C${x.join('%7C')}`
+          ),
         // path=color:0x0000ff|weight:5|40.737102,-73.990318|40.749825,-73.987963|40.752946,-73.987384
         /*
         "buttons": [{
