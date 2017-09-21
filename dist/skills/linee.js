@@ -42,7 +42,7 @@ exports.onMessage = (chat, text) => {
 var sqlite3 = require('sqlite3').verbose();
 const _mark = (la, lo, label, color) => `&markers=color:${color}%7Clabel:${label.substring(0, 1)}%7C${la},${lo}`;
 exports.onLocationReceived = (chat, coords) => {
-    var db = new sqlite3.Database('dist/db/database.sqlite3');
+    var db = new sqlite3.Database('dist/db/databaseFC.sqlite3'); // TODO portare in servicedb dove ho dbName
     //    db.serialize(function() {
     let dist = 9e6;
     let nearestStop;
