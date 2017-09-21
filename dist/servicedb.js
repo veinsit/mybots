@@ -90,10 +90,12 @@ function getShape(bacino, shape_id) {
   from shapes
   where shape_id = '${shape_id}'
   order by shape_pt_seq`;
+    console.log("getShape: " + shape_id);
     return new Promise(function (resolve, reject) {
         var db = new sqlite3.Database(dbName(bacino));
         db.all(q, function (err, rows) {
             db.close();
+            console.log("Shape rows 1: " + JSON.stringify(rows[0]));
             if (err)
                 reject(err);
             else
@@ -111,7 +113,10 @@ function getLongestShape(bacino, route_id) {
   GROUP BY s.shape_id
   ORDER BY numPoints desc`;
     return dbAllPromise(dbName(bacino), q)
-        .then((rows) => rows[0].shape_id)
+        .then((rows) => {
+        console.log("Shape rows 2: " + JSON.stringify(rows[0])); // prendo la 0 perché sono ordinate DESC
+        return rows[0].shape_id;
+    })
         .then((shape_id) => getShape(bacino, shape_id));
 }
 // n = quanti punti oltre al primo e ultimo

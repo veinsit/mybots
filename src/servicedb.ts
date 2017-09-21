@@ -123,12 +123,15 @@ export function getShape(bacino, shape_id)  : Promise<Shape[]> {
   const q = `select shape_pt_lat, shape_pt_lon, CAST(shape_pt_sequence as INTEGER) as shape_pt_seq
   from shapes
   where shape_id = '${shape_id}'
-  order by shape_pt_seq`
-  
+  order by shape_pt_seq`;
+
+  console.log("getShape: "+shape_id)
+ 
   return new Promise<Shape[]> (function(resolve,reject) {
     var db = new sqlite3.Database(dbName(bacino));
     db.all(q, function (err, rows) {
       db.close();
+      console.log("Shape rows 1: "+JSON.stringify(rows[0]))
       if (err) reject(err); else resolve( rows.map(r=>new Shape(r)));
     }); // end each
   }) // end Promise  
@@ -146,7 +149,10 @@ function getLongestShape(bacino, route_id) : Promise<Shape[]> {
 
   
   return dbAllPromise(dbName(bacino), q)
-  .then((rows) => rows[0].shape_id)
+  .then((rows) => {
+          console.log("Shape rows 2: "+JSON.stringify(rows[0])) // prendo la 0 perché sono ordinate DESC
+          return rows[0].shape_id
+    })
   .then((shape_id) => getShape(bacino, shape_id) )
 
 }
