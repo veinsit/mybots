@@ -14,19 +14,19 @@ const dbName = bacino => `dist/db/database${bacino}.sqlite3`
 
 export class Linea {
 
+  readonly bacino: string 
   readonly route_id:string 
   readonly route_short_name:string
   readonly route_long_name:string
   readonly route_type:string
 
-  display_name: string // es. 1,2, 96A, 127, ecc
-  readonly bacino: string // es. 1,2, 96A, 127, ecc
+  public display_name: string // es. 1,2, 96A, 127, ecc
   
   constructor (bacino, rec:any) {
-//    this.route_id =rec.route_id, this.route_short_name=rec.route_short_name, this.route_long_name=rec.route_short_name, this.route_type=rec.route_short_name
+    this.bacino = bacino
+    this.route_id =rec.route_id, this.route_short_name=rec.route_short_name, this.route_long_name=rec.route_short_name, this.route_type=rec.route_short_name
 
     this.display_name = this._displayName(rec.route_id, rec.route_long_name)
-    this.bacino = bacino
   }
   
   private _displayName(c:string, ln:string) : string {
@@ -140,7 +140,7 @@ export function getReducedLongestShape(bacino, route_id, n:number) : Promise<any
       .then(function(shape:any[]) {
         if ( n>=shape.length)
           return shape;
-          
+
         let step = shape.length/(n+1);
         let new_shape = []
         for(let i=0; i<n+1; i++) {

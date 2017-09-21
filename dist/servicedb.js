@@ -10,10 +10,10 @@ const utils = require("./utils");
 const dbName = bacino => `dist/db/database${bacino}.sqlite3`;
 class Linea {
     constructor(bacino, rec) {
-        //    this.route_id =rec.route_id, this.route_short_name=rec.route_short_name, this.route_long_name=rec.route_short_name, this.route_type=rec.route_short_name
         this.getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")";
-        this.display_name = this._displayName(rec.route_id, rec.route_long_name);
         this.bacino = bacino;
+        this.route_id = rec.route_id, this.route_short_name = rec.route_short_name, this.route_long_name = rec.route_short_name, this.route_type = rec.route_short_name;
+        this.display_name = this._displayName(rec.route_id, rec.route_long_name);
     }
     _displayName(c, ln) {
         ln = ln.toUpperCase();
