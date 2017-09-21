@@ -143,29 +143,27 @@ exports.searchLinea = (chat, askedLinea) => {
     if (nresults > 7) {
         nresults = 7;
     }
-    const p = new Promise((resolve, rej) => {
-        let items = []; // items = linee
-        for (let i = 0; i < nresults; i++) {
-            // let release_date = new Date(res.results[i].release_date)
-            const linea = results[i];
-            service.getReducedLongestShape('FC', linea.route_id, 10)
-                .then((shape) => {
-                items.push(_lineaItem(linea, shape))
-                    , (err) => { console.log("ERR prom shape rejected: " + err); items.push(_lineaItem(linea)); };
-            }); //end then
-        }
-        resolve(items);
-    });
-    p.then((items) => chat.say("Ecco le linee che ho trovato!").then(() => {
-        chat.sendGenericTemplate(items); /*.then(() => {
-            chat.sendTypingIndicator(1500).then(() => {
-                chat.say({
-                text: "Scegli!",
-                quickReplies: movies.map(it=>"== "+it.route_id)
+    let items = []; // items = linee
+    /// crea un array di Promise per ogni linea
+    let promises = [];
+    for (var index = 0; index < results.length; index++) {
+        var linea = results[index];
+        promises.push(service.getReducedLongestShape('FC', linea.route_id, 10)
+            .then((shape) => { items.push(_lineaItem(linea, shape)); }, (err) => { items.push(_lineaItem(linea)); console.log("ERR prom shape rejected: " + err); }) //end then        
+        ); // end push
+    }
+    Promise.all(promises).then(() => {
+        chat.say("Ecco le linee che ho trovato!").then(() => {
+            chat.sendGenericTemplate(items); /*.then(() => {
+                chat.sendTypingIndicator(1500).then(() => {
+                    chat.say({
+                    text: "Scegli!",
+                    quickReplies: movies.map(it=>"== "+it.route_id)
+                    })
                 })
-            })
-            })*/
-    }));
+                })*/
+        });
+    });
     return true;
 };
 function _lineaItem(linea, shape) {
@@ -266,7 +264,7 @@ const onResultPassaggi = (data, chat, route_id, corsa_id) => {
 function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
     chat.say(`La fermata più vicina è ${nearestStop.stop_name} a ${dist.toFixed(0)} metri in linea d'aria`, { typing: true })
         .then(() => {
-        const m1 = _mark(coords.lat, coords.lon, 'P', 'blue');
+        const m1 = _mark(coords.lat, coords.long, 'P', 'blue');
         const m2 = _mark(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red');
         //        chat.sendAttachment('image', utils.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, {typing:true})
         chat.sendAttachment('image', utils.gStatMapUrl(`size=160x160${m1}${m2}`), undefined, { typing: true });

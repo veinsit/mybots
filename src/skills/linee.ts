@@ -51,6 +51,7 @@ export const onMessage = (chat, text): boolean => {
 var sqlite3 = require('sqlite3').verbose();
 
 const _mark = (la, lo, label, color) => `&markers=color:${color}%7Clabel:${label.substring(0, 1)}%7C${la},${lo}`;
+
 export const onLocationReceived = (chat, coords) => {
     var db = new sqlite3.Database('dist/db/databaseFC.sqlite3'); // TODO portare in servicedb dove ho dbName
 
@@ -172,22 +173,22 @@ export const searchLinea = (chat, askedLinea): boolean => {
         nresults = 7
     }
 
+    let items = [] // items = linee
 
-    const p = new Promise((resolve,rej) => {
-        let items = [] // items = linee
-        for (let i = 0; i < nresults; i++) {
-            // let release_date = new Date(res.results[i].release_date)
-            const linea = results[i]
+    /// crea un array di Promise per ogni linea
+    let promises : Promise<void>[] = []
+    for (var index = 0; index < results.length; index++) {
+        var linea = results[index];
+        promises.push(
             service.getReducedLongestShape('FC', linea.route_id, 10)
-                .then((shape: Shape[]) => {
-                    items.push(_lineaItem(linea, shape))
-                        , (err) => { console.log("ERR prom shape rejected: " + err); items.push(_lineaItem(linea)) }
-                })//end then
-        }
-        resolve(items)
-    });
+            .then(
+                (shape: Shape[]) => {items.push(_lineaItem(linea, shape)) },
+                      (err)      => {items.push(_lineaItem(linea)       ); console.log("ERR prom shape rejected: " + err);  }
+            )//end then        
+        )// end push
+    }
 
-    p.then((items)=>
+    Promise.all(promises).then(()=>{
         chat.say("Ecco le linee che ho trovato!").then(() => {
             chat.sendGenericTemplate(items) /*.then(() => {
                 chat.sendTypingIndicator(1500).then(() => {
@@ -198,7 +199,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
                 })
                 })*/
         })
-    )
+    })
     return true;
 }
 
@@ -323,7 +324,7 @@ const onResultPassaggi = (data, chat, route_id, corsa_id) => {
 function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
     chat.say(`La fermata più vicina è ${nearestStop.stop_name} a ${dist.toFixed(0)} metri in linea d'aria`, { typing: true })
         .then(() => {
-            const m1 = _mark(coords.lat, coords.lon, 'P', 'blue')
+            const m1 = _mark(coords.lat, coords.long, 'P', 'blue')
             const m2 = _mark(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red')
             //        chat.sendAttachment('image', utils.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, {typing:true})
             chat.sendAttachment('image', utils.gStatMapUrl(`size=160x160${m1}${m2}`), undefined, { typing: true })
