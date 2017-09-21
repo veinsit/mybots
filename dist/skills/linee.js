@@ -149,7 +149,7 @@ exports.searchLinea = (chat, askedLinea) => {
             .then((shape) => { items.push(_lineaItem(linea, shape)); console.log("Promise resolved for " + linea.route_id); }, (err) => { items.push(_lineaItem(linea, undefined)); console.log("ERR prom shape rejected: " + err); }) //end then        
         ); // end push
     }
-    Promise.all(promises).then(() => {
+    setTimeout(() => Promise.all(promises).then(() => {
         console.log("Promise.all resolved " + items.length);
         chat.say("Ecco le linee che ho trovato!").then(() => {
             chat.sendGenericTemplate(items); /*.then(() => {
@@ -161,7 +161,7 @@ exports.searchLinea = (chat, askedLinea) => {
                 })
                 })*/
         });
-    }, (err) => console.log("ERR Promise.all: " + err));
+    }, (err) => console.log("ERR Promise.all: " + err)), 3000);
     return true;
 };
 function _lineaItem(linea, shape) {

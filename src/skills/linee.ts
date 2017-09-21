@@ -187,23 +187,23 @@ export const searchLinea = (chat, askedLinea): boolean => {
             )//end then        
         )// end push
     }
-
-    Promise.all(promises).then(()=>{ 
-        console.log("Promise.all resolved "+items.length);
-        chat.say("Ecco le linee che ho trovato!").then(() => {
-            chat.sendGenericTemplate(items) /*.then(() => {
-                chat.sendTypingIndicator(1500).then(() => {
-                    chat.say({
-                    text: "Scegli!",
-                    quickReplies: movies.map(it=>"== "+it.route_id)
+    setTimeout(() =>
+        Promise.all(promises).then(()=>{ 
+            console.log("Promise.all resolved "+items.length);
+            chat.say("Ecco le linee che ho trovato!").then(() => {
+                chat.sendGenericTemplate(items) /*.then(() => {
+                    chat.sendTypingIndicator(1500).then(() => {
+                        chat.say({
+                        text: "Scegli!",
+                        quickReplies: movies.map(it=>"== "+it.route_id)
+                        })
                     })
+                    })*/
                 })
-                })*/
-            })
-        },
-        (err) => console.log("ERR Promise.all: "+err)
-    )
-
+            },
+            (err) => console.log("ERR Promise.all: "+err)
+        )
+    , 3000);
     return true;
 }
 
