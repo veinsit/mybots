@@ -153,26 +153,30 @@ function getLongestShape(bacino, route_id) : Promise<Shape[]> {
           console.log("Shape rows 2: "+JSON.stringify(rows[0])) // prendo la 0 perché sono ordinate DESC
           return rows[0].shape_id
     })
-  .then((shape_id) => getShape(bacino, shape_id) )
+  .then((shape_id) => {console.log("shape_id "+shape_id); return getShape(bacino, shape_id)} )
 
 }
 // n = quanti punti oltre al primo e ultimo
 export function getReducedLongestShape(bacino, route_id, n:number) : Promise<Shape[]> {
 
     return getLongestShape(bacino, route_id)
-      .then(function(shape:Shape[]) : Shape[] {
+      .then((shape:Shape[]) : Shape[] => {
+        console.log("getLongestShape resolved: ") // prendo la 0 perché sono ordinate DESC
         if ( n>=shape.length)
           return shape;
 
         let step = shape.length/(n+1);
         let new_shape : Shape[] = []
+
         for(let i=0; i<n+1; i++) {
-          new_shape.push(shape[i*step])
+           new_shape.push(shape[i*step])
         }
         new_shape.push(shape[shape.length-1])
-        
+        console.log("New shape: "+JSON.stringify(new_shape[0])) // prendo la 0 perché sono ordinate DESC
+
         return new_shape;
       })
+//      .catch((err)=>{console.log("getLongestShape rejected: ")})
 }
 
 function dbAllPromise(dbname:string, query:string) : Promise<any[]> {
