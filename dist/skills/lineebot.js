@@ -11,12 +11,13 @@ exports.onPostback = (pl, chat, data) => {
         scegliAorD(chat, pl.substring(16));
         return true;
     }
-    if (pl.startsWith("TPL_ORARI_")) {
-        const AorD = pl.substring(10, 12); // As or Di
-        const codLinea = pl.substring(13);
-        displayOrariPage(chat, codLinea, AorD, 0);
+    /*
+    if (pl.startsWith("TPL_ORARI_")) { 10 // es. TPL_ORARI_As_CE04
+        const AorD = pl.substring(10, 12)  // As or Di
+        const codLinea = pl.substring(13)
+        displayOrariPage(chat, codLinea, AorD, 0)
         return true;
-    }
+    }*/
     if (pl.startsWith("TPL_PAGE_CORSE_")) {
         const match = /(.*)_(As|Di)_([0-9]+)/.exec(pl.substring(15));
         displayOrariPage(chat, match[1], match[2], parseInt(match[3], 20));
@@ -154,7 +155,7 @@ exports.searchLinea = (chat, askedLinea) => {
         //    for (var index = 0; index < results.length; index++) {
         var linea = results[index];
         //        promises.push(
-        service.getReducedLongestShape('FC', linea.route_id, 10)
+        service.getReducedLongestShape('FC', linea.route_id, 20)
             .then((shape) => {
             items.push(_lineaItem(linea, shape));
             console.log("Promise resolved for " + linea.route_id);
@@ -163,42 +164,33 @@ exports.searchLinea = (chat, askedLinea) => {
             if (index < nresults - 1)
                 loop(index + 1);
             else {
-                console.log("Promise.all resolved " + items.length);
-                chat && chat.say("Ecco le linee che ho trovato!").then(() => {
-                    chat.sendGenericTemplate(items); /*.then(() => {
-                        chat.sendTypingIndicator(1500).then(() => {
-                            chat.say({
-                            text: "Scegli!",
-                            quickReplies: movies.map(it=>"== "+it.route_id)
-                            })
-                        })
-                        })*/
-                });
+                sayLineeTrovate(chat, items);
             }
         })
             .catch((err) => {
-            items.push(_lineaItem(linea, undefined));
             console.log("ERR prom shape rejected: " + linea.route_id + " " + err);
         });
         //        )// end push
     })(0);
     return true;
 };
+// item di un generic template
 function _lineaItem(linea, shape) {
     let x = [];
-    const hasShape = (shape !== undefined && shape !== null && shape.length >= 4);
-    console.log("_lineaItem : " + hasShape + " " + JSON.stringify(shape[0]));
+    /*
+    const hasShape = (shape !== undefined && shape !== null && shape.length >= 4)
+
     if (hasShape)
-        for (let i = 0; i < shape.length; i++)
-            x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`);
-    // shape && console.log(x.join('%7C'))
+    */
+    for (let i = 0; i < shape.length; i++)
+        x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`);
     const center = linea.mapCenter();
     return {
         title: linea.getTitle(),
         subtitle: linea.getSubtitle(),
         // https://developers.google.com/maps/documentation/static-maps/intro
         //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
-        image_url: utils.gStatMapUrl(!hasShape
+        image_url: utils.gStatMapUrl(shape.length < 2
             ? `size=300x150&center=${center.center}&zoom=${center.zoom}`
             : `size=300x150&path=color:0xff0000%7Cweight:2%7C${x.join('%7C')}`),
         // path=color:0x0000ff|weight:5|40.737102,-73.990318|40.749825,-73.987963|40.752946,-73.987384
@@ -209,10 +201,10 @@ function _lineaItem(linea, shape) {
         "title": emo.emoji.link + " Dettagli",
         "webview_height_ratio": "tall"
         }]*/
-        // producono ORARI_XX_YYYY
+        // TPL_PAGE_CORSE_F127_As_2
         buttons: [
-            utils.postbackBtn(linea.getAscDir(), "TPL_ORARI_As_" + linea.route_id),
-            utils.postbackBtn(linea.getDisDir(), "TPL_ORARI_Di_" + linea.route_id),
+            utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`),
+            utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`),
             utils.weburlBtn("Sito", linea.getOpendataUri())
         ]
     };
@@ -292,4 +284,20 @@ exports.webgetLinea = (bacino, route_id, req, res) => {
     else
         res.send(`linea ${route_id} non trovata`);
 };
+// =================================================================================
+//            helpers
+// =================================================================================
+function sayLineeTrovate(chat, items) {
+    // console.log("Promise.all resolved "+items.length);
+    chat && chat.say("Ecco le linee che ho trovato!").then(() => {
+        chat.sendGenericTemplate(items); /*.then(() => {
+            chat.sendTypingIndicator(1500).then(() => {
+                chat.say({
+                text: "Scegli!",
+                quickReplies: movies.map(it=>"== "+it.route_id)
+                })
+            })
+            })*/
+    });
+}
 //# sourceMappingURL=lineebot.js.map

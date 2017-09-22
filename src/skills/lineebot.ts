@@ -19,13 +19,14 @@ export const onPostback = (pl: string, chat, data): boolean => {
         scegliAorD(chat, pl.substring(16))
         return true;
     }
-    if (pl.startsWith("TPL_ORARI_")) {
+    /*
+    if (pl.startsWith("TPL_ORARI_")) { 10 // es. TPL_ORARI_As_CE04
         const AorD = pl.substring(10, 12)  // As or Di
         const codLinea = pl.substring(13)
         displayOrariPage(chat, codLinea, AorD, 0)
         return true;
-    }
-    if (pl.startsWith("TPL_PAGE_CORSE_")) { // 15 PAGE_CORSE_F127_As_2
+    }*/
+    if (pl.startsWith("TPL_PAGE_CORSE_")) { // 15 TPL_PAGE_CORSE_F127_As_2
         const match = /(.*)_(As|Di)_([0-9]+)/.exec(pl.substring(15))
 
         displayOrariPage(chat, match[1], match[2], parseInt(match[3], 20))
@@ -194,7 +195,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
 //    for (var index = 0; index < results.length; index++) {
         var linea = results[index];
 //        promises.push(
-            service.getReducedLongestShape('FC', linea.route_id, 10)
+            service.getReducedLongestShape('FC', linea.route_id, 20)
             .then((shape: Shape[]) => {
                     items.push( _lineaItem(linea, shape)); 
                     console.log("Promise resolved for "+linea.route_id)
@@ -203,21 +204,10 @@ export const searchLinea = (chat, askedLinea): boolean => {
                 if (index < nresults-1) 
                     loop(index+1) 
                 else {
-                    console.log("Promise.all resolved "+items.length);
-                    chat && chat.say("Ecco le linee che ho trovato!").then(() => {
-                        chat.sendGenericTemplate(items) /*.then(() => {
-                            chat.sendTypingIndicator(1500).then(() => {
-                                chat.say({
-                                text: "Scegli!",
-                                quickReplies: movies.map(it=>"== "+it.route_id)
-                                })
-                            })
-                            })*/
-                        })
-                    }
+                    sayLineeTrovate(chat, items);
+                }
             })        
             .catch((err) => {
-                items.push(_lineaItem(linea, undefined)       ); 
                 console.log("ERR prom shape rejected: " + linea.route_id+" "+err);
             })
 //        )// end push
@@ -225,23 +215,25 @@ export const searchLinea = (chat, askedLinea): boolean => {
 
     return true;
 }
-
+// item di un generic template
 function _lineaItem(linea: Linea, shape: Shape[]) {
     let x: string[] = []
+    /*
     const hasShape = (shape !== undefined && shape !== null && shape.length >= 4)
-    console.log("_lineaItem : "+hasShape+" "+JSON.stringify(shape[0]))
+
     if (hasShape)
+    */
         for (let i=0; i<shape.length; i++)
             x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`)
 
-    // shape && console.log(x.join('%7C'))
+
     const center = linea.mapCenter()
     return {
         title: linea.getTitle(),
         subtitle: linea.getSubtitle(),
         // https://developers.google.com/maps/documentation/static-maps/intro
         //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
-        image_url: utils.gStatMapUrl( !hasShape
+        image_url: utils.gStatMapUrl( shape.length < 2
             ? `size=300x150&center=${center.center}&zoom=${center.zoom}`
             : `size=300x150&path=color:0xff0000%7Cweight:2%7C${x.join('%7C')}`
           ),
@@ -253,10 +245,10 @@ function _lineaItem(linea: Linea, shape: Shape[]) {
         "title": emo.emoji.link + " Dettagli",
         "webview_height_ratio": "tall"
         }]*/
-        // producono ORARI_XX_YYYY
+        // TPL_PAGE_CORSE_F127_As_2
         buttons: [
-            utils.postbackBtn(linea.getAscDir(), "TPL_ORARI_As_" + linea.route_id),
-            utils.postbackBtn(linea.getDisDir(), "TPL_ORARI_Di_" + linea.route_id),
+            utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`), // 0 sta per pagina 0
+            utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`), // 0 sta per pagina 0
 
             utils.weburlBtn("Sito", linea.getOpendataUri())
         ]
@@ -369,6 +361,16 @@ export const webgetLinea = (bacino, route_id, req, res) => {
 //            helpers
 // =================================================================================
 
-
-
-
+function sayLineeTrovate(chat, items) {
+    // console.log("Promise.all resolved "+items.length);
+    chat && chat.say("Ecco le linee che ho trovato!").then(() => {
+        chat.sendGenericTemplate(items) /*.then(() => {
+            chat.sendTypingIndicator(1500).then(() => {
+                chat.say({
+                text: "Scegli!",
+                quickReplies: movies.map(it=>"== "+it.route_id)
+                })
+            })
+            })*/
+        })
+}
