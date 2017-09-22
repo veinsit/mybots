@@ -20,9 +20,11 @@ app.get("/", (req, res) => {
     res.send("Hello !");
 });
 app.get("/api/linee/:routeid", (req, res) => {
-    console.log("ricevuta GET /api/linee/" + req.params.routeId);
+    console.log("ricevuta GET /api/linee/" + req.params.routeid);
     tpl.webgetLinea(req.params.routeId, req, res);
 });
+// tutto quello qui sopre deve essere PRIMA di new BootBot
+// ============================================================= end web
 const skills = [tpl, prove];
 const BootBot = require('../lib/MyBootBot');
 const bot = new BootBot(app, {
