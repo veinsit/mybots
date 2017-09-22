@@ -14,8 +14,6 @@ import tpl = require("./skills/linee")
 import prove = require("./skills/prove")
 import menuAssets = require('./assets/menu')
 
-import express = require('express');
-const app = express.express();
 
 const skills = [tpl, prove]
 
@@ -139,6 +137,8 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
 })
 
 // ------- web 
+import express = require('express');
+const app = express();
 app.set('views', './views')
 app.set('view engine', 'pug')
 
