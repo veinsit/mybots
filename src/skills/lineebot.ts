@@ -29,7 +29,7 @@ export const onPostback = (pl: string, chat, data): boolean => {
     if (pl.startsWith("TPL_PAGE_CORSE_")) { // 15 TPL_PAGE_CORSE_F127_As_2
         const match = /(.*)_(As|Di)_([0-9]+)/.exec(pl.substring(15))
 
-        displayOrariPage(chat, match[1], match[2], parseInt(match[3], 20))
+        displayOrariPage(chat, match[1], match[2], parseInt(match[3]))
         return true;
     }
     if (pl.startsWith("TPL_ON_CORSA_")) { // 13 TPL_ON_CORSA_F127_XXXX
@@ -285,23 +285,23 @@ const scegliAorD = (chat, route_id) => {
 }
 
 const displayOrariPage = (chat, route_id, AorD, page: number) => {
-    service.getCorseOggi('FC', route_id)
+    service.getCorseOggi('FC', route_id, AorD)
         .then((data) =>
-            onResultCorse(data, chat, route_id, AorD, page)
+            onResultCorse(chat, data, route_id, AorD, page)
         )
 };
 
-const onResultCorse = (data, chat, route_id, AorD, page) => {
+const onResultCorse = (chat, data, route_id, AorD, page) => {
     const quanteInsieme = 4;
     const result = {
         corse: data.filter((it) => it.VERSO === AorD)
             .slice(page * quanteInsieme, (page + 1) * quanteInsieme)
             .map(function (item) {
                 return {
-                    CORSA: item.CORSA,
-                    DESC_PERCORSO: item.DESC_PERCORSO,
-                    parte: item.ORA_INIZIO_STR,
-                    arriva: item.ORA_FINE_STR,
+                    CORSA: item.trip_id // item.CORSA,
+//                    DESC_PERCORSO: item.DESC_PERCORSO,
+//                    parte: item.ORA_INIZIO_STR,
+//                    arriva: item.ORA_FINE_STR,
                 }
             })
     }
@@ -312,8 +312,8 @@ const onResultCorse = (data, chat, route_id, AorD, page) => {
     for (let i = 0; i < Math.min(quanteInsieme, result.corse.length); i++) {
         const corsa = result.corse[i]
         els.push({
-            title: `${i+1}) partenza ${corsa.parte}`,
-            subtitle: corsa.DESC_PERCORSO + "  arriva alle " + corsa.arriva,
+            title: corsa.CORSA, // `${i+1}) partenza ${corsa.parte}`,
+            subtitle: "percorso ...", // corsa.DESC_PERCORSO + "  arriva alle " + corsa.arriva,
             // "image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",
             buttons: utils.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + route_id + "_" + corsa.CORSA),
         })

@@ -17,6 +17,8 @@ import tpl = require("./skills/lineebot")
 import prove = require("./skills/prove")
 import menuAssets = require('./assets/menu')
 
+// TEST: tpl.onPostback('TPL_PAGE_CORSE_CE04_As_0', utils.fakechat, undefined);
+
 const express = require('express');
 const app = express();
 app.set('views', './views')
