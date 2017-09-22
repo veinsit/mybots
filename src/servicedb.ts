@@ -87,6 +87,9 @@ export class Linea {
   getStaticMapUrl = () => 
       utils.gStatMapUrl(`size=300x150&center=${this.mapCenter().center}&zoom=${this.mapCenter().zoom}`);
 
+  getShape = (service) : Promise<Shape[]> => service.getReducedLongestShape(this.bacino, this.route_id, 20)
+
+      
   static queryGetAll = () =>
      "SELECT route_id, route_short_name, route_long_name, route_type FROM routes"
 }
