@@ -48,11 +48,17 @@ export const onMessage = (chat, text): boolean => {
     return searchLinea(chat, text);
 }
 
+export const onLocationReceived = (chat, coords) => {
+    _onLocationReceived(chat, coords, (nearestStop, lineePassanti, dist) => 
+        sayNearestStop(chat, coords, nearestStop, lineePassanti, dist)
+    )
+}
 var sqlite3 = require('sqlite3').verbose();
 
 const _mark = (la, lo, label, color) => `&markers=color:${color}%7Clabel:${label.substring(0, 1)}%7C${la},${lo}`;
 
-export const onLocationReceived = (chat, coords) => {
+    
+const _onLocationReceived = (chat, coords, callback) => {
     var db = new sqlite3.Database('dist/db/databaseFC.sqlite3'); // TODO portare in servicedb dove ho dbName
 
     //    db.serialize(function() {
@@ -77,17 +83,37 @@ export const onLocationReceived = (chat, coords) => {
                     row && lineePassanti.push(row.route_id)
                 },
                 function () { // chiamata al completamento
-                    if (dist > 8000)
-                        chat.say(`Mi dispiace, non c'è nessuna fermata nel raggio di 8 Km`, { typing: true })
-                    else
-                        sayNearestStop(chat, coords, nearestStop, lineePassanti, dist)
+                    db.close();
+                    callback(nearestStop, lineePassanti, dist)
                 }
-
-            );// end run 
-            db.close();
+            );
         }
     ); // end each
     //    });// end serialize
+}
+
+function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
+    if (dist > 8000)
+        chat && chat.say(`Mi dispiace, non c'è nessuna fermata nel raggio di 8 Km`, { typing: true })
+    else {
+        chat && chat.say(`La fermata più vicina è ${nearestStop.stop_name}
+               a ${dist.toFixed(0)} metri in linea d'aria`, 
+               { typing: true })
+        .then(() => {
+            const m1 = _mark(coords.lat, coords.long, 'P', 'blue')
+            const m2 = _mark(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red')
+            //        chat.sendAttachment('image', utils.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, {typing:true})
+            chat.sendAttachment('image', utils.gStatMapUrl(`size=300x300${m1}${m2}`), undefined, { typing: true })
+
+        })
+        .then(() => {
+            setTimeout(() =>
+                chat.say({
+                    text: 'Ci passano le linee ' + lineePassanti.join(', '),
+                    quickReplies: lineePassanti, // .map(l=>linee.filter(x=>x.route_id===l)),
+                }), 3000);
+        });
+    }
 }
 
 // inizializza var globale 'linee'
@@ -369,25 +395,7 @@ export const webgetLinea = (bacino, route_id, req, res) => {
 // =================================================================================
 //            helpers
 // =================================================================================
-function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
-    chat.say(`La fermata più vicina è ${nearestStop.stop_name}
-               a ${dist.toFixed(0)} metri in linea d'aria`, 
-               { typing: true })
-        .then(() => {
-            const m1 = _mark(coords.lat, coords.long, 'P', 'blue')
-            const m2 = _mark(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red')
-            //        chat.sendAttachment('image', utils.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, {typing:true})
-            chat.sendAttachment('image', utils.gStatMapUrl(`size=300x300${m1}${m2}`), undefined, { typing: true })
 
-        })
-        .then(() => {
-            setTimeout(() =>
-                chat.say({
-                    text: 'Ci passano le linee ' + lineePassanti.join(', '),
-                    quickReplies: lineePassanti, // .map(l=>linee.filter(x=>x.route_id===l)),
-                }), 3000);
-        });
-}
 
 
 

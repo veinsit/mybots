@@ -25,9 +25,9 @@ app.get("/", (req, res) => {
   }
 )
 
-app.get("/api/linee/:routeid", (req, res) => {
-  console.log("ricevuta GET /api/linee/"+req.params.routeid)
-  tpl.webgetLinea(req.params.routeid, req, res)
+app.get("/ui/tpl/:bacino/linee/:routeid", (req, res) => {
+  console.log("GET /ui/tpl/:bacino/linee/:routeid "+req.params.routeid)
+  tpl.webgetLinea(req.params.bacino, req.params.routeid, req, res)
   }
 )
 // tutto quello qui sopre deve essere PRIMA di new BootBot

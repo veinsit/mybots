@@ -318,4 +318,4 @@ function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
         }), 3000);
     });
 }
-//# sourceMappingURL=linee.js.map
+//# sourceMappingURL=linee.1.js.map

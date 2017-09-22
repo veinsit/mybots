@@ -4,7 +4,7 @@ if ( !process.env.OPENDATAURIBASE) {
 }
 
 const baseUri = process.env.OPENDATAURIBASE
-const baseUiUri = baseUri.replace('/api/', '/ui/');
+const baseUiUri = process.env.OPENDATAURIBASE+"ui/tpl/"
 
 const sqlite3 = require('sqlite3').verbose();
 import utils = require("./utils")

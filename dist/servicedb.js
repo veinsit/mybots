@@ -4,7 +4,7 @@ if (!process.env.OPENDATAURIBASE) {
     require('dotenv').config();
 }
 const baseUri = process.env.OPENDATAURIBASE;
-const baseUiUri = baseUri.replace('/api/', '/ui/');
+const baseUiUri = process.env.OPENDATAURIBASE + "ui/tpl/";
 const sqlite3 = require('sqlite3').verbose();
 const utils = require("./utils");
 const dbName = bacino => `dist/db/database${bacino}.sqlite3`;
