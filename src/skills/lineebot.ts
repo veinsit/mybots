@@ -187,45 +187,20 @@ export const searchLinea = (chat, askedLinea): boolean => {
 
     let items = []; // items = linee
 
-    /// crea un array di Promise per ogni linea
-    //   let promises : Promise<void>[] = [];
-
-
     (function loop(index) {
-//    for (var index = 0; index < results.length; index++) {
         var linea = results[index];
-//        promises.push(
-            linea.getShape(service)
-            .then((shape:Shape[]) => {
-                items.push({linea, shape})
-            })
-            .then(()=> {
-                if (index < nresults-1) 
-                    loop(index+1) 
-                else {
-                    sayLineeTrovate2(chat, items);
-                }
-            })        
 
-/*
-            service.getReducedLongestShape('FC', linea.route_id, 20)
-            .then((shape: Shape[]) => {
-                    items.push( _lineaItem(linea, shape)); 
-                    console.log("Promise resolved for "+linea.route_id)
-            })//end then
-            .then(()=> {
-                if (index < nresults-1) 
-                    loop(index+1) 
-                else {
-                    sayLineeTrovate(chat, items);
-                }
-            })        
-            .catch((err) => {
-                console.log("ERR prom shape rejected: " + linea.route_id+" "+err);
-            })
-*/
-
-//        )// end push
+        linea.getShape(service)
+        .then((shape:Shape[]) => {
+            items.push({linea, shape})
+        })
+        .then(()=> {
+            if (index < nresults-1) 
+                loop(index+1) 
+            else {
+                sayLineeTrovate2(chat, items);
+            }
+        })        
     }) (0)
 
     return true;
@@ -233,9 +208,21 @@ export const searchLinea = (chat, askedLinea): boolean => {
 
 
 function sayLineeTrovate2(chat, items) {  // items = array of {linea, shape}
-// console.log("Promise.all resolved "+items.length);
-chat && chat.say(items.length>1 ? "Ho trovato più di una linea ..." : "Ecco la linea "+items[0].linea.display_name)
-.then(() => {
+
+    chat && chat.say(items.length>1 ? "Ho trovato più di una linea ..." : "Ecco la linea "+items[0].linea.display_name)
+        .then(() => items.map(it => genericTemplateItem(it.linea, it.shape)))
+        .then( (arrayOfPromises) => Promise.all(arrayOfPromises))
+        .then((values) => chat.sendGenericTemplate(values)) /*.then(() => {
+        chat.sendTypingIndicator(1500).then(() => {
+            chat.say({
+            text: "Scegli!",
+            quickReplies: movies.map(it=>"== "+it.route_id)
+            })
+        })
+        })*/
+//    })
+ 
+/*
 
     chat.sendGenericTemplate(items.map(it => genericTemplateItem(it.linea, it.shape))) /*.then(() => {
         chat.sendTypingIndicator(1500).then(() => {
@@ -244,41 +231,29 @@ chat && chat.say(items.length>1 ? "Ho trovato più di una linea ..." : "Ecco la 
             quickReplies: movies.map(it=>"== "+it.route_id)
             })
         })
-        })*/
-    })
+        })--/
+    }) */
 }
 
 // item di un generic template
-function genericTemplateItem(linea: Linea, shape: Shape[]) {
+// necessaria Promise perché per avere l'url deve leggere lo shape
+function genericTemplateItem(linea: Linea, shape: Shape[]) : Promise<any> {
 
-    const polyline = getGStaticMapsPolyline(shape)
+    return linea.getGMapUrl(service)
+    .then(function(url) {
+        return { // questo è lo 'any' della Promise
+            title: linea.getTitle(),
+            subtitle: linea.getSubtitle(),
+            image_url :url,
+            buttons: [
+                utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`), // 0 sta per pagina 0
+                utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`), // 0 sta per pagina 0
+    
+                utils.weburlBtn("Sito", linea.getOpendataUri())
+            ]
+        }        
 
-    const center = linea.mapCenter()
-    return {
-        title: linea.getTitle(),
-        subtitle: linea.getSubtitle(),
-        // https://developers.google.com/maps/documentation/static-maps/intro
-        //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
-        image_url: utils.gStatMapUrl( shape.length < 2
-            ? `size=300x150&center=${center.center}&zoom=${center.zoom}`
-            : `size=300x150&path=color:0xff0000%7Cweight:2%7C${polyline}`
-          ),
-        // path=color:0x0000ff|weight:5|40.737102,-73.990318|40.749825,-73.987963|40.752946,-73.987384
-        /*
-        "buttons": [{
-        "type": "web_url",
-        "url": service.baseUiUri+'FC/linee/'+linea.route_id,
-        "title": emo.emoji.link + " Dettagli",
-        "webview_height_ratio": "tall"
-        }]*/
-        // TPL_PAGE_CORSE_F127_As_2
-        buttons: [
-            utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`), // 0 sta per pagina 0
-            utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`), // 0 sta per pagina 0
-
-            utils.weburlBtn("Sito", linea.getOpendataUri())
-        ]
-    }
+    })
 }
 
 
@@ -411,13 +386,17 @@ const onResultPassaggi = (data, chat, route_id, corsa_id) => {
 
 
 export const webgetLinea = (bacino, route_id, req, res) => {
-    const arraylinee = linee.filter(l=>l.bacino===bacino && l.route_id===route_id)
+    const arraylinee : Linea[] = linee.filter(l=>l.bacino===bacino && l.route_id===route_id)
     if (arraylinee.length===1) {
-        const linea = arraylinee[0]
+        const linea : Linea = arraylinee[0]
+        linea.getGMapUrl(service)
+        .then ((url) =>
         res.render('linea', {
             title: linea.getTitle(),
+            url,
             l:linea // route_id: linea.route_id
         }) 
+        )
     }
     else
         res.send(`linea ${route_id} non trovata`)
@@ -429,26 +408,6 @@ export const webgetLinea = (bacino, route_id, req, res) => {
 //            helpers
 // =================================================================================
 
-function sayLineeTrovate(chat, items) {
-    // console.log("Promise.all resolved "+items.length);
-    chat && chat.say("Ecco le linee che ho trovato!").then(() => {
-        chat.sendGenericTemplate(items) /*.then(() => {
-            chat.sendTypingIndicator(1500).then(() => {
-                chat.say({
-                text: "Scegli!",
-                quickReplies: movies.map(it=>"== "+it.route_id)
-                })
-            })
-            })*/
-        })
-}
 
-function getGStaticMapsPolyline(shape:Shape[]) {
-    let x: string[] = []
 
-    for (let i=0; i<shape.length; i++)
-        x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`)
-    
-    return x.join('%7C')
-}
 

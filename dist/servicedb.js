@@ -14,8 +14,24 @@ const dbName = bacino => `dist/db/database${bacino}.sqlite3`;
 class Linea {
     constructor(bacino, rec) {
         this.getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")";
-        this.getStaticMapUrl = () => utils.gStatMapUrl(`size=300x150&center=${this.mapCenter().center}&zoom=${this.mapCenter().zoom}`);
+        /*
+        getStaticMapUrl = () =>
+          utils.gStatMapUrl(`size=300x150&center=${this.mapCenter().center}&zoom=${this.mapCenter().zoom}`);
+      */
         this.getShape = (service) => service.getReducedLongestShape(this.bacino, this.route_id, 20);
+        this.getGMapUrl = (service) => this.getShape(service)
+            .then((shape) => { return this._gmapUrl(shape); });
+        // https://developers.google.com/maps/documentation/static-maps/intro
+        this._gmapUrl = (shape) => {
+            if (shape.length < 2) {
+                const center = this.mapCenter();
+                return utils.gStatMapUrl(`size=300x150&center=${center.center}&zoom=${center.zoom}`);
+            }
+            else {
+                const polyline = Shape.getGStaticMapsPolyline(shape);
+                return utils.gStatMapUrl(`size=300x150&path=color:0xff0000%7Cweight:2%7C${polyline}`);
+            }
+        };
         this.bacino = bacino;
         this.route_id = rec.route_id, this.route_short_name = rec.route_short_name, this.route_long_name = rec.route_short_name, this.route_type = rec.route_short_name;
         this.display_name = this._displayName(rec.route_id, rec.route_long_name);
@@ -110,6 +126,12 @@ class Shape {
         this.shape_pt_lat = r.shape_pt_lat;
         this.shape_pt_lon = r.shape_pt_lon;
         this.shape_pt_seq = r.shape_pt_seq;
+    }
+    static getGStaticMapsPolyline(shape) {
+        let x = [];
+        for (let i = 0; i < shape.length; i++)
+            x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`);
+        return x.join('%7C');
     }
 }
 exports.Shape = Shape;

@@ -149,12 +149,8 @@ exports.searchLinea = (chat, askedLinea) => {
     if (nresults > 4)
         nresults = 4;
     let items = []; // items = linee
-    /// crea un array di Promise per ogni linea
-    //   let promises : Promise<void>[] = [];
     (function loop(index) {
-        //    for (var index = 0; index < results.length; index++) {
         var linea = results[index];
-        //        promises.push(
         linea.getShape(service)
             .then((shape) => {
             items.push({ linea, shape });
@@ -166,68 +162,50 @@ exports.searchLinea = (chat, askedLinea) => {
                 sayLineeTrovate2(chat, items);
             }
         });
-        /*
-                    service.getReducedLongestShape('FC', linea.route_id, 20)
-                    .then((shape: Shape[]) => {
-                            items.push( _lineaItem(linea, shape));
-                            console.log("Promise resolved for "+linea.route_id)
-                    })//end then
-                    .then(()=> {
-                        if (index < nresults-1)
-                            loop(index+1)
-                        else {
-                            sayLineeTrovate(chat, items);
-                        }
-                    })
-                    .catch((err) => {
-                        console.log("ERR prom shape rejected: " + linea.route_id+" "+err);
-                    })
-        */
-        //        )// end push
     })(0);
     return true;
 };
 function sayLineeTrovate2(chat, items) {
-    // console.log("Promise.all resolved "+items.length);
     chat && chat.say(items.length > 1 ? "Ho trovato più di una linea ..." : "Ecco la linea " + items[0].linea.display_name)
-        .then(() => {
-        chat.sendGenericTemplate(items.map(it => genericTemplateItem(it.linea, it.shape))); /*.then(() => {
+        .then(() => items.map(it => genericTemplateItem(it.linea, it.shape)))
+        .then((arrayOfPromises) => Promise.all(arrayOfPromises))
+        .then((values) => chat.sendGenericTemplate(values)); /*.then(() => {
+    chat.sendTypingIndicator(1500).then(() => {
+        chat.say({
+        text: "Scegli!",
+        quickReplies: movies.map(it=>"== "+it.route_id)
+        })
+    })
+    })*/
+    //    })
+    /*
+    
+        chat.sendGenericTemplate(items.map(it => genericTemplateItem(it.linea, it.shape))) /*.then(() => {
             chat.sendTypingIndicator(1500).then(() => {
                 chat.say({
                 text: "Scegli!",
                 quickReplies: movies.map(it=>"== "+it.route_id)
                 })
             })
-            })*/
-    });
+            })--/
+        }) */
 }
 // item di un generic template
+// necessaria Promise perché per avere l'url deve leggere lo shape
 function genericTemplateItem(linea, shape) {
-    const polyline = getGStaticMapsPolyline(shape);
-    const center = linea.mapCenter();
-    return {
-        title: linea.getTitle(),
-        subtitle: linea.getSubtitle(),
-        // https://developers.google.com/maps/documentation/static-maps/intro
-        //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
-        image_url: utils.gStatMapUrl(shape.length < 2
-            ? `size=300x150&center=${center.center}&zoom=${center.zoom}`
-            : `size=300x150&path=color:0xff0000%7Cweight:2%7C${polyline}`),
-        // path=color:0x0000ff|weight:5|40.737102,-73.990318|40.749825,-73.987963|40.752946,-73.987384
-        /*
-        "buttons": [{
-        "type": "web_url",
-        "url": service.baseUiUri+'FC/linee/'+linea.route_id,
-        "title": emo.emoji.link + " Dettagli",
-        "webview_height_ratio": "tall"
-        }]*/
-        // TPL_PAGE_CORSE_F127_As_2
-        buttons: [
-            utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`),
-            utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`),
-            utils.weburlBtn("Sito", linea.getOpendataUri())
-        ]
-    };
+    return linea.getGMapUrl(service)
+        .then(function (url) {
+        return {
+            title: linea.getTitle(),
+            subtitle: linea.getSubtitle(),
+            image_url: url,
+            buttons: [
+                utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`),
+                utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`),
+                utils.weburlBtn("Sito", linea.getOpendataUri())
+            ]
+        };
+    });
 }
 // item di un generic template
 function _lineaItem(linea, shape) {
@@ -332,34 +310,14 @@ exports.webgetLinea = (bacino, route_id, req, res) => {
     const arraylinee = linee.filter(l => l.bacino === bacino && l.route_id === route_id);
     if (arraylinee.length === 1) {
         const linea = arraylinee[0];
-        res.render('linea', {
+        linea.getGMapUrl(service)
+            .then((url) => res.render('linea', {
             title: linea.getTitle(),
+            url,
             l: linea // route_id: linea.route_id
-        });
+        }));
     }
     else
         res.send(`linea ${route_id} non trovata`);
 };
-// =================================================================================
-//            helpers
-// =================================================================================
-function sayLineeTrovate(chat, items) {
-    // console.log("Promise.all resolved "+items.length);
-    chat && chat.say("Ecco le linee che ho trovato!").then(() => {
-        chat.sendGenericTemplate(items); /*.then(() => {
-            chat.sendTypingIndicator(1500).then(() => {
-                chat.say({
-                text: "Scegli!",
-                quickReplies: movies.map(it=>"== "+it.route_id)
-                })
-            })
-            })*/
-    });
-}
-function getGStaticMapsPolyline(shape) {
-    let x = [];
-    for (let i = 0; i < shape.length; i++)
-        x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`);
-    return x.join('%7C');
-}
 //# sourceMappingURL=lineebot.js.map
