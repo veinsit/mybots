@@ -11,6 +11,9 @@ import utils = require("./utils")
 
 const dbName = bacino => `dist/db/database${bacino}.sqlite3`
 
+// =================================================================================================
+//                Linea
+// =================================================================================================
 export class Linea {
 
   readonly bacino: string 
@@ -93,6 +96,16 @@ export function getLinee(bacino)  : Promise<any[]> {
   return dbAllPromise(dbName(bacino), Linea.queryGetAll());  
 } 
 
+
+export function getLineeFermata(bacino, stop_id) : Promise<any[]> {
+  const q = "SELECT a.route_id FROM trips a WHERE a.trip_id IN (SELECT b.trip_id FROM stop_times b WHERE b.stop_id='" + stop_id + "') GROUP BY a.route_id"
+  return dbAllPromise(dbName(bacino), q);
+}
+
+
+// =================================================================================================
+//                Corse
+// =================================================================================================
 export function getCorseOggi(bacino, route_id, dir01?)  : Promise<any[]> {
 
 
@@ -119,6 +132,10 @@ export function getPassaggiCorsa(bacino, corsa)  : Promise<any[]> {
   return dbAllPromise(dbName(bacino), q);  
 }  
 
+
+// =================================================================================================
+//                Shape
+// =================================================================================================
 export class Shape {
   readonly shape_pt_lat : number
   readonly shape_pt_lon : number
@@ -171,7 +188,7 @@ export function getReducedLongestShape(bacino, route_id, n:number) : Promise<Sha
 
     return getLongestShape(bacino, route_id)
       .then((shape:Shape[]) : Shape[] => {
-//        console.log("getLongestShape resolved: ") // prendo la 0 perché sono ordinate DESC
+
         if ( n>=shape.length)
           return shape;
 
@@ -187,6 +204,9 @@ export function getReducedLongestShape(bacino, route_id, n:number) : Promise<Sha
         return new_shape;
       })
 }
+
+
+
 
 
 // ------------------------ utilities

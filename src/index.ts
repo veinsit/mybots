@@ -1,16 +1,19 @@
 'use strict'
 
+const useFakeChat = false;
+
 if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC
-  || !process.env.GOOGLE_STATICMAP_APIKEY || !process.env.OPENDATAURIBASE) {
-  require('dotenv').config()
+     || !process.env.GOOGLE_STATICMAP_APIKEY || !process.env.OPENDATAURIBASE) {
+   require('dotenv').config()
 }
 
 // https://github.com/sotirelisc/tvakis
 // https://www.messenger.com/t/thecvbot
 
 // Load emojis
+import utils = require('./utils')
 import emo = require('./assets/emoji')
-import tpl = require("./skills/linee")
+import tpl = require("./skills/lineebot")
 import prove = require("./skills/prove")
 import menuAssets = require('./assets/menu')
 
@@ -61,6 +64,9 @@ bot.on('message', (payload, chat) => {
   const fid = payload.sender.id
   const text = payload.message.text.toLowerCase()
   
+  if (useFakeChat)
+    chat = utils.fakechat
+
   console.log("sender.id = " + fid+"; text="+text)
 
   if (startKeys.filter(it=>it===text).length > 0) {
@@ -79,10 +85,9 @@ bot.on('message', (payload, chat) => {
   }
 
  if (!gestitoDaModulo) {
-   
       chat.say("Non ho capito ...")
   }
-})
+}) // end bot.on('message', ..)
 
 // usato per la posizione
 /*
@@ -102,6 +107,10 @@ bot.on('message', (payload, chat) => {
 */
 bot.on('attachment', (payload, chat) => {
   console.log('Att:' + JSON.stringify(payload.message.attachments[0]));
+  
+  if (useFakeChat)
+    chat = utils.fakechat
+
   if (payload.message.attachments[0])
     tpl.onLocationReceived(chat, payload.message.attachments[0].payload.coordinates)
 });
@@ -109,6 +118,10 @@ bot.on('attachment', (payload, chat) => {
 bot.on('postback', (payload, chat, data) => {
   const pl: string = payload.postback.payload
   console.log("on postback : " + pl)
+
+  if (useFakeChat)
+    chat = utils.fakechat
+
   
   let gestitoDaModulo = false
   for (let s of skills) {

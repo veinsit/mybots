@@ -59,13 +59,12 @@ const _mark = (la, lo, label, color) => `&markers=color:${color}%7Clabel:${label
 
     
 const _onLocationReceived = (chat, coords, callback) => {
-    var db = new sqlite3.Database('dist/db/databaseFC.sqlite3'); // TODO portare in servicedb dove ho dbName
+    const bacino ='FC'
+    var db = new sqlite3.Database(`dist/db/database${bacino}.sqlite3`); // TODO portare in servicedb dove ho dbName
 
     //    db.serialize(function() {
     let dist: number = 9e6
     let nearestStop;
-    let queryLineePassanti;
-    let lineePassanti = []
 
     // These two queries will run sequentially.
     db.each("SELECT stop_id,stop_name,stop_lat,stop_lon FROM stops",
@@ -74,18 +73,9 @@ const _onLocationReceived = (chat, coords, callback) => {
             if (d < dist) { dist = d; nearestStop = row; }
         },
         function () {
-            queryLineePassanti = "SELECT a.route_id FROM trips a WHERE a.trip_id IN (SELECT b.trip_id FROM stop_times b WHERE b.stop_id='" + nearestStop.stop_id + "') GROUP BY a.route_id"
-
-            db.each(queryLineePassanti,
-                function (err, row) { // chiamata per ogni riga
-                    if (err)
-                        console.log("query err: " + err)
-                    row && lineePassanti.push(row.route_id)
-                },
-                function () { // chiamata al completamento
-                    db.close();
-                    callback(nearestStop, lineePassanti, dist)
-                }
+            service.getLineeFermata(bacino, nearestStop.stop_id)
+            .then((numerilinea:string[]) => 
+                callback(nearestStop, numerilinea, dist)
             );
         }
     ); // end each
@@ -170,10 +160,6 @@ export function getLinee(bacino, callback: (linee:any[]) => any) {
 */
 
 //-------------------------------------------------------------------
-export const testSearchLinea = (chat, askedLinea): boolean => {
-
-    return true;
-}
 
 export const searchLinea = (chat, askedLinea): boolean => {
     //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
@@ -194,17 +180,15 @@ export const searchLinea = (chat, askedLinea): boolean => {
 
     console.log(`searchLinea ${search} : OK`)
     let nresults = results.length
-    // Show 7 (or less) relevant movies
-    if (nresults > 4) {
-        nresults = 4
-    }
 
-    let items = [] // items = linee
+    if (nresults > 4) 
+        nresults = 4;
+
+    let items = []; // items = linee
 
     /// crea un array di Promise per ogni linea
- //   let promises : Promise<void>[] = [];
+    //   let promises : Promise<void>[] = [];
 
-    if (nresults > 0) {
 
     (function loop(index) {
 //    for (var index = 0; index < results.length; index++) {
@@ -237,21 +221,8 @@ export const searchLinea = (chat, askedLinea): boolean => {
                 console.log("ERR prom shape rejected: " + linea.route_id+" "+err);
             })
 //        )// end push
-    })  (0)
-        }
+    }) (0)
 
-    /*
-//    setTimeout(() =>
-        Promise.all(promises).then(()=>{ 
-            console.log("Promise.all resolved "+items.length);
-            chat.say("Ecco le linee che ho trovato!").then(() => {
-                chat.sendGenericTemplate(items)
-                })
-            },
-            (err) => console.log("ERR Promise.all: "+err)
-        )
-  //  , 3000);
-  */
     return true;
 }
 
@@ -291,6 +262,8 @@ function _lineaItem(linea: Linea, shape: Shape[]) {
         ]
     }
 }
+
+
 const scegliAorD = (chat, route_id) => {
     const qr = ["Ascen", "Discen"];
     chat.conversation((convo) => {

@@ -8,6 +8,9 @@ const baseUiUri = process.env.OPENDATAURIBASE + "ui/tpl/";
 const sqlite3 = require('sqlite3').verbose();
 const utils = require("./utils");
 const dbName = bacino => `dist/db/database${bacino}.sqlite3`;
+// =================================================================================================
+//                Linea
+// =================================================================================================
 class Linea {
     constructor(bacino, rec) {
         this.getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")";
@@ -68,6 +71,14 @@ function getLinee(bacino) {
     return dbAllPromise(dbName(bacino), Linea.queryGetAll());
 }
 exports.getLinee = getLinee;
+function getLineeFermata(bacino, stop_id) {
+    const q = "SELECT a.route_id FROM trips a WHERE a.trip_id IN (SELECT b.trip_id FROM stop_times b WHERE b.stop_id='" + stop_id + "') GROUP BY a.route_id";
+    return dbAllPromise(dbName(bacino), q);
+}
+exports.getLineeFermata = getLineeFermata;
+// =================================================================================================
+//                Corse
+// =================================================================================================
 function getCorseOggi(bacino, route_id, dir01) {
     const direction = dir01 ? ` and direction_id='${dir01}' ` : '';
     const d = (new Date()); // oggi
@@ -89,6 +100,9 @@ function getPassaggiCorsa(bacino, corsa) {
     return dbAllPromise(dbName(bacino), q);
 }
 exports.getPassaggiCorsa = getPassaggiCorsa;
+// =================================================================================================
+//                Shape
+// =================================================================================================
 class Shape {
     constructor(r) {
         this.shape_pt_lat = r.shape_pt_lat;
@@ -134,7 +148,6 @@ function getLongestShape(bacino, route_id) {
 function getReducedLongestShape(bacino, route_id, n) {
     return getLongestShape(bacino, route_id)
         .then((shape) => {
-        //        console.log("getLongestShape resolved: ") // prendo la 0 perché sono ordinate DESC
         if (n >= shape.length)
             return shape;
         let step = Math.floor(shape.length / (n + 1));

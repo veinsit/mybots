@@ -32,6 +32,11 @@ export function omStatMapUrl(params:string) : string {
     return "https://open.mapquestapi.com/staticmap/v4/getplacemap?key="+process.env.MAPQUEST_KEY+"&location=Los+Angeles,CA&size=600,400&zoom=9&showicon=red_1-1";
 }
 */
+export const fakechat = { 
+    say: (text) => console.log('chat say > '+text), 
+    sendAttachment : (type,url) => console.log('chat sendAttachment > '+url),
+    sendListTemplate : (elements) => elements.forEach(e=>console.log(`${e.title} - ${e.subtitle}`))
+}
 
 export function distance(lat1,lon1,lat2,lon2) {
 	

@@ -1,5 +1,6 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
+const useFakeChat = false;
 if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC
     || !process.env.GOOGLE_STATICMAP_APIKEY || !process.env.OPENDATAURIBASE) {
     require('dotenv').config();
@@ -7,8 +8,9 @@ if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC
 // https://github.com/sotirelisc/tvakis
 // https://www.messenger.com/t/thecvbot
 // Load emojis
+const utils = require("./utils");
 const emo = require("./assets/emoji");
-const tpl = require("./skills/linee");
+const tpl = require("./skills/lineebot");
 const prove = require("./skills/prove");
 const menuAssets = require("./assets/menu");
 const express = require('express');
@@ -45,6 +47,8 @@ const startKeys = ['hello', 'hi', 'hey', 'ehi', 'start', 'inizia', 'ciao', 'salv
 bot.on('message', (payload, chat) => {
     const fid = payload.sender.id;
     const text = payload.message.text.toLowerCase();
+    if (useFakeChat)
+        chat = utils.fakechat;
     console.log("sender.id = " + fid + "; text=" + text);
     if (startKeys.filter(it => it === text).length > 0) {
         chat.sendTypingIndicator(500)
@@ -59,7 +63,7 @@ bot.on('message', (payload, chat) => {
     if (!gestitoDaModulo) {
         chat.say("Non ho capito ...");
     }
-});
+}); // end bot.on('message', ..)
 // usato per la posizione
 /*
 "attachments": [
@@ -78,12 +82,16 @@ bot.on('message', (payload, chat) => {
 */
 bot.on('attachment', (payload, chat) => {
     console.log('Att:' + JSON.stringify(payload.message.attachments[0]));
+    if (useFakeChat)
+        chat = utils.fakechat;
     if (payload.message.attachments[0])
         tpl.onLocationReceived(chat, payload.message.attachments[0].payload.coordinates);
 });
 bot.on('postback', (payload, chat, data) => {
     const pl = payload.postback.payload;
     console.log("on postback : " + pl);
+    if (useFakeChat)
+        chat = utils.fakechat;
     let gestitoDaModulo = false;
     for (let s of skills) {
         if (gestitoDaModulo = s.onPostback(pl, chat, data))

@@ -42,12 +42,11 @@ exports.onLocationReceived = (chat, coords) => {
 var sqlite3 = require('sqlite3').verbose();
 const _mark = (la, lo, label, color) => `&markers=color:${color}%7Clabel:${label.substring(0, 1)}%7C${la},${lo}`;
 const _onLocationReceived = (chat, coords, callback) => {
-    var db = new sqlite3.Database('dist/db/databaseFC.sqlite3'); // TODO portare in servicedb dove ho dbName
+    const bacino = 'FC';
+    var db = new sqlite3.Database(`dist/db/database${bacino}.sqlite3`); // TODO portare in servicedb dove ho dbName
     //    db.serialize(function() {
     let dist = 9e6;
     let nearestStop;
-    let queryLineePassanti;
-    let lineePassanti = [];
     // These two queries will run sequentially.
     db.each("SELECT stop_id,stop_name,stop_lat,stop_lon FROM stops", function (err, row) {
         let d = utils.distance(coords.lat, coords.long, row.stop_lat, row.stop_lon);
@@ -56,15 +55,8 @@ const _onLocationReceived = (chat, coords, callback) => {
             nearestStop = row;
         }
     }, function () {
-        queryLineePassanti = "SELECT a.route_id FROM trips a WHERE a.trip_id IN (SELECT b.trip_id FROM stop_times b WHERE b.stop_id='" + nearestStop.stop_id + "') GROUP BY a.route_id";
-        db.each(queryLineePassanti, function (err, row) {
-            if (err)
-                console.log("query err: " + err);
-            row && lineePassanti.push(row.route_id);
-        }, function () {
-            db.close();
-            callback(nearestStop, lineePassanti, dist);
-        });
+        service.getLineeFermata(bacino, nearestStop.stop_id)
+            .then((numerilinea) => callback(nearestStop, numerilinea, dist));
     }); // end each
     //    });// end serialize
 };
@@ -137,9 +129,6 @@ export function getLinee(bacino, callback: (linee:any[]) => any) {
 }
 */
 //-------------------------------------------------------------------
-exports.testSearchLinea = (chat, askedLinea) => {
-    return true;
-};
 exports.searchLinea = (chat, askedLinea) => {
     //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
     let search = askedLinea.toUpperCase();
@@ -156,59 +145,43 @@ exports.searchLinea = (chat, askedLinea) => {
     }
     console.log(`searchLinea ${search} : OK`);
     let nresults = results.length;
-    // Show 7 (or less) relevant movies
-    if (nresults > 4) {
+    if (nresults > 4)
         nresults = 4;
-    }
     let items = []; // items = linee
     /// crea un array di Promise per ogni linea
     //   let promises : Promise<void>[] = [];
-    if (nresults > 0) {
-        (function loop(index) {
-            //    for (var index = 0; index < results.length; index++) {
-            var linea = results[index];
-            //        promises.push(
-            service.getReducedLongestShape('FC', linea.route_id, 10)
-                .then((shape) => {
-                items.push(_lineaItem(linea, shape));
-                console.log("Promise resolved for " + linea.route_id);
-            }) //end then
-                .then(() => {
-                if (index < nresults - 1)
-                    loop(index + 1);
-                else {
-                    console.log("Promise.all resolved " + items.length);
-                    chat && chat.say("Ecco le linee che ho trovato!").then(() => {
-                        chat.sendGenericTemplate(items); /*.then(() => {
-                            chat.sendTypingIndicator(1500).then(() => {
-                                chat.say({
-                                text: "Scegli!",
-                                quickReplies: movies.map(it=>"== "+it.route_id)
-                                })
+    (function loop(index) {
+        //    for (var index = 0; index < results.length; index++) {
+        var linea = results[index];
+        //        promises.push(
+        service.getReducedLongestShape('FC', linea.route_id, 10)
+            .then((shape) => {
+            items.push(_lineaItem(linea, shape));
+            console.log("Promise resolved for " + linea.route_id);
+        }) //end then
+            .then(() => {
+            if (index < nresults - 1)
+                loop(index + 1);
+            else {
+                console.log("Promise.all resolved " + items.length);
+                chat && chat.say("Ecco le linee che ho trovato!").then(() => {
+                    chat.sendGenericTemplate(items); /*.then(() => {
+                        chat.sendTypingIndicator(1500).then(() => {
+                            chat.say({
+                            text: "Scegli!",
+                            quickReplies: movies.map(it=>"== "+it.route_id)
                             })
-                            })*/
-                    });
-                }
-            })
-                .catch((err) => {
-                items.push(_lineaItem(linea, undefined));
-                console.log("ERR prom shape rejected: " + linea.route_id + " " + err);
-            });
-            //        )// end push
-        })(0);
-    }
-    /*
-//    setTimeout(() =>
-        Promise.all(promises).then(()=>{
-            console.log("Promise.all resolved "+items.length);
-            chat.say("Ecco le linee che ho trovato!").then(() => {
-                chat.sendGenericTemplate(items)
-                })
-            },
-            (err) => console.log("ERR Promise.all: "+err)
-        )
-  //  , 3000);
-  */
+                        })
+                        })*/
+                });
+            }
+        })
+            .catch((err) => {
+            items.push(_lineaItem(linea, undefined));
+            console.log("ERR prom shape rejected: " + linea.route_id + " " + err);
+        });
+        //        )// end push
+    })(0);
     return true;
 };
 function _lineaItem(linea, shape) {
