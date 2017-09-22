@@ -1,10 +1,11 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
-const useFakeChat = false;
 if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC
     || !process.env.GOOGLE_STATICMAP_APIKEY || !process.env.OPENDATAURIBASE) {
     require('dotenv').config();
 }
+const debug = process.env.DEBUG !== undefined ? parseInt(process.env.DEBUG) : false;
+const useFakeChat = debug;
 // https://github.com/sotirelisc/tvakis
 // https://www.messenger.com/t/thecvbot
 // Load emojis
@@ -13,7 +14,6 @@ const emo = require("./assets/emoji");
 const tpl = require("./skills/lineebot");
 const prove = require("./skills/prove");
 const menuAssets = require("./assets/menu");
-// TEST: tpl.onPostback('TPL_PAGE_CORSE_CE04_As_0', utils.fakechat, undefined);
 const express = require('express');
 const app = express();
 app.set('views', './views');
@@ -124,6 +124,11 @@ bot.on('postback:HELP_PAYLOAD', (payload, chat) => {
 bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
     showAbout(chat);
 });
-tpl.init((linee, err) => { })
-    .then(() => bot.start(process.env.PORT || 3000));
+if (debug) {
+    require("./indexDebug").goDebug(tpl);
+}
+else {
+    tpl.init((linee, err) => { })
+        .then(() => bot.start(process.env.PORT || 3000));
+}
 //# sourceMappingURL=index.js.map

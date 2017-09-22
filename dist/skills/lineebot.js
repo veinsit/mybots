@@ -236,16 +236,17 @@ const displayOrariPage = (chat, route_id, AorD, page) => {
 const onResultCorse = (chat, data, route_id, AorD, page) => {
     const quanteInsieme = 4;
     const result = {
-        corse: data.filter((it) => it.VERSO === AorD)
+        corse: data // già filtrate A o D .filter((it) => it.VERSO === AorD)
             .slice(page * quanteInsieme, (page + 1) * quanteInsieme)
-            .map(function (item) {
+        /*
+        .map(function (item) {
             return {
                 CORSA: item.trip_id // item.CORSA,
-                //                    DESC_PERCORSO: item.DESC_PERCORSO,
-                //                    parte: item.ORA_INIZIO_STR,
-                //                    arriva: item.ORA_FINE_STR,
-            };
-        })
+//                    DESC_PERCORSO: item.DESC_PERCORSO,
+//                    parte: item.ORA_INIZIO_STR,
+//                    arriva: item.ORA_FINE_STR,
+            }
+        }) */
     };
     // Puoi inviare da un minimo di 2 a un massimo di 4 elementi.
     // L'aggiunta di un pulsante a ogni elemento è facoltativa. Puoi avere solo 1 pulsante per elemento.
@@ -254,8 +255,8 @@ const onResultCorse = (chat, data, route_id, AorD, page) => {
     for (let i = 0; i < Math.min(quanteInsieme, result.corse.length); i++) {
         const corsa = result.corse[i];
         els.push({
-            title: corsa.CORSA,
-            subtitle: "percorso ...",
+            title: "Corsa " + corsa.trip_id,
+            subtitle: "sul percorso " + corsa.route_id,
             // "image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",
             buttons: utils.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + route_id + "_" + corsa.CORSA),
         });
@@ -266,7 +267,7 @@ const onResultCorse = (chat, data, route_id, AorD, page) => {
     noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `TPL_PAGE_CORSE_${route_id}_${AorD}_${page + 1}`), { typing: true });
 };
 const displayCorsa = (chat, route_id, corsa_id) => {
-    service.getCorseOggi('FC', route_id)
+    service.getCorseOggi('FC', route_id, "As")
         .then((data) => onResultPassaggi(data, chat, route_id, corsa_id));
 };
 const onResultPassaggi = (data, chat, route_id, corsa_id) => {

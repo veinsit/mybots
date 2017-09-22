@@ -1,28 +1,27 @@
 'use strict'
 
-if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC
-  || !process.env.GOOGLE_STATICMAP_APIKEY || !process.env.OPENDATAURIBASE) {
-  require('dotenv').config()
-}
+ require('dotenv').config()
 
 // https://github.com/sotirelisc/tvakis
 // https://www.messenger.com/t/thecvbot
 
 // Load emojis
+import utils = require('./utils')
+
 import emo = require('./assets/emoji')
-import tpl = require("./skills/linee")
 import prove = require("./skills/prove")
 import menuAssets = require('./assets/menu')
 
-const skills = [tpl, prove]
+export function goDebug(tpl) {
+  tpl.init( (linee, err) => { /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/})
+  .then(() =>
 
-setTimeout(() => tpl.init((linee, err) =>{
-  
-  //   linee && console.log( linee.map(l=>[l.LINEA_ID, l.display_name] ))
- 
-     tpl.searchLinea(undefined, '91')
- 
-      
- }), 2000);
+     tpl.onPostback('TPL_PAGE_CORSE_CE04_As_0', utils.fakechat, undefined)
+
+
+  )}
+
+
+
  
  

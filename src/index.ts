@@ -1,11 +1,13 @@
 'use strict'
 
-const useFakeChat = false;
 
 if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC
      || !process.env.GOOGLE_STATICMAP_APIKEY || !process.env.OPENDATAURIBASE) {
    require('dotenv').config()
 }
+
+const debug = process.env.DEBUG!==undefined ? parseInt(process.env.DEBUG) : false
+const useFakeChat = debug;
 
 // https://github.com/sotirelisc/tvakis
 // https://www.messenger.com/t/thecvbot
@@ -17,7 +19,7 @@ import tpl = require("./skills/lineebot")
 import prove = require("./skills/prove")
 import menuAssets = require('./assets/menu')
 
-// TEST: tpl.onPostback('TPL_PAGE_CORSE_CE04_As_0', utils.fakechat, undefined);
+
 
 const express = require('express');
 const app = express();
@@ -169,10 +171,13 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
   showAbout(chat)
 })
 
-
-
-tpl.init( (linee, err) => { /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/})
+if (debug) {
+  require("./indexDebug").goDebug(tpl)
+} else {
+  tpl.init( (linee, err) => { /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/})
   .then(() =>
     bot.start(process.env.PORT || 3000)
   )
+}
+
 

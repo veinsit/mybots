@@ -106,17 +106,18 @@ export function getLineeFermata(bacino, stop_id) : Promise<any[]> {
 // =================================================================================================
 //                Corse
 // =================================================================================================
-export function getCorseOggi(bacino, route_id, dir01?)  : Promise<any[]> {
+export function getCorseOggi(bacino, route_id, dir01, date?)  : Promise<any[]> {
 
+  dir01 = dir01==="As" ? 0 : (dir01==="Di" ? 1 : dir01)
 
-  const direction = dir01 ? ` and direction_id='${dir01}' ` : ''
-  const d = (new Date()) // oggi
+  const and_direction = dir01 ? ` and direction_id='${dir01}' ` : ''
+  const d = date || (new Date()) // oggi
   const dateAAAMMGG = d.getFullYear().toString() + utils.pad2zero(d.getMonth()+1) + utils.pad2zero(d.getDate())
 
   const q = `select 
   t.service_id, t.trip_id, t.shape_id
   from trips t 
-  where t.route_id='${route_id}' ${direction} 
+  where t.route_id='${route_id}' ${and_direction} 
   and t.service_id in (SELECT service_id from calendar_dates where date='${dateAAAMMGG}' )`;
 
   return dbAllPromise(dbName(bacino), q);  
