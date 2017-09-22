@@ -19,7 +19,7 @@ exports.onPostback = (pl, chat, data) => {
     }
     if (pl.startsWith("TPL_PAGE_CORSE_")) {
         const match = /(.*)_(As|Di)_([0-9]+)/.exec(pl.substring(15));
-        displayOrariPage(chat, match[1], match[2], parseInt(match[3], 10));
+        displayOrariPage(chat, match[1], match[2], parseInt(match[3], 20));
         return true;
     }
     if (pl.startsWith("TPL_ON_CORSA_")) {

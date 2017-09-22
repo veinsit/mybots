@@ -28,7 +28,7 @@ export const onPostback = (pl: string, chat, data): boolean => {
     if (pl.startsWith("TPL_PAGE_CORSE_")) { // 15 PAGE_CORSE_F127_As_2
         const match = /(.*)_(As|Di)_([0-9]+)/.exec(pl.substring(15))
 
-        displayOrariPage(chat, match[1], match[2], parseInt(match[3], 10))
+        displayOrariPage(chat, match[1], match[2], parseInt(match[3], 20))
         return true;
     }
     if (pl.startsWith("TPL_ON_CORSA_")) { // 13 TPL_ON_CORSA_F127_XXXX
