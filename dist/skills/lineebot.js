@@ -315,7 +315,7 @@ exports.webgetLinea = (bacino, route_id, req, res) => {
             title: linea.getTitle(),
             url,
             l: linea // route_id: linea.route_id
-        }));
+        })); //end then
     }
     else
         res.send(`linea ${route_id} non trovata`);

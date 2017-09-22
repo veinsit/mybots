@@ -391,12 +391,12 @@ export const webgetLinea = (bacino, route_id, req, res) => {
         const linea : Linea = arraylinee[0]
         linea.getGMapUrl(service)
         .then ((url) =>
-        res.render('linea', {
-            title: linea.getTitle(),
-            url,
-            l:linea // route_id: linea.route_id
-        }) 
-        )
+            res.render('linea', {
+                title: linea.getTitle(),
+                url,
+                l:linea // route_id: linea.route_id
+            }) 
+        )//end then
     }
     else
         res.send(`linea ${route_id} non trovata`)
