@@ -238,15 +238,15 @@ function _lineaItem(linea: Linea, shape: Shape[]) {
             x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`)
 
     // shape && console.log(x.join('%7C'))
-    const center = mapCenter(linea)
+    const center = linea.mapCenter()
     return {
         title: linea.getTitle(),
         subtitle: linea.getSubtitle(),
         // https://developers.google.com/maps/documentation/static-maps/intro
         //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
         image_url: utils.gStatMapUrl( !hasShape
-            ? `size=100x50&center=${center.center}&zoom=${center.zoom}`
-            : `size=100x50&path=color:0x0000ff%7Cweight:2%7C${x.join('%7C')}`
+            ? `size=300x150&center=${center.center}&zoom=${center.zoom}`
+            : `size=300x150&path=color:0xff0000%7Cweight:2%7C${x.join('%7C')}`
           ),
         // path=color:0x0000ff|weight:5|40.737102,-73.990318|40.749825,-73.987963|40.752946,-73.987384
         /*
@@ -350,6 +350,22 @@ const onResultPassaggi = (data, chat, route_id, corsa_id) => {
     chat.say(`Qui dovrei mostrarti i passaggi della corsa ${corsa_id} della linea ${route_id}`)
 }
 
+
+export const webgetLinea = (route_id, req, res) => {
+    const arraylinee = linee.filter(l=>l.route_id===route_id)
+    if (arraylinee.length===1) {
+        const linea = arraylinee[0]
+        res.render('linea', {
+            title: linea.getTitle(),
+            l:linea // route_id: linea.route_id
+        }) 
+    }
+    else
+        res.send(`linea ${route_id} non trovata`)
+}
+
+
+
 // =================================================================================
 //            helpers
 // =================================================================================
@@ -361,7 +377,7 @@ function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
             const m1 = _mark(coords.lat, coords.long, 'P', 'blue')
             const m2 = _mark(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red')
             //        chat.sendAttachment('image', utils.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, {typing:true})
-            chat.sendAttachment('image', utils.gStatMapUrl(`size=160x160${m1}${m2}`), undefined, { typing: true })
+            chat.sendAttachment('image', utils.gStatMapUrl(`size=300x300${m1}${m2}`), undefined, { typing: true })
 
         })
         .then(() => {
@@ -374,10 +390,4 @@ function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
 }
 
 
-function mapCenter(linea: Linea): any {
-    const cu = linea.getCU();
-    if (cu === 'CE') return { center: "Cesena,Italy", zoom: 11 }
-    if (cu === 'FO') return { center: "Forli,Italy", zoom: 11 }
-    if (cu === 'CO') return { center: "Cesenatico,Italy", zoom: 13 }
-    if (cu === undefined) return { center: "Forlimpopoli,Italy", zoom: 8 }
-}
+

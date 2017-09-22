@@ -11,6 +11,7 @@ const dbName = bacino => `dist/db/database${bacino}.sqlite3`;
 class Linea {
     constructor(bacino, rec) {
         this.getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")";
+        this.getStaticMapUrl = () => utils.gStatMapUrl(`size=300x150&center=${this.mapCenter().center}&zoom=${this.mapCenter().zoom}`);
         this.bacino = bacino;
         this.route_id = rec.route_id, this.route_short_name = rec.route_short_name, this.route_long_name = rec.route_short_name, this.route_type = rec.route_short_name;
         this.display_name = this._displayName(rec.route_id, rec.route_long_name);
@@ -49,8 +50,19 @@ class Linea {
         }
         return undefined;
     }
-    static queryGetAll() { return "SELECT route_id, route_short_name, route_long_name, route_type FROM routes"; }
+    mapCenter() {
+        const cu = this.getCU();
+        if (cu === 'CE')
+            return { center: "Cesena,Italy", zoom: 11 };
+        if (cu === 'FO')
+            return { center: "Forli,Italy", zoom: 11 };
+        if (cu === 'CO')
+            return { center: "Cesenatico,Italy", zoom: 13 };
+        if (cu === undefined)
+            return { center: "Forlimpopoli,Italy", zoom: 8 };
+    }
 }
+Linea.queryGetAll = () => "SELECT route_id, route_short_name, route_long_name, route_type FROM routes";
 exports.Linea = Linea;
 function getLinee(bacino) {
     return dbAllPromise(dbName(bacino), Linea.queryGetAll());
@@ -95,7 +107,6 @@ function getShape(bacino, shape_id) {
         var db = new sqlite3.Database(dbName(bacino));
         db.all(q, function (err, rows) {
             db.close();
-            console.log("Shape rows 1: " + JSON.stringify(rows[0]));
             if (err)
                 reject(err);
             else
@@ -123,7 +134,7 @@ function getLongestShape(bacino, route_id) {
 function getReducedLongestShape(bacino, route_id, n) {
     return getLongestShape(bacino, route_id)
         .then((shape) => {
-        console.log("getLongestShape resolved: "); // prendo la 0 perché sono ordinate DESC
+        //        console.log("getLongestShape resolved: ") // prendo la 0 perché sono ordinate DESC
         if (n >= shape.length)
             return shape;
         let step = Math.floor(shape.length / (n + 1));
@@ -132,12 +143,12 @@ function getReducedLongestShape(bacino, route_id, n) {
             new_shape.push(shape[i * step]);
         }
         new_shape.push(shape[shape.length - 1]);
-        console.log("New shape: " + JSON.stringify(new_shape[0])); // prendo la 0 perché sono ordinate DESC
+        // console.log("New shape: "+JSON.stringify(new_shape[0])) // prendo la 0 perché sono ordinate DESC
         return new_shape;
     });
-    //      .catch((err)=>{console.log("getLongestShape rejected: ")})
 }
 exports.getReducedLongestShape = getReducedLongestShape;
+// ------------------------ utilities
 function dbAllPromise(dbname, query) {
     return new Promise(function (resolve, reject) {
         var db = new sqlite3.Database(dbname);

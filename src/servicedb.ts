@@ -4,7 +4,6 @@ if ( !process.env.OPENDATAURIBASE) {
 }
 
 const baseUri = process.env.OPENDATAURIBASE
-
 const baseUiUri = baseUri.replace('/api/', '/ui/');
 
 const sqlite3 = require('sqlite3').verbose();
@@ -73,7 +72,20 @@ export class Linea {
     }
     return undefined
   }
-  static queryGetAll() : string { return "SELECT route_id, route_short_name, route_long_name, route_type FROM routes"}
+
+  mapCenter(): any {
+    const cu = this.getCU();
+    if (cu === 'CE') return { center: "Cesena,Italy", zoom: 11 }
+    if (cu === 'FO') return { center: "Forli,Italy", zoom: 11 }
+    if (cu === 'CO') return { center: "Cesenatico,Italy", zoom: 13 }
+    if (cu === undefined) return { center: "Forlimpopoli,Italy", zoom: 8 }
+ }
+
+  getStaticMapUrl = () => 
+      utils.gStatMapUrl(`size=300x150&center=${this.mapCenter().center}&zoom=${this.mapCenter().zoom}`);
+
+  static queryGetAll = () =>
+     "SELECT route_id, route_short_name, route_long_name, route_type FROM routes"
 }
 
 
@@ -131,7 +143,6 @@ export function getShape(bacino, shape_id)  : Promise<Shape[]> {
     var db = new sqlite3.Database(dbName(bacino));
     db.all(q, function (err, rows) {
       db.close();
-      console.log("Shape rows 1: "+JSON.stringify(rows[0]))
       if (err) reject(err); else resolve( rows.map(r=>new Shape(r)));
     }); // end each
   }) // end Promise  
@@ -146,22 +157,21 @@ function getLongestShape(bacino, route_id) : Promise<Shape[]> {
   WHERE s.shape_id in (SELECT t.shape_id from trips t where t.route_id='${route_id}')
   GROUP BY s.shape_id
   ORDER BY numPoints desc`
-
   
   return dbAllPromise(dbName(bacino), q)
-  .then((rows) => {
-          console.log("Shape rows 2: "+JSON.stringify(rows[0])) // prendo la 0 perché sono ordinate DESC
-          return rows[0].shape_id
-    })
-  .then((shape_id) => {console.log("shape_id "+shape_id); return getShape(bacino, shape_id)} )
-
+    .then((rows) => {
+            console.log("Shape rows 2: "+JSON.stringify(rows[0])) // prendo la 0 perché sono ordinate DESC
+            return rows[0].shape_id
+      })
+    .then((shape_id) => {console.log("shape_id "+shape_id); return getShape(bacino, shape_id)} )
 }
+
 // n = quanti punti oltre al primo e ultimo
 export function getReducedLongestShape(bacino, route_id, n:number) : Promise<Shape[]> {
 
     return getLongestShape(bacino, route_id)
       .then((shape:Shape[]) : Shape[] => {
-        console.log("getLongestShape resolved: ") // prendo la 0 perché sono ordinate DESC
+//        console.log("getLongestShape resolved: ") // prendo la 0 perché sono ordinate DESC
         if ( n>=shape.length)
           return shape;
 
@@ -172,12 +182,14 @@ export function getReducedLongestShape(bacino, route_id, n:number) : Promise<Sha
            new_shape.push(shape[i*step])
         }
         new_shape.push( shape[shape.length-1] )
-        console.log("New shape: "+JSON.stringify(new_shape[0])) // prendo la 0 perché sono ordinate DESC
+        // console.log("New shape: "+JSON.stringify(new_shape[0])) // prendo la 0 perché sono ordinate DESC
 
         return new_shape;
       })
-//      .catch((err)=>{console.log("getLongestShape rejected: ")})
 }
+
+
+// ------------------------ utilities
 
 function dbAllPromise(dbname:string, query:string) : Promise<any[]> {
   return new Promise (function(resolve,reject) {

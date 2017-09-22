@@ -11,6 +11,8 @@ const emo = require("./assets/emoji");
 const tpl = require("./skills/linee");
 const prove = require("./skills/prove");
 const menuAssets = require("./assets/menu");
+const express = require("express");
+const app = express.express();
 const skills = [tpl, prove];
 const BootBot = require('../lib/MyBootBot');
 const bot = new BootBot({
@@ -100,6 +102,15 @@ bot.on('postback:HELP_PAYLOAD', (payload, chat) => {
 });
 bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
     showAbout(chat);
+});
+// ------- web 
+app.set('views', './views');
+app.set('view engine', 'pug');
+app.get("/", (req, res) => {
+    res.send("Hello !");
+});
+app.get("/api/linee/:routeid", (req, res) => {
+    tpl.webgetLinea(req.params.routeId, req, res);
 });
 tpl.init((linee, err) => { })
     .then(() => bot.start(process.env.PORT || 3000));
