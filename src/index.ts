@@ -137,7 +137,7 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
 })
 
 // ------- web 
-import express = require('express');
+const express = require('express');
 const app = express();
 app.set('views', './views')
 app.set('view engine', 'pug')
