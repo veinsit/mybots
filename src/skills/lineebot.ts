@@ -249,14 +249,15 @@ function genericTemplateItem(linea: Linea, shape: Shape[]) : Promise<any> {
                 utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`), // 0 sta per pagina 0
                 utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`), // 0 sta per pagina 0
     
-                utils.weburlBtn("Sito A", service.getOpendataUri(linea,0)),
-                utils.weburlBtn("Sito R", service.getOpendataUri(linea,1))
+                utils.weburlBtn("Sito A", service.getOpendataUri(linea,0))
+//                utils.weburlBtn("Sito R", service.getOpendataUri(linea,1))
             ]
         }        
 
     })
 }
 
+/*
 
 // item di un generic template
 function _lineaItem(linea: Linea, shape: Shape[]) {
@@ -265,7 +266,7 @@ function _lineaItem(linea: Linea, shape: Shape[]) {
     const hasShape = (shape !== undefined && shape !== null && shape.length >= 4)
 
     if (hasShape)
-    */
+    --/
         for (let i=0; i<shape.length; i++)
             x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`)
 
@@ -287,7 +288,7 @@ function _lineaItem(linea: Linea, shape: Shape[]) {
         "url": service.baseUiUri+'FC/linee/'+linea.route_id,
         "title": emo.emoji.link + " Dettagli",
         "webview_height_ratio": "tall"
-        }]*/
+        }]--/
         // TPL_PAGE_CORSE_F127_As_2
         buttons: [
             utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`), // 0 sta per pagina 0
@@ -298,7 +299,7 @@ function _lineaItem(linea: Linea, shape: Shape[]) {
         ]
     }
 }
-
+*/
 
 const scegliAorD = (chat, route_id) => {
     const qr = ["Ascen", "Discen"];

@@ -202,31 +202,36 @@ function genericTemplateItem(linea, shape) {
             buttons: [
                 utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`),
                 utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`),
-                utils.weburlBtn("Sito A", service.getOpendataUri(linea, 0)),
-                utils.weburlBtn("Sito R", service.getOpendataUri(linea, 1))
+                utils.weburlBtn("Sito A", service.getOpendataUri(linea, 0))
+                //                utils.weburlBtn("Sito R", service.getOpendataUri(linea,1))
             ]
         };
     });
 }
+/*
+
 // item di un generic template
-function _lineaItem(linea, shape) {
-    let x = [];
+function _lineaItem(linea: Linea, shape: Shape[]) {
+    let x: string[] = []
     /*
     const hasShape = (shape !== undefined && shape !== null && shape.length >= 4)
 
     if (hasShape)
-    */
-    for (let i = 0; i < shape.length; i++)
-        x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`);
-    const center = linea.mapCenter();
+    --/
+        for (let i=0; i<shape.length; i++)
+            x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`)
+
+
+    const center = linea.mapCenter()
     return {
         title: linea.getTitle(),
         subtitle: linea.getSubtitle(),
         // https://developers.google.com/maps/documentation/static-maps/intro
         //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
-        image_url: utils.gStatMapUrl(shape.length < 2
+        image_url: utils.gStatMapUrl( shape.length < 2
             ? `size=300x150&center=${center.center}&zoom=${center.zoom}`
-            : `size=300x150&path=color:0xff0000%7Cweight:2%7C${x.join('%7C')}`),
+            : `size=300x150&path=color:0xff0000%7Cweight:2%7C${x.join('%7C')}`
+          ),
         // path=color:0x0000ff|weight:5|40.737102,-73.990318|40.749825,-73.987963|40.752946,-73.987384
         /*
         "buttons": [{
@@ -234,16 +239,18 @@ function _lineaItem(linea, shape) {
         "url": service.baseUiUri+'FC/linee/'+linea.route_id,
         "title": emo.emoji.link + " Dettagli",
         "webview_height_ratio": "tall"
-        }]*/
+        }]--/
         // TPL_PAGE_CORSE_F127_As_2
         buttons: [
-            utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`),
-            utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`),
+            utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`), // 0 sta per pagina 0
+            utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`), // 0 sta per pagina 0
+
             utils.weburlBtn("Sito A", service.getOpendataUri(linea, 0)),
             utils.weburlBtn("Sito R", service.getOpendataUri(linea, 1))
         ]
-    };
+    }
 }
+*/
 const scegliAorD = (chat, route_id) => {
     const qr = ["Ascen", "Discen"];
     chat.conversation((convo) => {
