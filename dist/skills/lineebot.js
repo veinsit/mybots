@@ -168,7 +168,7 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
         const elements = [
             {
                 "title": linea.getTitle(),
-                "subtitle": linea.getSubTitle(),
+                "subtitle": linea.getSubtitle(),
                 "image_url": url,
             },
             {

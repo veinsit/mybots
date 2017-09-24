@@ -215,7 +215,7 @@ function sayLineeTrovate_GenericTemplate(chat, items) {  // items = array of {li
 
 function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
 
-    const linea = lineaAndShape.linea
+    const linea:Linea = lineaAndShape.linea
 
     linea.getGMapUrl(service, "320x160")
         .then((url) => {
@@ -223,7 +223,7 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
             const elements = [
                 {
                     "title": linea.getTitle(),
-                    "subtitle": linea.getSubTitle(),
+                    "subtitle": linea.getSubtitle(),
                     "image_url": url,
                     /* per ora no buttons sull'immagine      
                     "buttons": [
