@@ -96,7 +96,7 @@ exports.getServizi = getServizi;
 // =================================================================================================
 //                Linea
 // =================================================================================================
-function getOpendataUri(linea, dir01) { return `${baseUiUri}${linea.bacino}/linee/${linea.route_id}/0/d/${dir01}`; }
+function getOpendataUri(linea, dir01, dayOffset) { return `${baseUiUri}${linea.bacino}/linee/${linea.route_id}/dir/${dir01}/g/${dayOffset}`; }
 exports.getOpendataUri = getOpendataUri;
 function getLinee(bacino) {
     return dbAllPromise(dbName(bacino), Linea.queryGetAll());

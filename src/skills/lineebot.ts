@@ -113,12 +113,12 @@ const _mark = (la, lo, label, color) => `&markers=color:${color}%7Clabel:${label
 
 // inizializza var globale 'linee'
 
-export const init = (callback?) : Promise<any>  => { 
+export const init = (callback?): Promise<any> => {
     return service.getLinee('FC')
-    .then((rows: any[]) => {
-        linee = rows.map((row) => new service.Linea('FC', row));
-        callback && callback(linee, undefined)
-    });
+        .then((rows: any[]) => {
+            linee = rows.map((row) => new service.Linea('FC', row));
+            callback && callback(linee, undefined)
+        });
 
 }
 
@@ -160,7 +160,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
                 else {
                     //                sayLineeTrovate_GenericTemplate(chat, items);
                     if (items.length === 1)
-                        sayLineaTrovata_ListTemplate(chat, items[0]);
+                        sayLineaTrovata_ListTemplate2(chat, items[0]);
                     else {
                         chat.say({
                             text: "Quale linea ?",
@@ -197,7 +197,7 @@ function sayLineeTrovate_GenericTemplate(chat, items) {  // items = array of {li
                         utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_0_0`), // 0 sta per pagina 0
                         utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_1_0`), // 0 sta per pagina 0
 
-                        utils.weburlBtn("Sito A", service.getOpendataUri(linea, 0))
+                        utils.weburlBtn("Sito A", service.getOpendataUri(linea, 0, 0))
                         //                utils.weburlBtn("Sito R", service.getOpendataUri(linea,1))
                     ]
                 }
@@ -215,15 +215,15 @@ function sayLineeTrovate_GenericTemplate(chat, items) {  // items = array of {li
 
 function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
 
-    const linea:Linea = lineaAndShape.linea
+    const linea: Linea = lineaAndShape.linea
 
     Promise.all([linea.getGMapUrl(service, "320x160"), service.getOrarLinea(linea.bacino, linea.route_id, 0, 0)])
-//    linea.getGMapUrl(service, "320x160")
+        //    linea.getGMapUrl(service, "320x160")
         .then((values) => {
             const trips = values[1]
             const url = values[0]
-            const dir0 = trips[0][0].stop_name+" >> "+ trips[0][trips.length-1].stop_name  // [{trip_id, stop_sequence,  departure_time, stop_name,
-            const dir1 = trips[0][trips.length-1].stop_name+" >> "+ trips[0][0].stop_name 
+            const dir0 = trips[0][0].stop_name + " >> " + trips[0][trips.length - 1].stop_name  // [{trip_id, stop_sequence,  departure_time, stop_name,
+            const dir1 = trips[0][trips.length - 1].stop_name + " >> " + trips[0][0].stop_name
             const options = { topElementStyle: 'large' }  // o compact
             const elements = [
                 {
@@ -247,7 +247,7 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
                     subtitle: "orari oggi",
                     default_action: {
                         "type": "web_url",
-                        "url": service.getOpendataUri(linea, 0),
+                        "url": service.getOpendataUri(linea, 0, 0),
                         "webview_height_ratio": "tall",
                         // messenger_extensions: true,
                         //"fallback_url": "http://www.startromagna.it/"
@@ -259,7 +259,7 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
                     //"image_url": "https://peterssendreceiveapp.ngrok.io/img/blue-t-shirt.png",
                     "default_action": {
                         "type": "web_url",
-                        "url": service.getOpendataUri(linea, 1),
+                        "url": service.getOpendataUri(linea, 1, 0),
                         // messenger_extensions: true,
                         "webview_height_ratio": "tall",
                         // "fallback_url": "https://peterssendreceiveapp.ngrok.io/"
@@ -280,14 +280,77 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
         })
 }
 
-const displayOrariPage = (chat, route_id, dir01:number, page: number) => {
+function sayLineaTrovata_ListTemplate2(chat, lineaAndShape) {
+
+    const linea: Linea = lineaAndShape.linea
+    linea.getGMapUrl(service, "320x160")
+        .then((url) => {
+            chat.sendAttachment('image', url, undefined, { typing: true })
+                .then(() => {
+                    service.getOrarLinea(linea.bacino, linea.route_id, 0, 0)
+                        //    linea.getGMapUrl(service, "320x160")
+                        .then((trips) => {
+                            const dir0 = trips[0][0].stop_name + " >> " + trips[0][trips.length - 1].stop_name  // [{trip_id, stop_sequence,  departure_time, stop_name,
+                            const dir1 = trips[0][trips.length - 1].stop_name + " >> " + trips[0][0].stop_name
+                            const options = { topElementStyle: 'large' }  // o compact
+                            const elements = [
+                                {
+                                    title: dir0, subtitle: "orari oggi",
+                                    default_action: {
+                                        type: "web_url",
+                                        url: service.getOpendataUri(linea, 0, 0),   // andata oggi
+                                        webview_height_ratio: "tall",
+                                        // messenger_extensions: true,
+                                        //"fallback_url": "http://www.startromagna.it/"
+                                    }
+                                },
+                                {
+                                    title: dir1, subtitle: "orari oggi",
+                                    default_action: {
+                                        type: "web_url",
+                                        url: service.getOpendataUri(linea, 1, 0),   // ritorno oggi
+                                        webview_height_ratio: "tall",
+                                        // messenger_extensions: true,
+                                        //"fallback_url": "http://www.startromagna.it/"
+                                    }
+                                },
+                                {
+                                    title: dir0, subtitle: "orari domani",
+                                    default_action: {
+                                        type: "web_url",
+                                        url: service.getOpendataUri(linea, 0, 1),   // andata domani
+                                        webview_height_ratio: "tall",
+                                        // messenger_extensions: true,
+                                        //"fallback_url": "http://www.startromagna.it/"
+                                    }
+                                },
+                                {
+                                    title: dir1, subtitle: "orari domani",
+                                    default_action: {
+                                        type: "web_url",
+                                        url: service.getOpendataUri(linea, 1, 1),   // ritorno domani
+                                        webview_height_ratio: "tall",
+                                        // messenger_extensions: true,
+                                        //"fallback_url": "http://www.startromagna.it/"
+                                    }
+                                }
+                            ] // end elements
+                            chat.sendListTemplate(elements, [], options)
+                        })
+                })//end then
+        });
+
+
+};
+
+
+const displayOrariPage = (chat, route_id, dir01: number, page: number) => {
     service.getCorseOggi('FC', route_id, dir01)
         .then((data) =>
             onResultCorse(chat, data, route_id, dir01, page)
         )
-};
-
-const onResultCorse = (chat, data, route_id, dir01:number, page:number) => {
+}
+const onResultCorse = (chat, data, route_id, dir01: number, page: number) => {
     const quanteInsieme = 4;
     const result = {
         corse: data // già filtrate A o D .filter((it) => it.VERSO === AorD)
@@ -339,7 +402,7 @@ const onResultPassaggi = (data, chat, route_id, corsa_id) => {
 }
 
 
-export const webgetLinea = (bacino, route_id, giorno: number, dir01: number, req, res) => {
+export const webgetLinea = (bacino, route_id, dir01: number, giorno: number, req, res) => {
     const arraylinee: Linea[] = linee.filter(l => l.bacino === bacino && l.route_id === route_id)
     if (arraylinee.length === 1) {
         const linea: Linea = arraylinee[0]

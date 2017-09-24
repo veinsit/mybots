@@ -140,7 +140,7 @@ export function getServizi(bacino): Promise<any[]> {
 // =================================================================================================
 //                Linea
 // =================================================================================================
-export function getOpendataUri(linea: Linea, dir01: number) { return `${baseUiUri}${linea.bacino}/linee/${linea.route_id}/0/d/${dir01}` }
+export function getOpendataUri(linea: Linea, dir01: number, dayOffset:number) { return `${baseUiUri}${linea.bacino}/linee/${linea.route_id}/dir/${dir01}/g/${dayOffset}` }
 
 export function getLinee(bacino): Promise<any[]> {
   return dbAllPromise(dbName(bacino), Linea.queryGetAll());

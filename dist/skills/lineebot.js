@@ -119,7 +119,7 @@ exports.searchLinea = (chat, askedLinea) => {
             else {
                 //                sayLineeTrovate_GenericTemplate(chat, items);
                 if (items.length === 1)
-                    sayLineaTrovata_ListTemplate(chat, items[0]);
+                    sayLineaTrovata_ListTemplate2(chat, items[0]);
                 else {
                     chat.say({
                         text: "Quale linea ?",
@@ -150,7 +150,7 @@ function sayLineeTrovate_GenericTemplate(chat, items) {
                 buttons: [
                     utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_0_0`),
                     utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_1_0`),
-                    utils.weburlBtn("Sito A", service.getOpendataUri(linea, 0))
+                    utils.weburlBtn("Sito A", service.getOpendataUri(linea, 0, 0))
                     //                utils.weburlBtn("Sito R", service.getOpendataUri(linea,1))
                 ]
             };
@@ -181,7 +181,7 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
                 subtitle: "orari oggi",
                 default_action: {
                     "type": "web_url",
-                    "url": service.getOpendataUri(linea, 0),
+                    "url": service.getOpendataUri(linea, 0, 0),
                     "webview_height_ratio": "tall",
                 }
             },
@@ -191,7 +191,7 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
                 //"image_url": "https://peterssendreceiveapp.ngrok.io/img/blue-t-shirt.png",
                 "default_action": {
                     "type": "web_url",
-                    "url": service.getOpendataUri(linea, 1),
+                    "url": service.getOpendataUri(linea, 1, 0),
                     // messenger_extensions: true,
                     "webview_height_ratio": "tall",
                 },
@@ -200,6 +200,57 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
         chat.sendListTemplate(elements, [], options);
     });
 }
+function sayLineaTrovata_ListTemplate2(chat, lineaAndShape) {
+    const linea = lineaAndShape.linea;
+    linea.getGMapUrl(service, "320x160")
+        .then((url) => {
+        chat.sendAttachment('image', url, undefined, { typing: true })
+            .then(() => {
+            service.getOrarLinea(linea.bacino, linea.route_id, 0, 0)
+                .then((trips) => {
+                const dir0 = trips[0][0].stop_name + " >> " + trips[0][trips.length - 1].stop_name; // [{trip_id, stop_sequence,  departure_time, stop_name,
+                const dir1 = trips[0][trips.length - 1].stop_name + " >> " + trips[0][0].stop_name;
+                const options = { topElementStyle: 'large' }; // o compact
+                const elements = [
+                    {
+                        title: dir0, subtitle: "orari oggi",
+                        default_action: {
+                            type: "web_url",
+                            url: service.getOpendataUri(linea, 0, 0),
+                            webview_height_ratio: "tall",
+                        }
+                    },
+                    {
+                        title: dir1, subtitle: "orari oggi",
+                        default_action: {
+                            type: "web_url",
+                            url: service.getOpendataUri(linea, 1, 0),
+                            webview_height_ratio: "tall",
+                        }
+                    },
+                    {
+                        title: dir0, subtitle: "orari domani",
+                        default_action: {
+                            type: "web_url",
+                            url: service.getOpendataUri(linea, 0, 1),
+                            webview_height_ratio: "tall",
+                        }
+                    },
+                    {
+                        title: dir1, subtitle: "orari domani",
+                        default_action: {
+                            type: "web_url",
+                            url: service.getOpendataUri(linea, 1, 1),
+                            webview_height_ratio: "tall",
+                        }
+                    }
+                ]; // end elements
+                chat.sendListTemplate(elements, [], options);
+            });
+        }); //end then
+    });
+}
+;
 const displayOrariPage = (chat, route_id, dir01, page) => {
     service.getCorseOggi('FC', route_id, dir01)
         .then((data) => onResultCorse(chat, data, route_id, dir01, page));
@@ -244,7 +295,7 @@ const displayCorsa = (chat, route_id, corsa_id) => {
 const onResultPassaggi = (data, chat, route_id, corsa_id) => {
     chat.say(`Qui dovrei mostrarti i passaggi della corsa ${corsa_id} della linea ${route_id}`);
 };
-exports.webgetLinea = (bacino, route_id, giorno, dir01, req, res) => {
+exports.webgetLinea = (bacino, route_id, dir01, giorno, req, res) => {
     const arraylinee = linee.filter(l => l.bacino === bacino && l.route_id === route_id);
     if (arraylinee.length === 1) {
         const linea = arraylinee[0];
