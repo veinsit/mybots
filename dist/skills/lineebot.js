@@ -8,7 +8,6 @@ let linee = [];
 exports.PB_TPL = 'TPL_';
 exports.onPostback = (pl, chat, data) => {
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
-        //        scegliAorD(chat, pl.substring(16))
         return exports.searchLinea(chat, pl.substring(16));
     }
     /*
@@ -19,8 +18,8 @@ exports.onPostback = (pl, chat, data) => {
         return true;
     }*/
     if (pl.startsWith("TPL_PAGE_CORSE_")) {
-        const match = /(.*)_(As|Di)_([0-9]+)/.exec(pl.substring(15));
-        displayOrariPage(chat, match[1], match[2], parseInt(match[3]));
+        const match = /(.*)_(0|1)_([0-9]+)/.exec(pl.substring(15));
+        displayOrariPage(chat, match[1], parseInt(match[2]), parseInt(match[3]));
         return true;
     }
     if (pl.startsWith("TPL_ON_CORSA_")) {
@@ -147,8 +146,8 @@ function sayLineeTrovate_GenericTemplate(chat, items) {
                 subtitle: linea.getSubtitle(),
                 image_url: url,
                 buttons: [
-                    utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`),
-                    utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`),
+                    utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_0_0`),
+                    utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_1_0`),
                     utils.weburlBtn("Sito A", service.getOpendataUri(linea, 0))
                     //                utils.weburlBtn("Sito R", service.getOpendataUri(linea,1))
                 ]
@@ -176,7 +175,7 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
                 "subtitle": "orari andata",
                 "default_action": {
                     "type": "web_url",
-                    "url": service.getOpendataUri(linea, "As"),
+                    "url": service.getOpendataUri(linea, 0),
                     "webview_height_ratio": "tall",
                 }
             },
@@ -186,7 +185,7 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
                 "subtitle": "Orari ritorno",
                 "default_action": {
                     "type": "web_url",
-                    "url": service.getOpendataUri(linea, "Di"),
+                    "url": service.getOpendataUri(linea, 1),
                     // messenger_extensions: true,
                     "webview_height_ratio": "tall",
                 },
@@ -238,31 +237,40 @@ function _lineaItem(linea: Linea, shape: Shape[]) {
     }
 }
 */
+/*
 const scegliAorD = (chat, route_id) => {
     const qr = ["Ascen", "Discen"];
     chat.conversation((convo) => {
         // tutto dentro la convo
-        convo.ask({ text: 'In quale direzione ?', quickReplies: qr }, (payload, convo) => {
-            const text = payload.message.text;
-            convo.end()
-                .then(() => displayOrariPage(chat, route_id, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0));
-        }, [{
+        convo.ask(
+            { text: 'In quale direzione ?', quickReplies: qr },
+            (payload, convo) => {
+                const text = payload.message.text;
+                convo.end()
+                    .then(() =>
+                        displayOrariPage(chat, route_id, text.toUpperCase().startsWith("AS") ? 0 : 1, 0)
+                    )
+            },
+            [{
                 event: 'quick_reply',
                 callback: (payload, convo) => {
                     const text = payload.message.text;
                     // convo.say(`Thanks for choosing one of the options. Your favorite color is ${text}`);
                     convo.end()
-                        .then(() => displayOrariPage(chat, route_id, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0));
+                        .then(() =>
+                            displayOrariPage(chat, route_id, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0)
+                        )
                 }
             }
-        ]);
+            ]);
     });
+}
+*/
+const displayOrariPage = (chat, route_id, dir01, page) => {
+    service.getCorseOggi('FC', route_id, dir01)
+        .then((data) => onResultCorse(chat, data, route_id, dir01, page));
 };
-const displayOrariPage = (chat, route_id, AorD, page) => {
-    service.getCorseOggi('FC', route_id, AorD)
-        .then((data) => onResultCorse(chat, data, route_id, AorD, page));
-};
-const onResultCorse = (chat, data, route_id, AorD, page) => {
+const onResultCorse = (chat, data, route_id, dir01, page) => {
     const quanteInsieme = 4;
     const result = {
         corse: data // già filtrate A o D .filter((it) => it.VERSO === AorD)
@@ -293,10 +301,10 @@ const onResultCorse = (chat, data, route_id, AorD, page) => {
     const noNextPage = () => result.corse.length < quanteInsieme;
     // emetti max 4 elementi
     chat.sendListTemplate(els, // PAGE_CORSE_F127_As_2
-    noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `TPL_PAGE_CORSE_${route_id}_${AorD}_${page + 1}`), { typing: true });
+    noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `TPL_PAGE_CORSE_${route_id}_${dir01}_${page + 1}`), { typing: true });
 };
 const displayCorsa = (chat, route_id, corsa_id) => {
-    service.getCorseOggi('FC', route_id, "As")
+    service.getCorseOggi('FC', route_id, 0)
         .then((data) => onResultPassaggi(data, chat, route_id, corsa_id));
 };
 const onResultPassaggi = (data, chat, route_id, corsa_id) => {

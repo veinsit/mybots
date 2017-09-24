@@ -107,8 +107,7 @@ exports.getLineeFermata = getLineeFermata;
 //                Corse
 // =================================================================================================
 function getCorseOggi(bacino, route_id, dir01, date) {
-    dir01 = (dir01 === undefined || dir01 === "As" || dir01 === 0 ? 0 : 1);
-    const and_direction = (dir01 === 0 || dir01 === 1) ? ` and direction_id='${dir01}' ` : '';
+    const and_direction = (dir01 ? ` and direction_id='${dir01}' ` : '');
     const d = date || (new Date()); // oggi
     // elenco di corse (trip_id) del servizio (service_id) di una data
     const q = `select t.service_id, t.trip_id, t.shape_id from trips t 

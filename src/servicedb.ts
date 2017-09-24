@@ -134,7 +134,7 @@ const dbName = bacino => `dist/db/database${bacino}.sqlite3`
 // =================================================================================================
 //                Linea
 // =================================================================================================
-export function getOpendataUri(linea:Linea, dir01) { return `${baseUiUri}${linea.bacino}/linee/0/${dir01}/${linea.route_id}` }
+export function getOpendataUri(linea:Linea, dir01:number) { return `${baseUiUri}${linea.bacino}/linee/0/${dir01}/${linea.route_id}` }
 
 
 
@@ -154,9 +154,7 @@ export function getLineeFermata(bacino, stop_id): Promise<any[]> {
 // =================================================================================================
 export function getCorseOggi(bacino, route_id, dir01, date?): Promise<any[]> {
 
-  dir01 = (dir01===undefined || dir01 === "As" || dir01 === 0 ? 0 : 1)
-
-  const and_direction = (dir01===0 || dir01===1) ? ` and direction_id='${dir01}' ` : ''
+  const and_direction = (dir01 ? ` and direction_id='${dir01}' ` : '')
   const d = date || (new Date()) // oggi
 
     // elenco di corse (trip_id) del servizio (service_id) di una data
