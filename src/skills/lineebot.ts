@@ -222,7 +222,7 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
             const options = { topElementStyle: 'large' }  // o compact
             const elements = [
                 {
-                    //"title": linea.getTitle(),
+                    "title": linea.getTitle(),
                     //"subtitle": linea.getSubtitle(),
                     "image_url": url,
                     /* per ora no buttons sull'immagine      
