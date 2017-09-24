@@ -89,6 +89,10 @@ const baseUiUri = process.env.OPENDATAURIBASE + "ui/tpl/";
 const sqlite3 = require('sqlite3').verbose();
 const utils = require("./utils");
 const dbName = bacino => `dist/db/database${bacino}.sqlite3`;
+function getServizi(bacino) {
+    return dbAllPromise(dbName(bacino), "select unique service_id from calendar_dates");
+}
+exports.getServizi = getServizi;
 // =================================================================================================
 //                Linea
 // =================================================================================================

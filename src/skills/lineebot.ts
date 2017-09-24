@@ -113,12 +113,14 @@ const _mark = (la, lo, label, color) => `&markers=color:${color}%7Clabel:${label
 
 // inizializza var globale 'linee'
 
-export const init = (callback?) =>
-    service.getLinee('FC')
-        .then((rows: any[]) => {
-            linee = rows.map((row) => new service.Linea('FC', row));
-            callback && callback(linee, undefined)
-        });
+export const init = (callback?) : Promise<any>  => { 
+    return service.getLinee('FC')
+    .then((rows: any[]) => {
+        linee = rows.map((row) => new service.Linea('FC', row));
+        callback && callback(linee, undefined)
+    });
+
+}
 
 export const searchLinea = (chat, askedLinea): boolean => {
     //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
@@ -215,14 +217,18 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
 
     const linea:Linea = lineaAndShape.linea
 
-    linea.getGMapUrl(service, "320x160")
-        .then((url) => {
+    Promise.all([linea.getGMapUrl(service, "320x160"), service.getOrarLinea(linea.bacino, linea.route_id, 0, 0)])
+//    linea.getGMapUrl(service, "320x160")
+        .then((values) => {
+            const url = values[0]
+            const dir0 = values[1][0].stop_name+" >> "+ values[1][values[1].length-1].stop_name  // [{trip_id, stop_sequence,  departure_time, stop_name,
+            const dir1 = values[1][values[1].length-1].stop_name+" >> "+ values[1][0].stop_name 
             const options = { topElementStyle: 'large' }  // o compact
             const elements = [
                 {
-                    "title": linea.getTitle(),
-                    //"subtitle": linea.getSubtitle(),
-                    "image_url": url,
+                    title: linea.getTitle(),
+                    subtitle: dir0,
+                    image_url: url,
                     /* per ora no buttons sull'immagine      
                     "buttons": [
                       {
@@ -236,9 +242,9 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
                     ]*/
                 },
                 {
-                    "title": "Andata",
-                    "subtitle": "orari andata",
-                    "default_action": {
+                    title: dir0,
+                    subtitle: "orari oggi",
+                    default_action: {
                         "type": "web_url",
                         "url": service.getOpendataUri(linea, 0),
                         "webview_height_ratio": "tall",
@@ -247,9 +253,9 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
                     }
                 },
                 {
-                    "title": "Ritorno",
-                    "image_url": "https://peterssendreceiveapp.ngrok.io/img/blue-t-shirt.png",
-                    "subtitle": "Orari ritorno",
+                    "title": dir1,
+                    "subtitle": "orari oggi",
+                    //"image_url": "https://peterssendreceiveapp.ngrok.io/img/blue-t-shirt.png",
                     "default_action": {
                         "type": "web_url",
                         "url": service.getOpendataUri(linea, 1),
@@ -273,78 +279,6 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
         })
 }
 
-/*
-
-// item di un generic template
-function _lineaItem(linea: Linea, shape: Shape[]) {
-    let x: string[] = []
-    /*
-    const hasShape = (shape !== undefined && shape !== null && shape.length >= 4)
-
-    if (hasShape)
-    --/
-        for (let i=0; i<shape.length; i++)
-            x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`)
-
-
-    const center = linea.mapCenter()
-    return {
-        title: linea.getTitle(),
-        subtitle: linea.getSubtitle(),
-        // https://developers.google.com/maps/documentation/static-maps/intro
-        //                image_url: utils.gStatMapUrl(`center=${center.center}&zoom=${center.zoom}&size=100x50`),
-        image_url: utils.gStatMapUrl( shape.length < 2
-            ? `size=300x150&center=${center.center}&zoom=${center.zoom}`
-            : `size=300x150&path=color:0xff0000%7Cweight:2%7C${x.join('%7C')}`
-          ),
-        // path=color:0x0000ff|weight:5|40.737102,-73.990318|40.749825,-73.987963|40.752946,-73.987384
-        /*
-        "buttons": [{
-        "type": "web_url",
-        "url": service.baseUiUri+'FC/linee/'+linea.route_id,
-        "title": emo.emoji.link + " Dettagli",
-        "webview_height_ratio": "tall"
-        }]--/
-        // TPL_PAGE_CORSE_F127_As_2
-        buttons: [
-            utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`), // 0 sta per pagina 0
-            utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`), // 0 sta per pagina 0
-
-            utils.weburlBtn("Sito A", service.getOpendataUri(linea, 0)),
-            utils.weburlBtn("Sito R", service.getOpendataUri(linea, 1))
-        ]
-    }
-}
-*/
-/*
-const scegliAorD = (chat, route_id) => {
-    const qr = ["Ascen", "Discen"];
-    chat.conversation((convo) => {
-        // tutto dentro la convo
-        convo.ask(
-            { text: 'In quale direzione ?', quickReplies: qr },
-            (payload, convo) => {
-                const text = payload.message.text;
-                convo.end()
-                    .then(() =>
-                        displayOrariPage(chat, route_id, text.toUpperCase().startsWith("AS") ? 0 : 1, 0)
-                    )
-            },
-            [{
-                event: 'quick_reply',
-                callback: (payload, convo) => {
-                    const text = payload.message.text;
-                    // convo.say(`Thanks for choosing one of the options. Your favorite color is ${text}`);
-                    convo.end()
-                        .then(() =>
-                            displayOrariPage(chat, route_id, text.toUpperCase().startsWith("AS") ? "As" : "Di", 0)
-                        )
-                }
-            }
-            ]);
-    });
-}
-*/
 const displayOrariPage = (chat, route_id, dir01:number, page: number) => {
     service.getCorseOggi('FC', route_id, dir01)
         .then((data) =>
