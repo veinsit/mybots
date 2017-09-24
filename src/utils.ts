@@ -29,7 +29,11 @@ export function addDays(date:Date, days:number) : Date {
     result.setDate(result.getDate() + days);
     return result;
 }  
-  
+
+export function dateAaaaMmGg(d:Date) {
+    return d.getFullYear().toString() + pad2zero(d.getMonth() + 1) + pad2zero(d.getDate())
+}
+
 export function gStatMapUrl(params:string) : string {
     return 'https://maps.googleapis.com/maps/api/staticmap?'+params+'&key='+process.env.GOOGLE_STATICMAP_APIKEY
 }

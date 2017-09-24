@@ -107,14 +107,13 @@ exports.getLineeFermata = getLineeFermata;
 //                Corse
 // =================================================================================================
 function getCorseOggi(bacino, route_id, dir01, date) {
-    dir01 = dir01 === "As" ? 0 : (dir01 === "Di" ? 1 : dir01);
+    dir01 = (dir01 === undefined || dir01 === "As" || dir01 === 0 ? 0 : 1);
     const and_direction = (dir01 === 0 || dir01 === 1) ? ` and direction_id='${dir01}' ` : '';
     const d = date || (new Date()); // oggi
-    const dateAAAMMGG = d.getFullYear().toString() + utils.pad2zero(d.getMonth() + 1) + utils.pad2zero(d.getDate());
     // elenco di corse (trip_id) del servizio (service_id) di una data
     const q = `select t.service_id, t.trip_id, t.shape_id from trips t 
   where t.route_id='${route_id}' ${and_direction} 
-  and t.service_id in (SELECT service_id from calendar_dates where date='${dateAAAMMGG}' )`;
+  and t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(d)}' )`;
     return dbAllPromise(dbName(bacino), q);
 }
 exports.getCorseOggi = getCorseOggi;
@@ -122,7 +121,7 @@ function getPassaggiCorsa(bacino, trip_id) {
     const q = `select st.stop_sequence, st.trip_id, st.departure_time, s.stop_name, s.stop_lat, s.stop_lon
   from stop_times st 
   join stops s on st.stop_id=s.stop_id 
-  where st.trip_id='${trip_id}' 
+  where st.trip_id='${trip_id}' and s.stop_name NOT LIKE 'Semafor%'
   order by st.departure_time`;
     return dbAllPromise(dbName(bacino), q);
 }

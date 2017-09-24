@@ -222,8 +222,8 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
             const options = { topElementStyle: 'large' }  // o compact
             const elements = [
                 {
-                    "title": linea.getTitle(),
-                    "subtitle": linea.getSubtitle(),
+                    //"title": linea.getTitle(),
+                    //"subtitle": linea.getSubtitle(),
                     "image_url": url,
                     /* per ora no buttons sull'immagine      
                     "buttons": [
@@ -243,9 +243,9 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
                     "default_action": {
                         "type": "web_url",
                         "url": service.getOpendataUri(linea, "As"),
-                        // messenger_extensions: true,
                         "webview_height_ratio": "tall",
-                        // "fallback_url": "https://peterssendreceiveapp.ngrok.io/"
+                        // messenger_extensions: true,
+                        "fallback_url": "http://www.startromagna.it/"
                     }
                 },
                 {

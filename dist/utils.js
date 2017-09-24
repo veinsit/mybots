@@ -27,6 +27,10 @@ function addDays(date, days) {
     return result;
 }
 exports.addDays = addDays;
+function dateAaaaMmGg(d) {
+    return d.getFullYear().toString() + pad2zero(d.getMonth() + 1) + pad2zero(d.getDate());
+}
+exports.dateAaaaMmGg = dateAaaaMmGg;
 function gStatMapUrl(params) {
     return 'https://maps.googleapis.com/maps/api/staticmap?' + params + '&key=' + process.env.GOOGLE_STATICMAP_APIKEY;
 }
