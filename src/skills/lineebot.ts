@@ -210,9 +210,9 @@ export const searchLinea = (chat, askedLinea): boolean => {
 function sayLineeTrovate2(chat, items) {  // items = array of {linea, shape}
 
     chat && chat.say(items.length>1 ? "Ho trovato più di una linea ..." : "Ecco la linea "+items[0].linea.display_name)
-        .then(() => items.map(it => genericTemplateItem(it.linea, it.shape)))
+        .then(() => items.map(it => listTemplateItem(it.linea, it.shape)))
         .then( (arrayOfPromises) => Promise.all(arrayOfPromises))
-        .then((values) => chat.sendGenericTemplate(values)) /*.then(() => {
+        .then((values) => chat.sendListTemplate(values)) /*.then(() => {
         chat.sendTypingIndicator(1500).then(() => {
             chat.say({
             text: "Scegli!",
@@ -235,7 +235,7 @@ function sayLineeTrovate2(chat, items) {  // items = array of {linea, shape}
     }) */
 }
 
-// item di un generic template
+// linea come item di un generic template
 // necessaria Promise perché per avere l'url deve leggere lo shape
 function genericTemplateItem(linea: Linea, shape: Shape[]) : Promise<any> {
 
@@ -256,7 +256,25 @@ function genericTemplateItem(linea: Linea, shape: Shape[]) : Promise<any> {
 
     })
 }
-
+// linea come item di un list template
+// necessaria Promise perché per avere l'url deve leggere lo shape
+function listTemplateItem(linea: Linea, shape: Shape[]) : Promise<any> {
+    
+        return linea.getGMapUrl(service, "320x160")
+        .then(function(url) {
+            return { // questo è lo 'any' della Promise
+                title: linea.getTitle(),
+                subtitle: linea.getSubtitle(),
+                image_url :url,
+                buttons: [
+                    utils.weburlBtn("Orari A", service.getOpendataUri(linea,"As")),
+                    utils.weburlBtn("Orari R", service.getOpendataUri(linea,"Di"))
+                ]
+            }        
+    
+        })
+    }
+    
 /*
 
 // item di un generic template

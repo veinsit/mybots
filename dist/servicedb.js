@@ -115,7 +115,7 @@ exports.getLineeFermata = getLineeFermata;
 // =================================================================================================
 function getCorseOggi(bacino, route_id, dir01, date) {
     dir01 = dir01 === "As" ? 0 : (dir01 === "Di" ? 1 : dir01);
-    const and_direction = dir01 ? ` and direction_id='${dir01}' ` : '';
+    const and_direction = (dir01 === 0 || dir01 === 1) ? ` and direction_id='${dir01}' ` : '';
     const d = date || (new Date()); // oggi
     const dateAAAMMGG = d.getFullYear().toString() + utils.pad2zero(d.getMonth() + 1) + utils.pad2zero(d.getDate());
     // elenco di corse (trip_id) del servizio (service_id) di una data

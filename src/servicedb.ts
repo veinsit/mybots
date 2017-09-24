@@ -159,7 +159,7 @@ export function getCorseOggi(bacino, route_id, dir01, date?): Promise<any[]> {
 
   dir01 = dir01 === "As" ? 0 : (dir01 === "Di" ? 1 : dir01)
 
-  const and_direction = dir01 ? ` and direction_id='${dir01}' ` : ''
+  const and_direction = (dir01===0 || dir01===1) ? ` and direction_id='${dir01}' ` : ''
   const d = date || (new Date()) // oggi
   const dateAAAMMGG = d.getFullYear().toString() + utils.pad2zero(d.getMonth() + 1) + utils.pad2zero(d.getDate())
 
@@ -199,8 +199,6 @@ export function getOrarLinea(bacino, route_id, dir01, dayOffset:number): Promise
 // =================================================================================================
 //                Shape
 // =================================================================================================
-
-
 export function getShape(bacino, shape_id): Promise<Shape[]> {
 
   const q = `select shape_pt_lat, shape_pt_lon, CAST(shape_pt_sequence as INTEGER) as shape_pt_seq
