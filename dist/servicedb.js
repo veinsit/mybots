@@ -68,25 +68,18 @@ class Linea {
     getCU() {
         if (this.bacino === 'FC') {
             if (this.route_id.indexOf("CE") >= 0)
-                return 'CE';
+                return 'Cesena';
             if (this.route_id.indexOf("FO") >= 0)
-                return 'FO';
+                return 'Forlì';
             if (this.route_id.indexOf("CO") >= 0)
-                return 'CO';
-            return undefined;
+                return 'Cesenatico';
+            return 'Forlimpopoli';
         }
         return undefined;
     }
     mapCenter() {
         const cu = this.getCU();
-        if (cu === 'CE')
-            return { center: "Cesena,Italy", zoom: 11 };
-        if (cu === 'FO')
-            return { center: "Forli,Italy", zoom: 11 };
-        if (cu === 'CO')
-            return { center: "Cesenatico,Italy", zoom: 13 };
-        if (cu === undefined)
-            return { center: "Forlimpopoli,Italy", zoom: 8 };
+        return { center: `${cu},Italy`, zoom: 11 };
     }
 }
 Linea.queryGetAll = () => "SELECT route_id, route_short_name, route_long_name, route_type FROM routes";
