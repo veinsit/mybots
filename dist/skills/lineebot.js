@@ -206,11 +206,11 @@ function sayLineaTrovata_ListTemplate2(chat, lineaAndShape) {
         .then((url) => {
         chat.sendAttachment('image', url, undefined, { typing: true })
             .then(() => {
-            service.getOrarLinea(linea.bacino, linea.route_id, 0, 0)
+            service.getOrarLinea(linea.bacino, linea.route_id, 0, 0) //TODO: qui devo solo prendere dir0 e dir1
                 .then((trips) => {
                 const dir0 = trips[0][0].stop_name + " >> " + trips[0][trips.length - 1].stop_name; // [{trip_id, stop_sequence,  departure_time, stop_name,
                 const dir1 = trips[0][trips.length - 1].stop_name + " >> " + trips[0][0].stop_name;
-                const options = { topElementStyle: 'large' }; // o compact
+                const options = { topElementStyle: 'compact' }; // o compact
                 const elements = [
                     {
                         title: dir0, subtitle: "orari oggi",
