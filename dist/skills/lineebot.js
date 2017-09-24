@@ -165,9 +165,10 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
     const linea = lineaAndShape.linea;
     Promise.all([linea.getGMapUrl(service, "320x160"), service.getOrarLinea(linea.bacino, linea.route_id, 0, 0)])
         .then((values) => {
+        const trips = values[1];
         const url = values[0];
-        const dir0 = values[1][0].stop_name + " >> " + values[1][values[1].length - 1].stop_name; // [{trip_id, stop_sequence,  departure_time, stop_name,
-        const dir1 = values[1][values[1].length - 1].stop_name + " >> " + values[1][0].stop_name;
+        const dir0 = trips[0][0].stop_name + " >> " + trips[0][trips.length - 1].stop_name; // [{trip_id, stop_sequence,  departure_time, stop_name,
+        const dir1 = trips[0][trips.length - 1].stop_name + " >> " + trips[0][0].stop_name;
         const options = { topElementStyle: 'large' }; // o compact
         const elements = [
             {
@@ -255,7 +256,7 @@ exports.webgetLinea = (bacino, route_id, giorno, dir01, req, res) => {
             res.render('linea', {
                 l: linea,
                 url: values[0],
-                trips: values[1] // risultato [trip, trip, ...]  dove trip = [{trip_id, stop_sequence,  departure_time, stop_name, stop_lat, stop_lon}, {...}, ...]
+                trips: values[1] // risultato [trip, trip, ...]  dove trip[i] = [{trip_id, stop_sequence,  departure_time, stop_name, stop_lat, stop_lon}, {...}, ...]
             });
         });
     }

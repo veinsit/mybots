@@ -96,7 +96,7 @@ exports.getServizi = getServizi;
 // =================================================================================================
 //                Linea
 // =================================================================================================
-function getOpendataUri(linea, dir01) { return `${baseUiUri}${linea.bacino}/linee/0/${dir01}/${linea.route_id}`; }
+function getOpendataUri(linea, dir01) { return `${baseUiUri}${linea.bacino}/linee/${linea.route_id}/0/d/${dir01}`; }
 exports.getOpendataUri = getOpendataUri;
 function getLinee(bacino) {
     return dbAllPromise(dbName(bacino), Linea.queryGetAll());
@@ -111,7 +111,7 @@ exports.getLineeFermata = getLineeFermata;
 //                Corse
 // =================================================================================================
 function getCorseOggi(bacino, route_id, dir01, date) {
-    const and_direction = (dir01 ? ` and direction_id='${dir01}' ` : '');
+    const and_direction = (dir01 === 0 || dir01 === 1 ? ` and direction_id='${dir01}' ` : '');
     const d = date || (new Date()); // oggi
     // elenco di corse (trip_id) del servizio (service_id) di una data
     const q = `select t.service_id, t.trip_id, t.shape_id from trips t 
@@ -129,6 +129,11 @@ function getPassaggiCorsa(bacino, trip_id) {
     return dbAllPromise(dbName(bacino), q);
 }
 exports.getPassaggiCorsa = getPassaggiCorsa;
+function getPartenzaArrivo(bacino, trip_id) {
+    return getPassaggiCorsa(dbName(bacino), trip_id)
+        .then((rows) => { return [rows[0].stop_name, rows[rows.length - 1].stop_name]; });
+}
+exports.getPartenzaArrivo = getPartenzaArrivo;
 function getOrarLinea(bacino, route_id, dir01, dayOffset) {
     let ap = []; //
     const date = utils.addDays(new Date(), dayOffset);

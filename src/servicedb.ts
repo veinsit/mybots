@@ -140,7 +140,7 @@ export function getServizi(bacino): Promise<any[]> {
 // =================================================================================================
 //                Linea
 // =================================================================================================
-export function getOpendataUri(linea: Linea, dir01: number) { return `${baseUiUri}${linea.bacino}/linee/0/${dir01}/${linea.route_id}` }
+export function getOpendataUri(linea: Linea, dir01: number) { return `${baseUiUri}${linea.bacino}/linee/${linea.route_id}/0/d/${dir01}` }
 
 export function getLinee(bacino): Promise<any[]> {
   return dbAllPromise(dbName(bacino), Linea.queryGetAll());
@@ -157,7 +157,7 @@ export function getLineeFermata(bacino, stop_id): Promise<any[]> {
 // =================================================================================================
 export function getCorseOggi(bacino, route_id, dir01, date?): Promise<any[]> {
 
-  const and_direction = (dir01 ? ` and direction_id='${dir01}' ` : '')
+  const and_direction = (dir01===0||dir01===1 ? ` and direction_id='${dir01}' ` : '')
   const d = date || (new Date()) // oggi
 
   // elenco di corse (trip_id) del servizio (service_id) di una data
@@ -168,8 +168,6 @@ export function getCorseOggi(bacino, route_id, dir01, date?): Promise<any[]> {
   return dbAllPromise(dbName(bacino), q);
 }
 
-
-
 export function getPassaggiCorsa(bacino, trip_id): Promise<any[]> {
   const q = `select st.stop_sequence, st.trip_id, st.departure_time, s.stop_name, s.stop_lat, s.stop_lon
   from stop_times st 
@@ -178,6 +176,13 @@ export function getPassaggiCorsa(bacino, trip_id): Promise<any[]> {
   order by st.departure_time`;
 
   return dbAllPromise(dbName(bacino), q);
+}
+
+
+export function getPartenzaArrivo(bacino, trip_id): Promise<any[]> {
+
+  return getPassaggiCorsa(dbName(bacino), trip_id)
+  .then((rows) => {return [rows[0].stop_name, rows[rows.length-1].stop_name]})
 }
 
 export function getOrarLinea(bacino, route_id, dir01, dayOffset: number): Promise<any[]> {
