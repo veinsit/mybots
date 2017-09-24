@@ -193,7 +193,7 @@ function sayLineeTrovate2(chat, items) {
 // item di un generic template
 // necessaria Promise perché per avere l'url deve leggere lo shape
 function genericTemplateItem(linea, shape) {
-    return linea.getGMapUrl(service)
+    return linea.getGMapUrl(service, "320x160")
         .then(function (url) {
         return {
             title: linea.getTitle(),
@@ -202,7 +202,8 @@ function genericTemplateItem(linea, shape) {
             buttons: [
                 utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`),
                 utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`),
-                utils.weburlBtn("Sito", linea.getOpendataUri())
+                utils.weburlBtn("Sito A", service.getOpendataUri(linea, 0)),
+                utils.weburlBtn("Sito R", service.getOpendataUri(linea, 1))
             ]
         };
     });
@@ -238,7 +239,8 @@ function _lineaItem(linea, shape) {
         buttons: [
             utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`),
             utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`),
-            utils.weburlBtn("Sito", linea.getOpendataUri())
+            utils.weburlBtn("Sito A", service.getOpendataUri(linea, 0)),
+            utils.weburlBtn("Sito R", service.getOpendataUri(linea, 1))
         ]
     };
 }
@@ -306,16 +308,21 @@ const displayCorsa = (chat, route_id, corsa_id) => {
 const onResultPassaggi = (data, chat, route_id, corsa_id) => {
     chat.say(`Qui dovrei mostrarti i passaggi della corsa ${corsa_id} della linea ${route_id}`);
 };
-exports.webgetLinea = (bacino, route_id, req, res) => {
+exports.webgetLinea = (bacino, route_id, giorno, dir01, req, res) => {
     const arraylinee = linee.filter(l => l.bacino === bacino && l.route_id === route_id);
     if (arraylinee.length === 1) {
         const linea = arraylinee[0];
-        linea.getGMapUrl(service)
-            .then((url) => res.render('linea', {
-            title: linea.getTitle(),
-            url,
-            l: linea // route_id: linea.route_id
-        })); //end then
+        Promise.all([
+            linea.getGMapUrl(service, "400x400"),
+            service.getOrarLinea(bacino, route_id, dir01, giorno) // promise 1
+        ])
+            .then((values) => {
+            res.render('linea', {
+                l: linea,
+                url: values[0],
+                trips: values[1] // risultato [trip, trip, ...]  dove trip = [{trip_id, stop_sequence,  departure_time, stop_name, stop_lat, stop_lon}, {...}, ...]
+            });
+        });
     }
     else
         res.send(`linea ${route_id} non trovata`);

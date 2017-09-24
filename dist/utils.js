@@ -21,6 +21,12 @@ function getDaysDifference(date1, date2) {
     return Math.ceil(timeDiff / (1000 * 3600 * 24));
 }
 exports.getDaysDifference = getDaysDifference;
+function addDays(date, days) {
+    var result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+}
+exports.addDays = addDays;
 function gStatMapUrl(params) {
     return 'https://maps.googleapis.com/maps/api/staticmap?' + params + '&key=' + process.env.GOOGLE_STATICMAP_APIKEY;
 }

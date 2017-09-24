@@ -23,6 +23,12 @@ export function getDaysDifference(date1, date2) {
     let timeDiff = Math.abs(date2.getTime() - date1.getTime());
     return Math.ceil(timeDiff / (1000 * 3600 * 24));
   }
+
+export function addDays(date:Date, days:number) : Date {
+    var result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+}  
   
 export function gStatMapUrl(params:string) : string {
     return 'https://maps.googleapis.com/maps/api/staticmap?'+params+'&key='+process.env.GOOGLE_STATICMAP_APIKEY

@@ -239,7 +239,7 @@ function sayLineeTrovate2(chat, items) {  // items = array of {linea, shape}
 // necessaria Promise perché per avere l'url deve leggere lo shape
 function genericTemplateItem(linea: Linea, shape: Shape[]) : Promise<any> {
 
-    return linea.getGMapUrl(service)
+    return linea.getGMapUrl(service, "320x160")
     .then(function(url) {
         return { // questo è lo 'any' della Promise
             title: linea.getTitle(),
@@ -249,7 +249,8 @@ function genericTemplateItem(linea: Linea, shape: Shape[]) : Promise<any> {
                 utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`), // 0 sta per pagina 0
                 utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`), // 0 sta per pagina 0
     
-                utils.weburlBtn("Sito", linea.getOpendataUri())
+                utils.weburlBtn("Sito A", service.getOpendataUri(linea,0)),
+                utils.weburlBtn("Sito R", service.getOpendataUri(linea,1))
             ]
         }        
 
@@ -292,7 +293,8 @@ function _lineaItem(linea: Linea, shape: Shape[]) {
             utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_As_0`), // 0 sta per pagina 0
             utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_Di_0`), // 0 sta per pagina 0
 
-            utils.weburlBtn("Sito", linea.getOpendataUri())
+            utils.weburlBtn("Sito A", service.getOpendataUri(linea, 0)),
+            utils.weburlBtn("Sito R", service.getOpendataUri(linea, 1))
         ]
     }
 }
@@ -385,18 +387,21 @@ const onResultPassaggi = (data, chat, route_id, corsa_id) => {
 }
 
 
-export const webgetLinea = (bacino, route_id, req, res) => {
+export const webgetLinea = (bacino, route_id, giorno:number, dir01:number, req, res) => {
     const arraylinee : Linea[] = linee.filter(l=>l.bacino===bacino && l.route_id===route_id)
     if (arraylinee.length===1) {
         const linea : Linea = arraylinee[0]
-        linea.getGMapUrl(service)
-        .then ((url) =>
+        Promise.all([ 
+            linea.getGMapUrl(service,"400x400"), // promise 0
+            service.getOrarLinea(bacino, route_id, dir01, giorno) // promise 1
+        ])
+        .then((values)=> {
             res.render('linea', {
-                title: linea.getTitle(),
-                url,
-                l:linea // route_id: linea.route_id
+                l:linea, 
+                url   : values[0],
+                trips : values[1]   // risultato [trip, trip, ...]  dove trip = [{trip_id, stop_sequence,  departure_time, stop_name, stop_lat, stop_lon}, {...}, ...]
             }) 
-        )//end then
+        }) 
     }
     else
         res.send(`linea ${route_id} non trovata`)

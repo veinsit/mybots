@@ -3,14 +3,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 if (!process.env.OPENDATAURIBASE) {
     require('dotenv').config();
 }
-const baseUri = process.env.OPENDATAURIBASE;
-const baseUiUri = process.env.OPENDATAURIBASE + "ui/tpl/";
-const sqlite3 = require('sqlite3').verbose();
-const utils = require("./utils");
-const dbName = bacino => `dist/db/database${bacino}.sqlite3`;
-// =================================================================================================
-//                Linea
-// =================================================================================================
+class Shape {
+    constructor(r) {
+        this.shape_pt_lat = r.shape_pt_lat;
+        this.shape_pt_lon = r.shape_pt_lon;
+        this.shape_pt_seq = r.shape_pt_seq;
+    }
+    static getGStaticMapsPolyline(shape) {
+        let x = [];
+        for (let i = 0; i < shape.length; i++)
+            x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`);
+        return x.join('%7C');
+    }
+}
+exports.Shape = Shape;
 class Linea {
     constructor(bacino, rec) {
         this.getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")";
@@ -19,17 +25,17 @@ class Linea {
           utils.gStatMapUrl(`size=300x150&center=${this.mapCenter().center}&zoom=${this.mapCenter().zoom}`);
       */
         this.getShape = (service) => service.getReducedLongestShape(this.bacino, this.route_id, 20);
-        this.getGMapUrl = (service) => this.getShape(service)
-            .then((shape) => { return this._gmapUrl(shape); });
+        this.getGMapUrl = (service, size) => this.getShape(service)
+            .then((shape) => { return this._gmapUrl(shape, size); });
         // https://developers.google.com/maps/documentation/static-maps/intro
-        this._gmapUrl = (shape) => {
+        this._gmapUrl = (shape, size) => {
             if (shape.length < 2) {
                 const center = this.mapCenter();
-                return utils.gStatMapUrl(`size=300x150&center=${center.center}&zoom=${center.zoom}`);
+                return utils.gStatMapUrl(`size=${size}&center=${center.center}&zoom=${center.zoom}`);
             }
             else {
                 const polyline = Shape.getGStaticMapsPolyline(shape);
-                return utils.gStatMapUrl(`size=300x150&path=color:0xff0000%7Cweight:2%7C${polyline}`);
+                return utils.gStatMapUrl(`size=${size}&path=color:0xff0000%7Cweight:2%7C${polyline}`);
             }
         };
         this.bacino = bacino;
@@ -47,11 +53,12 @@ class Linea {
             return 'S' + parseInt(ln.substring(3)).toString();
         if (ln.startsWith('FO') || ln.startsWith('CE') || ln.startsWith("S0"))
             return parseInt(ln.substring(2)).toString();
+        if (ln.startsWith('R'))
+            return parseInt(ln.substring(1)).toString();
         if (ln.endsWith('CO'))
             return ln.substring(0, ln.length - 2);
         return ln;
     }
-    getOpendataUri() { return baseUiUri + 'FC/linee/' + this.route_id; }
     getAscDir() { return "Ascendente"; }
     getDisDir() { return "Discendente"; }
     getSubtitle() {
@@ -84,6 +91,16 @@ class Linea {
 }
 Linea.queryGetAll = () => "SELECT route_id, route_short_name, route_long_name, route_type FROM routes";
 exports.Linea = Linea;
+const baseUri = process.env.OPENDATAURIBASE;
+const baseUiUri = process.env.OPENDATAURIBASE + "ui/tpl/";
+const sqlite3 = require('sqlite3').verbose();
+const utils = require("./utils");
+const dbName = bacino => `dist/db/database${bacino}.sqlite3`;
+// =================================================================================================
+//                Linea
+// =================================================================================================
+function getOpendataUri(linea, dir01) { return `${baseUiUri}${linea.bacino}/linee/0/${dir01}/${linea.route_id}`; }
+exports.getOpendataUri = getOpendataUri;
 function getLinee(bacino) {
     return dbAllPromise(dbName(bacino), Linea.queryGetAll());
 }
@@ -101,40 +118,35 @@ function getCorseOggi(bacino, route_id, dir01, date) {
     const and_direction = dir01 ? ` and direction_id='${dir01}' ` : '';
     const d = date || (new Date()); // oggi
     const dateAAAMMGG = d.getFullYear().toString() + utils.pad2zero(d.getMonth() + 1) + utils.pad2zero(d.getDate());
-    const q = `select 
-  t.service_id, t.trip_id, t.shape_id
-  from trips t 
+    // elenco di corse (trip_id) del servizio (service_id) di una data
+    const q = `select t.service_id, t.trip_id, t.shape_id from trips t 
   where t.route_id='${route_id}' ${and_direction} 
   and t.service_id in (SELECT service_id from calendar_dates where date='${dateAAAMMGG}' )`;
     return dbAllPromise(dbName(bacino), q);
 }
 exports.getCorseOggi = getCorseOggi;
-function getPassaggiCorsa(bacino, corsa) {
+function getPassaggiCorsa(bacino, trip_id) {
     const q = `select st.stop_sequence, st.trip_id, st.departure_time, s.stop_name, s.stop_lat, s.stop_lon
   from stop_times st 
   join stops s on st.stop_id=s.stop_id 
-  where st.trip_id='${corsa}' 
+  where st.trip_id='${trip_id}' 
   order by st.departure_time`;
     return dbAllPromise(dbName(bacino), q);
 }
 exports.getPassaggiCorsa = getPassaggiCorsa;
+function getOrarLinea(bacino, route_id, dir01, dayOffset) {
+    let ap = []; //
+    const date = utils.addDays(new Date(), dayOffset);
+    // linea  --> tutte le corse di oggi ---> per ognmi corsa: tuitti i passaggi
+    // risultato [tripi, trip, ...]  dove trip = [{trip_id, stop_sequence,  departure_time, stop_name, stop_lat, stop_lon}, {...}, ...]
+    return getCorseOggi(bacino, route_id, dir01, date)
+        .then((trips) => trips.forEach((trip) => ap.push(getPassaggiCorsa(bacino, trip.trip_id))))
+        .then(() => Promise.all(ap));
+}
+exports.getOrarLinea = getOrarLinea;
 // =================================================================================================
 //                Shape
 // =================================================================================================
-class Shape {
-    constructor(r) {
-        this.shape_pt_lat = r.shape_pt_lat;
-        this.shape_pt_lon = r.shape_pt_lon;
-        this.shape_pt_seq = r.shape_pt_seq;
-    }
-    static getGStaticMapsPolyline(shape) {
-        let x = [];
-        for (let i = 0; i < shape.length; i++)
-            x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`);
-        return x.join('%7C');
-    }
-}
-exports.Shape = Shape;
 function getShape(bacino, shape_id) {
     const q = `select shape_pt_lat, shape_pt_lon, CAST(shape_pt_sequence as INTEGER) as shape_pt_seq
   from shapes

@@ -22,9 +22,9 @@ app.set('view engine', 'pug');
 app.get("/", (req, res) => {
     res.send("Hello !");
 });
-app.get("/ui/tpl/:bacino/linee/:routeid", (req, res) => {
-    console.log("GET /ui/tpl/:bacino/linee/:routeid " + req.params.routeid);
-    tpl.webgetLinea(req.params.bacino, req.params.routeid, req, res);
+app.get("/ui/tpl/:bacino/linee/:giorno/:dir01/:routeid", (req, res) => {
+    console.log("GET /ui/tpl/:bacino/linee/:giorno/:dir01/:routeid " + req.params.routeid);
+    tpl.webgetLinea(req.params.bacino, req.params.routeid, parseInt(req.params.giorno), parseInt(req.params.dir01), req, res);
 });
 // tutto quello qui sopre deve essere PRIMA di new BootBot
 // ============================================================= end web

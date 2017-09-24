@@ -3,6 +3,129 @@ if (!process.env.OPENDATAURIBASE) {
   require('dotenv').config()
 }
 
+export class Shape {
+  readonly shape_pt_lat: number
+  readonly shape_pt_lon: number
+  readonly shape_pt_seq: number
+
+  constructor(r) {
+    this.shape_pt_lat = r.shape_pt_lat
+    this.shape_pt_lon = r.shape_pt_lon
+    this.shape_pt_seq = r.shape_pt_seq
+  }
+
+  public static getGStaticMapsPolyline(shape: Shape[]) {
+    let x: string[] = []
+
+    for (let i = 0; i < shape.length; i++)
+      x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`)
+
+    return x.join('%7C')
+  }
+}
+
+
+export class Linea {
+  
+    readonly bacino: string
+    readonly route_id: string
+    readonly route_short_name: string
+    readonly route_long_name: string
+    readonly route_type: string
+  
+    public display_name: string // es. 1,2, 96A, 127, ecc
+  
+    constructor(bacino, rec: any) {
+      this.bacino = bacino
+      this.route_id = rec.route_id, this.route_short_name = rec.route_short_name, this.route_long_name = rec.route_short_name, this.route_type = rec.route_short_name
+  
+      this.display_name = this._displayName(rec.route_id, rec.route_long_name)
+    }
+  
+    private _displayName(c: string, ln: string): string {
+  
+      ln = ln.toUpperCase()
+      if (!ln.startsWith('LINEA '))
+        return ln;
+      ln = ln.substring(6)
+  
+      if (ln.startsWith('FOA'))
+        return parseInt(ln.substring(3)).toString() + 'A'
+  
+      if (ln.startsWith('FOS'))
+        return 'S' + parseInt(ln.substring(3)).toString()
+  
+      if (ln.startsWith('FO') || ln.startsWith('CE') || ln.startsWith("S0"))
+        return parseInt(ln.substring(2)).toString()
+  
+        if (ln.startsWith('R') )
+        return parseInt(ln.substring(1)).toString()
+  
+      if (ln.endsWith('CO'))
+        return ln.substring(0, ln.length - 2)
+  
+      return ln;
+    }
+  
+    getAscDir() { return "Ascendente" }
+    getDisDir() { return "Discendente" }
+    getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")"
+    getSubtitle() {
+      //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
+      return this.route_long_name
+    }
+  
+    getCU(): string {
+      if (this.bacino === 'FC') {
+        if (this.route_id.indexOf("CE") >= 0)
+          return 'CE'
+        if (this.route_id.indexOf("FO") >= 0)
+          return 'FO'
+        if (this.route_id.indexOf("CO") >= 0)
+          return 'CO'
+  
+        return undefined
+      }
+      return undefined
+    }
+  
+    mapCenter(): any {
+      const cu = this.getCU();
+      if (cu === 'CE') return { center: "Cesena,Italy", zoom: 11 }
+      if (cu === 'FO') return { center: "Forli,Italy", zoom: 11 }
+      if (cu === 'CO') return { center: "Cesenatico,Italy", zoom: 13 }
+      if (cu === undefined) return { center: "Forlimpopoli,Italy", zoom: 8 }
+    }
+  
+    /*
+    getStaticMapUrl = () =>
+      utils.gStatMapUrl(`size=300x150&center=${this.mapCenter().center}&zoom=${this.mapCenter().zoom}`);
+  */
+  
+    getShape = (service): Promise<Shape[]> =>
+      service.getReducedLongestShape(this.bacino, this.route_id, 20)
+  
+    getGMapUrl = (service, size): Promise<string> =>
+      this.getShape(service)
+        .then((shape) => { return this._gmapUrl(shape, size) })
+  
+   // https://developers.google.com/maps/documentation/static-maps/intro
+   
+    _gmapUrl = (shape:Shape[], size) : string => {
+        if (shape.length < 2) {
+          const center = this.mapCenter()
+          return utils.gStatMapUrl(`size=${size}&center=${center.center}&zoom=${center.zoom}`) 
+        } 
+        else {
+          const polyline = Shape.getGStaticMapsPolyline(shape)
+          return utils.gStatMapUrl(`size=${size}&path=color:0xff0000%7Cweight:2%7C${polyline}`) 
+        }
+    }
+  
+  static queryGetAll = () =>
+      "SELECT route_id, route_short_name, route_long_name, route_type FROM routes"
+  }
+
 const baseUri = process.env.OPENDATAURIBASE
 const baseUiUri = process.env.OPENDATAURIBASE + "ui/tpl/"
 
@@ -14,104 +137,8 @@ const dbName = bacino => `dist/db/database${bacino}.sqlite3`
 // =================================================================================================
 //                Linea
 // =================================================================================================
-export class Linea {
+export function getOpendataUri(linea:Linea, dir01) { return `${baseUiUri}${linea.bacino}/linee/0/${dir01}/${linea.route_id}` }
 
-  readonly bacino: string
-  readonly route_id: string
-  readonly route_short_name: string
-  readonly route_long_name: string
-  readonly route_type: string
-
-  public display_name: string // es. 1,2, 96A, 127, ecc
-
-  constructor(bacino, rec: any) {
-    this.bacino = bacino
-    this.route_id = rec.route_id, this.route_short_name = rec.route_short_name, this.route_long_name = rec.route_short_name, this.route_type = rec.route_short_name
-
-    this.display_name = this._displayName(rec.route_id, rec.route_long_name)
-  }
-
-  private _displayName(c: string, ln: string): string {
-
-    ln = ln.toUpperCase()
-    if (!ln.startsWith('LINEA '))
-      return ln;
-    ln = ln.substring(6)
-
-    if (ln.startsWith('FOA'))
-      return parseInt(ln.substring(3)).toString() + 'A'
-
-    if (ln.startsWith('FOS'))
-      return 'S' + parseInt(ln.substring(3)).toString()
-
-    if (ln.startsWith('FO') || ln.startsWith('CE') || ln.startsWith("S0"))
-      return parseInt(ln.substring(2)).toString()
-
-    if (ln.endsWith('CO'))
-      return ln.substring(0, ln.length - 2)
-
-    return ln;
-  }
-
-  getOpendataUri() { return baseUiUri + 'FC/linee/' + this.route_id }
-  getAscDir() { return "Ascendente" }
-  getDisDir() { return "Discendente" }
-  getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")"
-  getSubtitle() {
-    //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
-    return this.route_long_name
-  }
-
-  getCU(): string {
-    if (this.bacino === 'FC') {
-      if (this.route_id.indexOf("CE") >= 0)
-        return 'CE'
-      if (this.route_id.indexOf("FO") >= 0)
-        return 'FO'
-      if (this.route_id.indexOf("CO") >= 0)
-        return 'CO'
-
-      return undefined
-    }
-    return undefined
-  }
-
-  mapCenter(): any {
-    const cu = this.getCU();
-    if (cu === 'CE') return { center: "Cesena,Italy", zoom: 11 }
-    if (cu === 'FO') return { center: "Forli,Italy", zoom: 11 }
-    if (cu === 'CO') return { center: "Cesenatico,Italy", zoom: 13 }
-    if (cu === undefined) return { center: "Forlimpopoli,Italy", zoom: 8 }
-  }
-
-  /*
-  getStaticMapUrl = () =>
-    utils.gStatMapUrl(`size=300x150&center=${this.mapCenter().center}&zoom=${this.mapCenter().zoom}`);
-*/
-
-  getShape = (service): Promise<Shape[]> =>
-    service.getReducedLongestShape(this.bacino, this.route_id, 20)
-
-  getGMapUrl = (service): Promise<string> =>
-    this.getShape(service)
-      .then((shape) => { return this._gmapUrl(shape) })
-
- // https://developers.google.com/maps/documentation/static-maps/intro
- 
-  _gmapUrl = (shape:Shape[]) : string => {
-      if (shape.length < 2) {
-        const center = this.mapCenter()
-        return utils.gStatMapUrl(`size=300x150&center=${center.center}&zoom=${center.zoom}`) 
-      } 
-      else {
-        const polyline = Shape.getGStaticMapsPolyline(shape)
-        return utils.gStatMapUrl(`size=300x150&path=color:0xff0000%7Cweight:2%7C${polyline}`) 
-      }
-  }
-
-static queryGetAll = () =>
-    "SELECT route_id, route_short_name, route_long_name, route_type FROM routes"
-}
 
 
 export function getLinee(bacino): Promise<any[]> {
@@ -136,49 +163,43 @@ export function getCorseOggi(bacino, route_id, dir01, date?): Promise<any[]> {
   const d = date || (new Date()) // oggi
   const dateAAAMMGG = d.getFullYear().toString() + utils.pad2zero(d.getMonth() + 1) + utils.pad2zero(d.getDate())
 
-  const q = `select 
-  t.service_id, t.trip_id, t.shape_id
-  from trips t 
+  // elenco di corse (trip_id) del servizio (service_id) di una data
+  const q = `select t.service_id, t.trip_id, t.shape_id from trips t 
   where t.route_id='${route_id}' ${and_direction} 
   and t.service_id in (SELECT service_id from calendar_dates where date='${dateAAAMMGG}' )`;
 
   return dbAllPromise(dbName(bacino), q);
 }
 
-export function getPassaggiCorsa(bacino, corsa): Promise<any[]> {
+
+
+export function getPassaggiCorsa(bacino, trip_id): Promise<any[]> {
   const q = `select st.stop_sequence, st.trip_id, st.departure_time, s.stop_name, s.stop_lat, s.stop_lon
   from stop_times st 
   join stops s on st.stop_id=s.stop_id 
-  where st.trip_id='${corsa}' 
+  where st.trip_id='${trip_id}' 
   order by st.departure_time`;
 
   return dbAllPromise(dbName(bacino), q);
 }
 
+export function getOrarLinea(bacino, route_id, dir01, dayOffset:number): Promise<any[]> {
+
+  let ap = [] //
+  const date:Date = utils.addDays(new Date(), dayOffset)
+
+  // linea  --> tutte le corse di oggi ---> per ognmi corsa: tuitti i passaggi
+  // risultato [tripi, trip, ...]  dove trip = [{trip_id, stop_sequence,  departure_time, stop_name, stop_lat, stop_lon}, {...}, ...]
+  return getCorseOggi(bacino, route_id, dir01, date)
+    .then ((trips : any[]) => trips.forEach((trip) => ap.push(getPassaggiCorsa(bacino, trip.trip_id)) ))
+    .then (() => Promise.all(ap))
+
+}
 
 // =================================================================================================
 //                Shape
 // =================================================================================================
-export class Shape {
-  readonly shape_pt_lat: number
-  readonly shape_pt_lon: number
-  readonly shape_pt_seq: number
 
-  constructor(r) {
-    this.shape_pt_lat = r.shape_pt_lat
-    this.shape_pt_lon = r.shape_pt_lon
-    this.shape_pt_seq = r.shape_pt_seq
-  }
-
-  public static getGStaticMapsPolyline(shape: Shape[]) {
-    let x: string[] = []
-
-    for (let i = 0; i < shape.length; i++)
-      x.push(`${shape[i].shape_pt_lat},${shape[i].shape_pt_lon}`)
-
-    return x.join('%7C')
-  }
-}
 
 export function getShape(bacino, shape_id): Promise<Shape[]> {
 
