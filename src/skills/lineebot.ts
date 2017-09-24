@@ -245,7 +245,7 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
                         "url": service.getOpendataUri(linea, "As"),
                         "webview_height_ratio": "tall",
                         // messenger_extensions: true,
-                        "fallback_url": "http://www.startromagna.it/"
+                        //"fallback_url": "http://www.startromagna.it/"
                     }
                 },
                 {
