@@ -293,7 +293,7 @@ export const webgetLinea = (bacino, route_id, dir01: number, dayOffset: number, 
     service.getTrips_WithShape(linea.bacino, linea.route_id, dir01, dayOffset) // oggi
     .then((trips: service.Trip[]) => {
         // prendi il trip[0] come rappresentativo TODO
-        const mainTrip: service.Trip = trips[0]
+        const mainTrip: service.Trip = ( trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length) ) ? trips[1] : ( trips[0] || undefined) ;
         res.render('linea', {
             l: linea,
             url: mainTrip.gmapUrl("320x320"),
@@ -304,20 +304,19 @@ export const webgetLinea = (bacino, route_id, dir01: number, dayOffset: number, 
 }
 
 export function sayLineaTrovata_ListTemplate2(chat, linea: Linea) {
-
     // TODO qui (ma non nel web) mettere una versione ridotta
     service.getTrips_NoShape(linea.bacino, linea.route_id, 0, 0) // andata oggi
         .then((trips: service.Trip[]) => { 
             // prendi il trip[0] come rappresentativo TODO
-            const mainTrip: service.Trip = trips[0]
-            const dir0 = mainTrip.stop_times[0].stop_name + " >> " + mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name  // [{trip_id, stop_sequence,  departure_time, stop_name,
-            const dir1 = mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name + " >> " + mainTrip.stop_times[0].stop_name  // [{trip_id, stop_sequence,  departure_time, stop_name,
+            const mainTrip: service.Trip = ( trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length) ) ? trips[1] : ( trips[0] || undefined);
+            const dir0 = mainTrip && (mainTrip.stop_times[0].stop_name + " >> " + mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name)  // [{trip_id, stop_sequence,  departure_time, stop_name,
+            const dir1 = mainTrip && (mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name + " >> " + mainTrip.stop_times[0].stop_name)  // [{trip_id, stop_sequence,  departure_time, stop_name,
             const options = { topElementStyle: 'large' }  // large o compact
             const elements = [
                 {
                     title: linea.getTitle(),
                     subtitle: dir0,
-                    image_url: mainTrip.gmapUrl("320x160"),
+                    image_url: mainTrip && mainTrip.gmapUrl("320x160"),
                     /* per ora no buttons sull'immagine      
                     "buttons": [
                       {
