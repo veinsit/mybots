@@ -1,7 +1,7 @@
 export const isNumeric  = (x:any) : boolean => !isNaN(x)
 
 export const postbackBtn = (title,payload) => { return {title, type: "postback", payload} }
-export const weburlBtn = (title,url) => { return {"type": "web_url", url, title }}
+export const weburlBtn = (title,url) => { return {type: "web_url", url, title }}
 
 export const singlePostbackBtn = (title,payload) =>[postbackBtn(title,payload)]
 export const sayThenEnd = (convo, text) => { convo.say(text).then(()=>convo.end())}

@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isNumeric = (x) => !isNaN(x);
 exports.postbackBtn = (title, payload) => { return { title, type: "postback", payload }; };
-exports.weburlBtn = (title, url) => { return { "type": "web_url", url, title }; };
+exports.weburlBtn = (title, url) => { return { type: "web_url", url, title }; };
 exports.singlePostbackBtn = (title, payload) => [exports.postbackBtn(title, payload)];
 exports.sayThenEnd = (convo, text) => { convo.say(text).then(() => convo.end()); };
 exports.sayThenDo = (convo, text, action) => {

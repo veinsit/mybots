@@ -24,7 +24,7 @@ export const onPostback = (pl: string, chat, data): boolean => {
         const codLinea = pl.substring(13)
         displayOrariPage(chat, codLinea, AorD, 0)
         return true;
-    }*/
+    }
     if (pl.startsWith("TPL_PAGE_CORSE_")) { // 15 TPL_PAGE_CORSE_F127_0_2
         const match = /(.*)_(0|1)_([0-9]+)/.exec(pl.substring(15))
 
@@ -37,6 +37,7 @@ export const onPostback = (pl: string, chat, data): boolean => {
         displayCorsa(chat, match[1], match[2])
         return true;
     }
+    */
     return false;
 }
 
@@ -180,7 +181,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
     return true;
 }
 
-
+/*
 function sayLineeTrovate_GenericTemplate(chat, items) {  // items = array of {linea, shape}
 
     // linea come item di un generic template
@@ -210,9 +211,9 @@ function sayLineeTrovate_GenericTemplate(chat, items) {  // items = array of {li
         .then((arrayOfPromises) => Promise.all(arrayOfPromises))
         .then((values) => chat.sendGenericTemplate(values))
 }
+*/
 
-
-
+/*
 function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
 
     const linea: Linea = lineaAndShape.linea
@@ -240,7 +241,7 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
                         "webview_height_ratio": "tall",
                         "fallback_url": "https://peterssendreceiveapp.ngrok.io/"            
                       }
-                    ]*/
+                    ] ---/
                 },
                 {
                     title: dir0,
@@ -274,82 +275,73 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
                       "webview_height_ratio": "tall",
                       "fallback_url": "https://peterssendreceiveapp.ngrok.io/"            
                     }
-                  ]      */
+                  ]      ----/
                 }]
             chat.sendListTemplate(elements, [], options)
         })
 }
+*/
+function sayLineaTrovata_ListTemplate2(chat, linea: Linea) {
 
-function sayLineaTrovata_ListTemplate2(chat, lineaAndShape) {
-
-    const linea: Linea = lineaAndShape.linea
-    linea.getGMapUrl(service, "320x160")
-        .then((url) => {
-            chat.sendAttachment('image', url, undefined, { typing: true })
-                .then(() => {
-                    service.getOrarLinea(linea.bacino, linea.route_id, 0, 0) //TODO: qui devo solo prendere dir0 e dir1
-                        //    linea.getGMapUrl(service, "320x160")
-                        .then((trips) => {
-                            const dir0 = trips[0][0].stop_name + " >> " + trips[0][trips.length - 1].stop_name  // [{trip_id, stop_sequence,  departure_time, stop_name,
-                            const dir1 = trips[0][trips.length - 1].stop_name + " >> " + trips[0][0].stop_name
-                            const options = { topElementStyle: 'compact' }  // o compact
-                            const elements = [
-                                {
-                                    title: dir0, subtitle: "orari oggi",
-                                    default_action: {
-                                        type: "web_url",
-                                        url: service.getOpendataUri(linea, 0, 0),   // andata oggi
-                                        webview_height_ratio: "tall",
-                                        // messenger_extensions: true,
-                                        //"fallback_url": "http://www.startromagna.it/"
-                                    }
-                                },
-                                {
-                                    title: dir1, subtitle: "orari oggi",
-                                    default_action: {
-                                        type: "web_url",
-                                        url: service.getOpendataUri(linea, 1, 0),   // ritorno oggi
-                                        webview_height_ratio: "tall",
-                                        // messenger_extensions: true,
-                                        //"fallback_url": "http://www.startromagna.it/"
-                                    }
-                                },
-                                {
-                                    title: dir0, subtitle: "orari domani",
-                                    default_action: {
-                                        type: "web_url",
-                                        url: service.getOpendataUri(linea, 0, 1),   // andata domani
-                                        webview_height_ratio: "tall",
-                                        // messenger_extensions: true,
-                                        //"fallback_url": "http://www.startromagna.it/"
-                                    }
-                                },
-                                {
-                                    title: dir1, subtitle: "orari domani",
-                                    default_action: {
-                                        type: "web_url",
-                                        url: service.getOpendataUri(linea, 1, 1),   // ritorno domani
-                                        webview_height_ratio: "tall",
-                                        // messenger_extensions: true,
-                                        //"fallback_url": "http://www.startromagna.it/"
-                                    }
-                                }
-                            ] // end elements
-                            chat.sendListTemplate(elements, [], options)
-                        })
-                })//end then
-        });
-
-
+    service.getTrips(linea.bacino, linea.route_id, 0) // oggi
+        .then((trips: service.Trip[]) => {
+            // prendi il trip[0] come rappresentativo TODO
+            const mainTrip: service.Trip = trips[0]
+            const dir0 = mainTrip.stop_times[0].stop_name + " >> " + mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name  // [{trip_id, stop_sequence,  departure_time, stop_name,
+            const dir1 = mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name + " >> " + mainTrip.stop_times[0].stop_name  // [{trip_id, stop_sequence,  departure_time, stop_name,
+            const options = { topElementStyle: 'large' }  // large o compact
+            const elements = [
+                {
+                    title: linea.getTitle(),
+                    subtitle: dir0,
+                    image_url: mainTrip.gmapUrl("320x160"),
+                    /* per ora no buttons sull'immagine      
+                    "buttons": [
+                      {
+                        "title": "View",
+                        "type": "web_url",
+                        "url": "https://peterssendreceiveapp.ngrok.io/collection",
+                        "messenger_extensions": true,
+                        "webview_height_ratio": "tall",
+                        "fallback_url": "https://peterssendreceiveapp.ngrok.io/"            
+                      }
+                    ]*/
+                },
+                {
+                    title: "Andata", subtitle: "orari oggi",
+                    default_action: {
+                        type: "web_url",
+                        url: service.getOpendataUri(linea, 0, 0),   // andata oggi
+                        webview_height_ratio: "tall",
+                        // messenger_extensions: true,
+                        //"fallback_url": "http://www.startromagna.it/"
+                    }
+                },
+                {
+                    title: "Ritorno", subtitle: "orari oggi",
+                    default_action: {
+                        type: "web_url",
+                        url: service.getOpendataUri(linea, 1, 0),   // ritorno oggi
+                        webview_height_ratio: "tall",
+                        // messenger_extensions: true,
+                        //"fallback_url": "http://www.startromagna.it/"
+                    }
+                }
+            ] // end elements
+            chat.sendListTemplate(elements, [], options)
+        })
 };
 
 
+/*
 const displayOrariPage = (chat, route_id, dir01: number, page: number) => {
     service.getCorseOggi('FC', route_id, dir01)
         .then((data) =>
             onResultCorse(chat, data, route_id, dir01, page)
         )
 }
+*/
+/*
 const onResultCorse = (chat, data, route_id, dir01: number, page: number) => {
     const quanteInsieme = 4;
     const result = {
@@ -363,7 +355,7 @@ const onResultCorse = (chat, data, route_id, dir01: number, page: number) => {
 //                    parte: item.ORA_INIZIO_STR,
 //                    arriva: item.ORA_FINE_STR,
             }
-        }) */
+        }) ----/
     }
     // Puoi inviare da un minimo di 2 a un massimo di 4 elementi.
     // L'aggiunta di un pulsante a ogni elemento è facoltativa. Puoi avere solo 1 pulsante per elemento.
@@ -390,6 +382,7 @@ const onResultCorse = (chat, data, route_id, dir01: number, page: number) => {
 
 }
 
+
 const displayCorsa = (chat, route_id, corsa_id) => {
     service.getCorseOggi('FC', route_id, 0)
         .then((data) =>
@@ -401,7 +394,31 @@ const onResultPassaggi = (data, chat, route_id, corsa_id) => {
     chat.say(`Qui dovrei mostrarti i passaggi della corsa ${corsa_id} della linea ${route_id}`)
 }
 
+*/
 
+
+export const webgetLinea = (bacino, route_id, dir01: number, giorno: number, req, res) => {
+    const arraylinee: Linea[] = linee.filter(l => l.bacino === bacino && l.route_id === route_id)
+    if (arraylinee.length !== 1) {
+        res.send(`linea ${route_id} non trovata`)
+        return
+    }
+
+    const linea: Linea = arraylinee[0]
+
+    service.getTrips(linea.bacino, linea.route_id, 0) // oggi
+    .then((trips: service.Trip[]) => {
+        // prendi il trip[0] come rappresentativo TODO
+        const mainTrip: service.Trip = trips[0]
+        res.render('linea', {
+            l: linea,
+            url: mainTrip.gmapUrl("320x320"),
+            trips
+        })
+    })
+
+}
+/*
 export const webgetLinea = (bacino, route_id, dir01: number, giorno: number, req, res) => {
     const arraylinee: Linea[] = linee.filter(l => l.bacino === bacino && l.route_id === route_id)
     if (arraylinee.length === 1) {
@@ -421,8 +438,7 @@ export const webgetLinea = (bacino, route_id, dir01: number, giorno: number, req
     else
         res.send(`linea ${route_id} non trovata`)
 }
-
-
+*/
 
 // =================================================================================
 //            helpers
