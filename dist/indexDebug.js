@@ -16,7 +16,12 @@ function goDebug(tpl) {
           //console.log(values[1])
         })
         */
-        console.log(JSON.stringify(service.getTrips_Serialized('FC', 'F127', 0)));
+        console.log(JSON.stringify(service.getTrips_Promises('FC', 'F127', 0)
+            .then((trips) => {
+            // prendi il trip[0] come rappresentativo TODO
+            const mainTrip = trips[0];
+            console.log(JSON.stringify(trips[0]));
+        })));
     });
 }
 exports.goDebug = goDebug;

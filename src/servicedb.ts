@@ -175,65 +175,7 @@ export class Trip {
     }
   }
 }
-export function getTrips_Serialized(bacino, route_id, dir01, date?): Trip[] {
 
-  const and_direction = (dir01 === 0 || dir01 === 1 ? ` and direction_id='${dir01}' ` : '')
-  const d = date || (new Date()) // oggi
-
-
-  var db = new sqlite3.Database(dbName(bacino), sqlite3.OPEN_READONLY);
-
-  let trips: Trip[] = []
-  db.serialize(function () {
-
-    let tripIds: any[]   // {}
-    let shapeIds: any[]  // sape_id distinti
-    
-    // elenco di corse (trip_id) del servizio (service_id) di una data
-    const queryTripIds = `select t.trip_id, t.shape_id from trips t 
-      where t.route_id='${route_id}' ${and_direction} 
-      and t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(d)}' )`;
-
-    // ==================  1
-    db.all(queryTripIds, function (err, rows) {
-      tripIds = rows
-      shapeIds = Array.from(new Set(tripIds.map(ts=>ts.shape_id)))
-    }); // end all
-
-    for (let ts of tripIds) {
-      let trip;
-      trips.push(trip = new Trip(bacino, route_id, ts.trip_id, ts.shape_id, undefined, undefined))
-
-      const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
-        st.stop_id, s.stop_name, 
-        st.arrival_time, st.departure_time, 
-        s.stop_lat, s.stop_lon
-        FROM stop_times st 
-        join stops s on st.stop_id=s.stop_id 
-        where st.trip_id='${ts.trip_id}' and s.stop_name NOT LIKE 'Semafor%'
-        order by 1`;
-
-      // ==================  2
-      db.all(q_stop_times, function (err, _stop_times) {
-        trip.stop_times = _stop_times
-      }); // end all
-      // shape del trip
-      const q_shape = `select shape_pt_lat, shape_pt_lon, CAST(shape_pt_sequence as INTEGER) as shape_pt_seq
-      from shapes
-      where shape_id = '${ts.shape_id}'
-      order by shape_pt_seq`;
-
-      db.all(q_shape, function (err, _shapes) {
-        trip.shapes = _shapes
-      }); // end all
-
-    } // end for
-
-  }); // end serialize
-
-  db.close();
-  return trips;
-}
 export function getTrips_Promises(bacino, route_id, dir01, date?): Promise<Trip[]> {
 
   const and_direction = (dir01 === 0 || dir01 === 1 ? ` and direction_id='${dir01}' ` : '')
@@ -247,7 +189,7 @@ export function getTrips_Promises(bacino, route_id, dir01, date?): Promise<Trip[
   return dbAllPromise(dbName(bacino), q)
     .then((rows) => {
       let tripPromises: Promise<Trip>[] = []
-      rows.forEach(trip_id => tripPromises.push(getTrip(bacino, route_id, trip_id)))
+      rows.forEach(r => tripPromises.push(getTrip(bacino, route_id, r.trip_id)))
       return tripPromises
     },
     (err) => console.log(err)
@@ -281,25 +223,26 @@ export function getTrip(bacino, route_id, trip_id): Promise<Trip> {
   where st.trip_id='${trip_id}' and s.stop_name NOT LIKE 'Semafor%'
   order by 1`;
 
-  const q_trips = `select t.shape_id from trips t where t.trip_id = ${trip_id}`
+  const q_trips = `select t.shape_id from trips t where t.trip_id = '${trip_id}'`
 
   return Promise.all([
     dbAllPromise(dbName(bacino), q_stop_times),
     dbAllPromise(dbName(bacino), q_trips)
-      .then((rows) =>
-        getShape(bacino, rows[0])
+      .then((rows) => getShape(bacino, rows[0].shape_id),
+         (err) => console.log(err) 
       )   // ho una sola rows: rows[0] che è lo shape_id
   ])
     .then((values) => {
       const rows = values[0]
-      const shapes: Shape[] = values[1]
+      const shapes: Shape[] = values[1] as Shape[]
 
       return new Trip(bacino, route_id, trip_id, "shape_id",
         rows.map(r => new StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon)),
         shapes
       ) // end new Trip
 
-    })
+    }
+  )
   // end Promise
 
 }
@@ -410,7 +353,7 @@ export function getReducedLongestShape(bacino, route_id, n: number): Promise<Sha
 
 function dbAllPromise(dbname: string, query: string): Promise<any[]> {
   return new Promise(function (resolve, reject) {
-    var db = new sqlite3.Database(dbname, sqlite3.OPEN_READONLY);
+    var db = new sqlite3.Database(dbname) // , sqlite3.OPEN_READONLY);
     db.all(query, function (err, rows) {
       db.close();
       if (err) reject(err); else resolve(rows);

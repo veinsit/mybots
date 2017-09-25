@@ -240,40 +240,38 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
 }
 */
 function sayLineaTrovata_ListTemplate2(chat, linea) {
-    const trips = service.getTrips_Serialized(linea.bacino, linea.route_id, 0); // oggi
-    /*
-        service.getTrips_Promises(linea.bacino, linea.route_id, 0) // oggi
-            .then((trips: service.Trip[]) => { */
-    // prendi il trip[0] come rappresentativo TODO
-    const mainTrip = trips[0];
-    const dir0 = mainTrip.stop_times[0].stop_name + " >> " + mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name; // [{trip_id, stop_sequence,  departure_time, stop_name,
-    const dir1 = mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name + " >> " + mainTrip.stop_times[0].stop_name; // [{trip_id, stop_sequence,  departure_time, stop_name,
-    const options = { topElementStyle: 'large' }; // large o compact
-    const elements = [
-        {
-            title: linea.getTitle(),
-            subtitle: dir0,
-            image_url: mainTrip.gmapUrl("320x160"),
-        },
-        {
-            title: "Andata", subtitle: "orari oggi",
-            default_action: {
-                type: "web_url",
-                url: service.getOpendataUri(linea, 0, 0),
-                webview_height_ratio: "tall",
+    service.getTrips_Promises(linea.bacino, linea.route_id, 0) // oggi
+        .then((trips) => {
+        // prendi il trip[0] come rappresentativo TODO
+        const mainTrip = trips[0];
+        const dir0 = mainTrip.stop_times[0].stop_name + " >> " + mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name; // [{trip_id, stop_sequence,  departure_time, stop_name,
+        const dir1 = mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name + " >> " + mainTrip.stop_times[0].stop_name; // [{trip_id, stop_sequence,  departure_time, stop_name,
+        const options = { topElementStyle: 'large' }; // large o compact
+        const elements = [
+            {
+                title: linea.getTitle(),
+                subtitle: dir0,
+                image_url: mainTrip.gmapUrl("320x160"),
+            },
+            {
+                title: "Andata", subtitle: "orari oggi",
+                default_action: {
+                    type: "web_url",
+                    url: service.getOpendataUri(linea, 0, 0),
+                    webview_height_ratio: "tall",
+                }
+            },
+            {
+                title: "Ritorno", subtitle: "orari oggi",
+                default_action: {
+                    type: "web_url",
+                    url: service.getOpendataUri(linea, 1, 0),
+                    webview_height_ratio: "tall",
+                }
             }
-        },
-        {
-            title: "Ritorno", subtitle: "orari oggi",
-            default_action: {
-                type: "web_url",
-                url: service.getOpendataUri(linea, 1, 0),
-                webview_height_ratio: "tall",
-            }
-        }
-    ]; // end elements
-    chat.sendListTemplate(elements, [], options);
-    //  })
+        ]; // end elements
+        chat.sendListTemplate(elements, [], options);
+    });
 }
 ;
 /*
@@ -345,15 +343,15 @@ exports.webgetLinea = (bacino, route_id, dir01, giorno, req, res) => {
         return;
     }
     const linea = arraylinee[0];
-    const trips = service.getTrips_Serialized(linea.bacino, linea.route_id, 0); // oggi
-    //    .then((trips: service.Trip[]) => {
-    // prendi il trip[0] come rappresentativo TODO
-    const mainTrip = trips[0];
-    res.render('linea', {
-        l: linea,
-        url: mainTrip.gmapUrl("320x320"),
-        trips
+    service.getTrips_Promises(linea.bacino, linea.route_id, 0) // oggi
+        .then((trips) => {
+        // prendi il trip[0] come rappresentativo TODO
+        const mainTrip = trips[0];
+        res.render('linea', {
+            l: linea,
+            url: mainTrip.gmapUrl("320x320"),
+            trips
+        });
     });
-    //  })
 };
 //# sourceMappingURL=lineebot.js.map
