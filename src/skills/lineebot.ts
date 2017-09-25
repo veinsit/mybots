@@ -281,7 +281,7 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
         })
 }
 */
-function sayLineaTrovata_ListTemplate2(chat, linea: Linea) {
+export function sayLineaTrovata_ListTemplate2(chat, linea: Linea) {
 
     service.getTrips_Promises(linea.bacino, linea.route_id, 0) // oggi
         .then((trips: service.Trip[]) => { 

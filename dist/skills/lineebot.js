@@ -273,6 +273,7 @@ function sayLineaTrovata_ListTemplate2(chat, linea) {
         chat.sendListTemplate(elements, [], options);
     });
 }
+exports.sayLineaTrovata_ListTemplate2 = sayLineaTrovata_ListTemplate2;
 ;
 /*
 const displayOrariPage = (chat, route_id, dir01: number, page: number) => {

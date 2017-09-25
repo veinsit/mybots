@@ -1,6 +1,10 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 require('dotenv').config();
+// https://github.com/sotirelisc/tvakis
+// https://www.messenger.com/t/thecvbot
+// Load emojis
+const utils = require("./utils");
 const service = require("./servicedb");
 /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/
 function goDebug(tpl) {
@@ -16,6 +20,7 @@ function goDebug(tpl) {
           //console.log(values[1])
         })
         */
+        tpl.sayLineaTrovata_ListTemplate2(utils.fakechat, linea);
         console.log(JSON.stringify(service.getTrips_Promises('FC', 'F127', 0)
             .then((trips) => {
             // prendi il trip[0] come rappresentativo TODO
