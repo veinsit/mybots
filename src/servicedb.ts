@@ -155,7 +155,7 @@ export class Trip {
     readonly bacino: string,
     readonly route_id: string,
     readonly trip_id: string,
-    readonly shape_id: string,
+    public shape_id: string,
     //    readonly dir01:number,
     public stop_times: StopTime[],
     public shapes: Shape[]
@@ -165,7 +165,7 @@ export class Trip {
 
     // https://developers.google.com/maps/documentation/static-maps/intro
 
-    if (this.shapes.length < 2) {
+    if (!this.shapes || this.shapes.length < 2) {
       const center = { center: "Forlimpopoli, Italia", zoom: 12 }; // this.mapCenter()
       return utils.gStatMapUrl(`size=${size}&center=${center.center}&zoom=${center.zoom}`)
     }
@@ -175,8 +175,15 @@ export class Trip {
     }
   }
 }
-
-export function getTrips_Promises(bacino, route_id, dir01, dayOffset): Promise<Trip[]> {
+export function getTrips_NoShape(bacino, route_id, dir01, dayOffset): Promise<Trip[]> {
+  return _getTrips(bacino, route_id, dir01, dayOffset, (b,r,t) => getTripWithoutShape(b,r,t) )
+}
+export function getTrips_WithShape(bacino, route_id, dir01, dayOffset): Promise<Trip[]> {
+  return _getTrips(bacino, route_id, dir01, dayOffset, (b,r,t) => getTripWithShape(b,r,t) )
+}
+  
+// serve per la pagina web
+function _getTrips(bacino, route_id, dir01, dayOffset, getTripFunc : (b,r,t) => Promise<Trip>): Promise<Trip[]> {
 
   const and_direction = (dir01 === 0 || dir01 === 1 ? ` and direction_id='${dir01}' ` : '')
   const date = utils.addDays(new Date(), dayOffset)
@@ -189,7 +196,7 @@ export function getTrips_Promises(bacino, route_id, dir01, dayOffset): Promise<T
   return dbAllPromise(dbName(bacino), q)
     .then((rows) => {
       let tripPromises: Promise<Trip>[] = []
-      rows.forEach(r => tripPromises.push(getTrip(bacino, route_id, r.trip_id)))
+      rows.forEach(r => tripPromises.push(getTripFunc(bacino, route_id, r.trip_id)))
       return tripPromises
     },
     (err) => console.log(err)
@@ -210,10 +217,52 @@ and t.service_id in (SELECT service_id from calendar_dates where date='${utils.d
 return dbAllPromise(dbName(bacino), q);
 }
 */
+export function getTripWithoutShape(bacino, route_id, trip_id): Promise<Trip> {
+  
+    const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
+    st.stop_id, s.stop_name, 
+    st.arrival_time, st.departure_time, 
+    s.stop_lat, s.stop_lon
+    FROM stop_times st 
+    join stops s on st.stop_id=s.stop_id 
+    where st.trip_id='${trip_id}' and s.stop_name NOT LIKE 'Semafor%'
+    order by 1`;
+  
+    return dbAllPromise(dbName(bacino), q_stop_times)
+      .then((rows) => {
+  
+        return new Trip(bacino, route_id, trip_id, undefined,
+          rows.map(r => new StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon)),
+          undefined
+        ) // end new Trip
+  
+      }
+    )
+    // end Promise
+  
+  }
+  
+  
 
+export function getTripWithShape(bacino, route_id, trip_id): Promise<Trip> {
+  const q_trips = `select MAX(t.shape_id) as shapeid from trips t where t.trip_id = '${trip_id}'`;
 
-export function getTrip(bacino, route_id, trip_id): Promise<Trip> {
-
+  return dbAllPromise(dbName(bacino), q_trips)
+  .then((rows:any[]) => rows[0].shapeid)  
+  .then((shape_id) => 
+      getShape(bacino, shape_id)
+        .then((shapes:Shape[]) => 
+            getTripWithoutShape(bacino, route_id, trip_id)
+              .then((trip:Trip) => {
+                trip.shapes = shapes
+                trip.shape_id = shape_id
+                return trip
+              })
+      )
+    )  
+  }
+  export function getTripWithShape_OLD(bacino, route_id, trip_id): Promise<Trip> {
+      
   const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
   st.stop_id, s.stop_name, 
   st.arrival_time, st.departure_time, 
@@ -228,15 +277,15 @@ export function getTrip(bacino, route_id, trip_id): Promise<Trip> {
   return Promise.all([
     dbAllPromise(dbName(bacino), q_stop_times),
     dbAllPromise(dbName(bacino), q_trips)
-      .then((rows) => getShape(bacino, rows[0].shape_id),
+      .then((rows) => {return {shapes:getShape(bacino, rows[0].shape_id), shape_id:rows[0].shape_id}},
          (err) => console.log(err) 
       )   // ho una sola rows: rows[0] che è lo shape_id
   ])
     .then((values) => {
       const rows = values[0]
-      const shapes: Shape[] = values[1] as Shape[]
+      const shapes: Shape[] = (values[1] as any).shapes as Shape[]
 
-      return new Trip(bacino, route_id, trip_id, "shape_id",
+      return new Trip(bacino, route_id, trip_id, (values[1] as any).shape_id,
         rows.map(r => new StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon)),
         shapes
       ) // end new Trip

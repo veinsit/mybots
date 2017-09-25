@@ -290,7 +290,7 @@ export const webgetLinea = (bacino, route_id, dir01: number, dayOffset: number, 
 
     const linea: Linea = arraylinee[0]
 
-    service.getTrips_Promises(linea.bacino, linea.route_id, dir01, dayOffset) // oggi
+    service.getTrips_WithShape(linea.bacino, linea.route_id, dir01, dayOffset) // oggi
     .then((trips: service.Trip[]) => {
         // prendi il trip[0] come rappresentativo TODO
         const mainTrip: service.Trip = trips[0]
@@ -306,7 +306,7 @@ export const webgetLinea = (bacino, route_id, dir01: number, dayOffset: number, 
 export function sayLineaTrovata_ListTemplate2(chat, linea: Linea) {
 
     // TODO qui (ma non nel web) mettere una versione ridotta
-    service.getTrips_Promises(linea.bacino, linea.route_id, 0, 0) // andata oggi
+    service.getTrips_NoShape(linea.bacino, linea.route_id, 0, 0) // andata oggi
         .then((trips: service.Trip[]) => { 
             // prendi il trip[0] come rappresentativo TODO
             const mainTrip: service.Trip = trips[0]

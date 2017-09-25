@@ -122,7 +122,7 @@ class Trip {
     }
     gmapUrl(size) {
         // https://developers.google.com/maps/documentation/static-maps/intro
-        if (this.shapes.length < 2) {
+        if (!this.shapes || this.shapes.length < 2) {
             const center = { center: "Forlimpopoli, Italia", zoom: 12 }; // this.mapCenter()
             return utils.gStatMapUrl(`size=${size}&center=${center.center}&zoom=${center.zoom}`);
         }
@@ -133,7 +133,16 @@ class Trip {
     }
 }
 exports.Trip = Trip;
-function getTrips_Promises(bacino, route_id, dir01, dayOffset) {
+function getTrips_NoShape(bacino, route_id, dir01, dayOffset) {
+    return _getTrips(bacino, route_id, dir01, dayOffset, (b, r, t) => getTripWithoutShape(b, r, t));
+}
+exports.getTrips_NoShape = getTrips_NoShape;
+function getTrips_WithShape(bacino, route_id, dir01, dayOffset) {
+    return _getTrips(bacino, route_id, dir01, dayOffset, (b, r, t) => getTripWithShape(b, r, t));
+}
+exports.getTrips_WithShape = getTrips_WithShape;
+// serve per la pagina web
+function _getTrips(bacino, route_id, dir01, dayOffset, getTripFunc) {
     const and_direction = (dir01 === 0 || dir01 === 1 ? ` and direction_id='${dir01}' ` : '');
     const date = utils.addDays(new Date(), dayOffset);
     // elenco di corse (trip_id) del servizio (service_id) di una data
@@ -143,12 +152,11 @@ function getTrips_Promises(bacino, route_id, dir01, dayOffset) {
     return dbAllPromise(dbName(bacino), q)
         .then((rows) => {
         let tripPromises = [];
-        rows.forEach(r => tripPromises.push(getTrip(bacino, route_id, r.trip_id)));
+        rows.forEach(r => tripPromises.push(getTripFunc(bacino, route_id, r.trip_id)));
         return tripPromises;
     }, (err) => console.log(err))
         .then((tripPromises) => Promise.all(tripPromises));
 }
-exports.getTrips_Promises = getTrips_Promises;
 /*
 export function getCorseOggi(bacino, route_id, dir01, date?): Promise<any[]> {
 
@@ -163,7 +171,36 @@ and t.service_id in (SELECT service_id from calendar_dates where date='${utils.d
 return dbAllPromise(dbName(bacino), q);
 }
 */
-function getTrip(bacino, route_id, trip_id) {
+function getTripWithoutShape(bacino, route_id, trip_id) {
+    const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
+    st.stop_id, s.stop_name, 
+    st.arrival_time, st.departure_time, 
+    s.stop_lat, s.stop_lon
+    FROM stop_times st 
+    join stops s on st.stop_id=s.stop_id 
+    where st.trip_id='${trip_id}' and s.stop_name NOT LIKE 'Semafor%'
+    order by 1`;
+    return dbAllPromise(dbName(bacino), q_stop_times)
+        .then((rows) => {
+        return new Trip(bacino, route_id, trip_id, undefined, rows.map(r => new StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon)), undefined); // end new Trip
+    });
+    // end Promise
+}
+exports.getTripWithoutShape = getTripWithoutShape;
+function getTripWithShape(bacino, route_id, trip_id) {
+    const q_trips = `select MAX(t.shape_id) as shapeid from trips t where t.trip_id = '${trip_id}'`;
+    return dbAllPromise(dbName(bacino), q_trips)
+        .then((rows) => rows[0].shapeid)
+        .then((shape_id) => getShape(bacino, shape_id)
+        .then((shapes) => getTripWithoutShape(bacino, route_id, trip_id)
+        .then((trip) => {
+        trip.shapes = shapes;
+        trip.shape_id = shape_id;
+        return trip;
+    })));
+}
+exports.getTripWithShape = getTripWithShape;
+function getTripWithShape_OLD(bacino, route_id, trip_id) {
     const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
   st.stop_id, s.stop_name, 
   st.arrival_time, st.departure_time, 
@@ -176,16 +213,16 @@ function getTrip(bacino, route_id, trip_id) {
     return Promise.all([
         dbAllPromise(dbName(bacino), q_stop_times),
         dbAllPromise(dbName(bacino), q_trips)
-            .then((rows) => getShape(bacino, rows[0].shape_id), (err) => console.log(err)) // ho una sola rows: rows[0] che è lo shape_id
+            .then((rows) => { return { shapes: getShape(bacino, rows[0].shape_id), shape_id: rows[0].shape_id }; }, (err) => console.log(err)) // ho una sola rows: rows[0] che è lo shape_id
     ])
         .then((values) => {
         const rows = values[0];
-        const shapes = values[1];
-        return new Trip(bacino, route_id, trip_id, "shape_id", rows.map(r => new StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon)), shapes); // end new Trip
+        const shapes = values[1].shapes;
+        return new Trip(bacino, route_id, trip_id, values[1].shape_id, rows.map(r => new StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon)), shapes); // end new Trip
     });
     // end Promise
 }
-exports.getTrip = getTrip;
+exports.getTripWithShape_OLD = getTripWithShape_OLD;
 /* vedi getTrip
 export function getPassaggiCorsa(bacino, trip_id): Promise<any[]> {
   const q = `select st.stop_sequence, st.trip_id, st.departure_time, s.stop_name, s.stop_lat, s.stop_lon

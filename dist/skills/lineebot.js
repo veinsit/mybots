@@ -246,7 +246,7 @@ exports.webgetLinea = (bacino, route_id, dir01, dayOffset, req, res) => {
         return;
     }
     const linea = arraylinee[0];
-    service.getTrips_Promises(linea.bacino, linea.route_id, dir01, dayOffset) // oggi
+    service.getTrips_WithShape(linea.bacino, linea.route_id, dir01, dayOffset) // oggi
         .then((trips) => {
         // prendi il trip[0] come rappresentativo TODO
         const mainTrip = trips[0];
@@ -259,7 +259,7 @@ exports.webgetLinea = (bacino, route_id, dir01, dayOffset, req, res) => {
 };
 function sayLineaTrovata_ListTemplate2(chat, linea) {
     // TODO qui (ma non nel web) mettere una versione ridotta
-    service.getTrips_Promises(linea.bacino, linea.route_id, 0, 0) // andata oggi
+    service.getTrips_NoShape(linea.bacino, linea.route_id, 0, 0) // andata oggi
         .then((trips) => {
         // prendi il trip[0] come rappresentativo TODO
         const mainTrip = trips[0];
