@@ -283,8 +283,10 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
 */
 function sayLineaTrovata_ListTemplate2(chat, linea: Linea) {
 
-    service.getTrips(linea.bacino, linea.route_id, 0) // oggi
-        .then((trips: service.Trip[]) => {
+    const trips:service.Trip[] = service.getTrips_Serialized(linea.bacino, linea.route_id, 0) // oggi
+/*    
+    service.getTrips_Promises(linea.bacino, linea.route_id, 0) // oggi
+        .then((trips: service.Trip[]) => { */
             // prendi il trip[0] come rappresentativo TODO
             const mainTrip: service.Trip = trips[0]
             const dir0 = mainTrip.stop_times[0].stop_name + " >> " + mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name  // [{trip_id, stop_sequence,  departure_time, stop_name,
@@ -329,7 +331,7 @@ function sayLineaTrovata_ListTemplate2(chat, linea: Linea) {
                 }
             ] // end elements
             chat.sendListTemplate(elements, [], options)
-        })
+      //  })
 };
 
 
@@ -406,8 +408,8 @@ export const webgetLinea = (bacino, route_id, dir01: number, giorno: number, req
 
     const linea: Linea = arraylinee[0]
 
-    service.getTrips(linea.bacino, linea.route_id, 0) // oggi
-    .then((trips: service.Trip[]) => {
+    const trips:service.Trip[] = service.getTrips_Serialized(linea.bacino, linea.route_id, 0) // oggi
+//    .then((trips: service.Trip[]) => {
         // prendi il trip[0] come rappresentativo TODO
         const mainTrip: service.Trip = trips[0]
         res.render('linea', {
@@ -415,7 +417,7 @@ export const webgetLinea = (bacino, route_id, dir01: number, giorno: number, req
             url: mainTrip.gmapUrl("320x320"),
             trips
         })
-    })
+  //  })
 
 }
 /*
