@@ -127,11 +127,11 @@ export const searchLinea = (chat, askedLinea): boolean => {
     //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
 
     let search = askedLinea.toUpperCase()
-    console.log(`searchLinea: searching for  route_short_name = ${search}`)
+//    console.log(`searchLinea: searching for  route_short_name = ${search}`)
     let results: Linea[] = linee.filter(it => it.display_name === search)
 
     if (results.length === 0) {
-        console.log(`searchLinea: not found! searching for route_id = ${search}`)
+//        console.log(`searchLinea: not found! searching for route_id = ${search}`)
         // prova a cercare anche tra i codici linea
         results = linee.filter(it => it.route_id === search)
         if (results.length === 0) {
@@ -281,9 +281,32 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
         })
 }
 */
+export const webgetLinea = (bacino, route_id, dir01: number, dayOffset: number, req, res) => {
+    const arraylinee: Linea[] = linee.filter(l => l.bacino === bacino && l.route_id === route_id)
+    if (arraylinee.length !== 1) {
+        res.send(`linea ${route_id} non trovata`)
+        return
+    }
+
+    const linea: Linea = arraylinee[0]
+
+    service.getTrips_Promises(linea.bacino, linea.route_id, dir01, dayOffset) // oggi
+    .then((trips: service.Trip[]) => {
+        // prendi il trip[0] come rappresentativo TODO
+        const mainTrip: service.Trip = trips[0]
+        res.render('linea', {
+            l: linea,
+            url: mainTrip.gmapUrl("320x320"),
+            trips
+        })
+    })
+
+}
+
 export function sayLineaTrovata_ListTemplate2(chat, linea: Linea) {
 
-    service.getTrips_Promises(linea.bacino, linea.route_id, 0) // oggi
+    // TODO qui (ma non nel web) mettere una versione ridotta
+    service.getTrips_Promises(linea.bacino, linea.route_id, 0, 0) // andata oggi
         .then((trips: service.Trip[]) => { 
             // prendi il trip[0] come rappresentativo TODO
             const mainTrip: service.Trip = trips[0]
@@ -397,27 +420,7 @@ const onResultPassaggi = (data, chat, route_id, corsa_id) => {
 */
 
 
-export const webgetLinea = (bacino, route_id, dir01: number, giorno: number, req, res) => {
-    const arraylinee: Linea[] = linee.filter(l => l.bacino === bacino && l.route_id === route_id)
-    if (arraylinee.length !== 1) {
-        res.send(`linea ${route_id} non trovata`)
-        return
-    }
 
-    const linea: Linea = arraylinee[0]
-
-    service.getTrips_Promises(linea.bacino, linea.route_id, 0) // oggi
-    .then((trips: service.Trip[]) => {
-        // prendi il trip[0] come rappresentativo TODO
-        const mainTrip: service.Trip = trips[0]
-        res.render('linea', {
-            l: linea,
-            url: mainTrip.gmapUrl("320x320"),
-            trips
-        })
-    })
-
-}
 /*
 export const webgetLinea = (bacino, route_id, dir01: number, giorno: number, req, res) => {
     const arraylinee: Linea[] = linee.filter(l => l.bacino === bacino && l.route_id === route_id)

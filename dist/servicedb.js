@@ -133,13 +133,13 @@ class Trip {
     }
 }
 exports.Trip = Trip;
-function getTrips_Promises(bacino, route_id, dir01, date) {
+function getTrips_Promises(bacino, route_id, dir01, dayOffset) {
     const and_direction = (dir01 === 0 || dir01 === 1 ? ` and direction_id='${dir01}' ` : '');
-    const d = date || (new Date()); // oggi
+    const date = utils.addDays(new Date(), dayOffset);
     // elenco di corse (trip_id) del servizio (service_id) di una data
     const q = `select t.trip_id from trips t 
       where t.route_id='${route_id}' ${and_direction} 
-      and t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(d)}' )`;
+      and t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}' )`;
     return dbAllPromise(dbName(bacino), q)
         .then((rows) => {
         let tripPromises = [];

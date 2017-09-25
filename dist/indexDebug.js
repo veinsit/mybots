@@ -21,7 +21,7 @@ function goDebug(tpl) {
         })
         */
         tpl.sayLineaTrovata_ListTemplate2(utils.fakechat, linea);
-        console.log(JSON.stringify(service.getTrips_Promises('FC', 'F127', 0)
+        console.log(JSON.stringify(service.getTrips_Promises('FC', 'F127', 0, 0)
             .then((trips) => {
             // prendi il trip[0] come rappresentativo TODO
             const mainTrip = trips[0];

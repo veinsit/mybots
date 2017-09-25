@@ -32,7 +32,7 @@ export function goDebug(tpl) {
 
       tpl.sayLineaTrovata_ListTemplate2(utils.fakechat, linea)
 
-      console.log(JSON.stringify(service.getTrips_Promises('FC', 'F127', 0)
+      console.log(JSON.stringify(service.getTrips_Promises('FC', 'F127', 0, 0)
         .then((trips: service.Trip[]) => {
           // prendi il trip[0] come rappresentativo TODO
           const mainTrip: service.Trip = trips[0]

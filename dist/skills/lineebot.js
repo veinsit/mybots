@@ -94,10 +94,10 @@ exports.init = (callback) => {
 exports.searchLinea = (chat, askedLinea) => {
     //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
     let search = askedLinea.toUpperCase();
-    console.log(`searchLinea: searching for  route_short_name = ${search}`);
+    //    console.log(`searchLinea: searching for  route_short_name = ${search}`)
     let results = linee.filter(it => it.display_name === search);
     if (results.length === 0) {
-        console.log(`searchLinea: not found! searching for route_id = ${search}`);
+        //        console.log(`searchLinea: not found! searching for route_id = ${search}`)
         // prova a cercare anche tra i codici linea
         results = linee.filter(it => it.route_id === search);
         if (results.length === 0) {
@@ -239,8 +239,27 @@ function sayLineaTrovata_ListTemplate(chat, lineaAndShape) {
         })
 }
 */
+exports.webgetLinea = (bacino, route_id, dir01, dayOffset, req, res) => {
+    const arraylinee = linee.filter(l => l.bacino === bacino && l.route_id === route_id);
+    if (arraylinee.length !== 1) {
+        res.send(`linea ${route_id} non trovata`);
+        return;
+    }
+    const linea = arraylinee[0];
+    service.getTrips_Promises(linea.bacino, linea.route_id, dir01, dayOffset) // oggi
+        .then((trips) => {
+        // prendi il trip[0] come rappresentativo TODO
+        const mainTrip = trips[0];
+        res.render('linea', {
+            l: linea,
+            url: mainTrip.gmapUrl("320x320"),
+            trips
+        });
+    });
+};
 function sayLineaTrovata_ListTemplate2(chat, linea) {
-    service.getTrips_Promises(linea.bacino, linea.route_id, 0) // oggi
+    // TODO qui (ma non nel web) mettere una versione ridotta
+    service.getTrips_Promises(linea.bacino, linea.route_id, 0, 0) // andata oggi
         .then((trips) => {
         // prendi il trip[0] come rappresentativo TODO
         const mainTrip = trips[0];
@@ -275,84 +294,4 @@ function sayLineaTrovata_ListTemplate2(chat, linea) {
 }
 exports.sayLineaTrovata_ListTemplate2 = sayLineaTrovata_ListTemplate2;
 ;
-/*
-const displayOrariPage = (chat, route_id, dir01: number, page: number) => {
-    service.getCorseOggi('FC', route_id, dir01)
-        .then((data) =>
-            onResultCorse(chat, data, route_id, dir01, page)
-        )
-}
-*/
-/*
-const onResultCorse = (chat, data, route_id, dir01: number, page: number) => {
-    const quanteInsieme = 4;
-    const result = {
-        corse: data // già filtrate A o D .filter((it) => it.VERSO === AorD)
-            .slice(page * quanteInsieme, (page + 1) * quanteInsieme)
-        /*
-        .map(function (item) {
-            return {
-                CORSA: item.trip_id // item.CORSA,
-//                    DESC_PERCORSO: item.DESC_PERCORSO,
-//                    parte: item.ORA_INIZIO_STR,
-//                    arriva: item.ORA_FINE_STR,
-            }
-        }) ----/
-    }
-    // Puoi inviare da un minimo di 2 a un massimo di 4 elementi.
-    // L'aggiunta di un pulsante a ogni elemento è facoltativa. Puoi avere solo 1 pulsante per elemento.
-    // Puoi avere solo 1 pulsante globale.
-    const els = []
-    for (let i = 0; i < Math.min(quanteInsieme, result.corse.length); i++) {
-        const corsa = result.corse[i]
-        els.push({
-            title: "Corsa " + corsa.trip_id, // `${i+1}) partenza ${corsa.parte}`,
-            subtitle: "sul percorso " + corsa.route_id, // corsa.DESC_PERCORSO + "  arriva alle " + corsa.arriva,
-            // "image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",
-            buttons: utils.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + route_id + "_" + corsa.CORSA),
-        })
-    } // end for
-
-    const noNextPage = () => result.corse.length < quanteInsieme
-
-    // emetti max 4 elementi
-    chat.sendListTemplate(
-        els,                                                      // PAGE_CORSE_F127_As_2
-        noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `TPL_PAGE_CORSE_${route_id}_${dir01}_${page + 1}`),
-        { typing: true }
-    )
-
-}
-
-
-const displayCorsa = (chat, route_id, corsa_id) => {
-    service.getCorseOggi('FC', route_id, 0)
-        .then((data) =>
-            onResultPassaggi(data, chat, route_id, corsa_id)
-        )
-};
-
-const onResultPassaggi = (data, chat, route_id, corsa_id) => {
-    chat.say(`Qui dovrei mostrarti i passaggi della corsa ${corsa_id} della linea ${route_id}`)
-}
-
-*/
-exports.webgetLinea = (bacino, route_id, dir01, giorno, req, res) => {
-    const arraylinee = linee.filter(l => l.bacino === bacino && l.route_id === route_id);
-    if (arraylinee.length !== 1) {
-        res.send(`linea ${route_id} non trovata`);
-        return;
-    }
-    const linea = arraylinee[0];
-    service.getTrips_Promises(linea.bacino, linea.route_id, 0) // oggi
-        .then((trips) => {
-        // prendi il trip[0] come rappresentativo TODO
-        const mainTrip = trips[0];
-        res.render('linea', {
-            l: linea,
-            url: mainTrip.gmapUrl("320x320"),
-            trips
-        });
-    });
-};
 //# sourceMappingURL=lineebot.js.map
