@@ -27,6 +27,10 @@ app.get("/ui/tpl/:bacino/linee/:routeid/dir/:dir01/g/:giorno", (req, res) => {
     //  console.log("GET /ui/tpl/:bacino/linee/:giorno/:dir01/:routeid "+req.params.routeid)
     tpl.webgetLinea(req.params.bacino, req.params.routeid, parseInt(req.params.dir01), parseInt(req.params.giorno), req, res);
 });
+app.get("/ui/tpl/:bacino/linee/:routeid/dir/:dir01/g/:giorno/trip/:trip", (req, res) => {
+    //  console.log("GET /ui/tpl/:bacino/linee/:giorno/:dir01/:routeid "+req.params.routeid)
+    tpl.webgetLinea(req.params.bacino, req.params.routeid, parseInt(req.params.dir01), parseInt(req.params.giorno), req, res, req.params.trip);
+});
 // tutto quello qui sopre deve essere PRIMA di new BootBot
 // ============================================================= end web
 const skills = [tpl, prove];

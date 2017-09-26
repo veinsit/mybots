@@ -100,8 +100,8 @@ export class Linea {
     return ln;
   }
 
-  getAscDir() { return "Ascendente" }
-  getDisDir() { return "Discendente" }
+  getAscDir() { return "Andata" }
+  getDisDir() { return "Ritorno" }
   getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")"
   getSubtitle() {
     //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
@@ -145,16 +145,19 @@ export function getServizi(bacino): Promise<any[]> {
 // =================================================================================================
 //                Linea
 // =================================================================================================
-export function getOpendataUri(linea: Linea, dir01: number, dayOffset: number) { return `${baseUiUri}${linea.bacino}/linee/${linea.route_id}/dir/${dir01}/g/${dayOffset}` }
+export function getOpendataUri(linea: Linea, dir01: number, dayOffset: number, trip_id?) {
+  return `${baseUiUri}${linea.bacino}/linee/${linea.route_id}/dir/${dir01}/g/${dayOffset}`
+    + (trip_id ? '/trip' + trip_id : '')
+}
 
 export function getLinee(bacino): Promise<any[]> {
   return dbAllPromise(bacino, Linea.queryGetAll());
 }
 
 
-export function getLineeFermataDB(db, stop_id): Promise<any[]> {
+export function getRouteIdsFermataDB(db, stop_id): Promise<string[]> {
   const q = "SELECT a.route_id FROM trips a WHERE a.trip_id IN (SELECT b.trip_id FROM stop_times b WHERE b.stop_id='" + stop_id + "') GROUP BY a.route_id"
-  return dbAllPromiseDB(db, q);
+  return dbAllPromiseDB(db, q).then((a: any[]) => a.map(x => x.route_id));
 }
 
 // =================================================================================================
@@ -171,6 +174,21 @@ export class Trip {
     public stop_times: StopTime[],
     //public shapes: ShapePoint[]
   ) { }
+
+  getAsDir() {
+    return (this.stop_times ?
+      (this.stop_times[0].stop_name + " >> " + this.stop_times[this.stop_times.length - 1].stop_name)
+      : "Andata"
+    )
+  }
+
+  getDiDir() {
+    return (this.stop_times ?
+      (this.stop_times[this.stop_times.length - 1].stop_name + " >> " + this.stop_times[0].stop_name)
+      : "Ritorno"
+    )
+  }
+
 
 }
 
@@ -204,24 +222,16 @@ export class TripsAndShapes {
 
   gmapUrl(size, n): string {
     const mainTrip: Trip = this.getMainTrip();
-    const shape = this.shapes.filter(s => s.shape_id===mainTrip.shape_id)[0];
+    const shape = this.shapes.filter(s => s.shape_id === mainTrip.shape_id)[0];
     return shape.gmapUrl(size, n);
   }
 
   getAsDir(): string {
-    const mainTrip: Trip = this.getMainTrip();
-    return (mainTrip ?
-      (mainTrip.stop_times[0].stop_name + " >> " + mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name)
-      : "Andata"
-    )
+    return this.getMainTrip().getAsDir();
   }
 
   getDiDir(): string {
-    const mainTrip: Trip = this.getMainTrip();
-    return (mainTrip ?
-      (mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name + " >> " + mainTrip.stop_times[0].stop_name)
-      : "Ritorno"
-    )
+    return this.getMainTrip().getDiDir();
   }
 }
 
@@ -256,12 +266,12 @@ export function getTripsAndShapes(bacino, route_id, dir01, dayOffset): Promise<T
   return Promise.all([ptrips, pshapes])
     .then((values) => {
       _close(db);
-      let tas = new TripsAndShapes( [] , []);
+      let tas = new TripsAndShapes([], []);
       const trips: Trip[] = values[0] as Trip[]
       const shapes: Shape[] = values[1] as Shape[]
       trips.forEach(t => tas.trips.push(t))
       shapes.forEach(s => tas.shapes.push(s))
-      
+
       return tas;
     });
 

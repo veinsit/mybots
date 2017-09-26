@@ -65,8 +65,8 @@ class Linea {
             return ln.substring(0, ln.length - 2);
         return ln;
     }
-    getAscDir() { return "Ascendente"; }
-    getDisDir() { return "Discendente"; }
+    getAscDir() { return "Andata"; }
+    getDisDir() { return "Ritorno"; }
     getSubtitle() {
         //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
         return this.route_long_name;
@@ -101,17 +101,20 @@ exports.getServizi = getServizi;
 // =================================================================================================
 //                Linea
 // =================================================================================================
-function getOpendataUri(linea, dir01, dayOffset) { return `${baseUiUri}${linea.bacino}/linee/${linea.route_id}/dir/${dir01}/g/${dayOffset}`; }
+function getOpendataUri(linea, dir01, dayOffset, trip_id) {
+    return `${baseUiUri}${linea.bacino}/linee/${linea.route_id}/dir/${dir01}/g/${dayOffset}`
+        + (trip_id ? '/trip' + trip_id : '');
+}
 exports.getOpendataUri = getOpendataUri;
 function getLinee(bacino) {
     return dbAllPromise(bacino, Linea.queryGetAll());
 }
 exports.getLinee = getLinee;
-function getLineeFermataDB(db, stop_id) {
+function getRouteIdsFermataDB(db, stop_id) {
     const q = "SELECT a.route_id FROM trips a WHERE a.trip_id IN (SELECT b.trip_id FROM stop_times b WHERE b.stop_id='" + stop_id + "') GROUP BY a.route_id";
-    return dbAllPromiseDB(db, q);
+    return dbAllPromiseDB(db, q).then((a) => a.map(x => x.route_id));
 }
-exports.getLineeFermataDB = getLineeFermataDB;
+exports.getRouteIdsFermataDB = getRouteIdsFermataDB;
 // =================================================================================================
 //                Corse (trips)
 // =================================================================================================
@@ -125,6 +128,16 @@ class Trip {
         this.trip_id = trip_id;
         this.shape_id = shape_id;
         this.stop_times = stop_times;
+    }
+    getAsDir() {
+        return (this.stop_times ?
+            (this.stop_times[0].stop_name + " >> " + this.stop_times[this.stop_times.length - 1].stop_name)
+            : "Andata");
+    }
+    getDiDir() {
+        return (this.stop_times ?
+            (this.stop_times[this.stop_times.length - 1].stop_name + " >> " + this.stop_times[0].stop_name)
+            : "Ritorno");
     }
 }
 exports.Trip = Trip;
@@ -158,16 +171,10 @@ class TripsAndShapes {
         return shape.gmapUrl(size, n);
     }
     getAsDir() {
-        const mainTrip = this.getMainTrip();
-        return (mainTrip ?
-            (mainTrip.stop_times[0].stop_name + " >> " + mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name)
-            : "Andata");
+        return this.getMainTrip().getAsDir();
     }
     getDiDir() {
-        const mainTrip = this.getMainTrip();
-        return (mainTrip ?
-            (mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name + " >> " + mainTrip.stop_times[0].stop_name)
-            : "Ritorno");
+        return this.getMainTrip().getDiDir();
     }
 }
 exports.TripsAndShapes = TripsAndShapes;
