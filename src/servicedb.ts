@@ -113,7 +113,6 @@ const baseUiUri = process.env.OPENDATAURIBASE + "ui/tpl/"
 const sqlite3 = require('sqlite3').verbose();
 import utils = require("./utils")
 
-const dbName = bacino => `dist/db/database${bacino}.sqlite3`
 
 export function getServizi(bacino): Promise<any[]> {
   return dbAllPromise(bacino, "select unique service_id from calendar_dates");
@@ -435,7 +434,13 @@ function dbAllPromiseDB(db, query: string): Promise<any[]> {
 
 
 export function _close(db) {db.close(); console.log("db.close()")}
+
+const path = require('path');
+const dbPath = (bacino) => path.resolve(__dirname, `dist/db/database${bacino}.sqlite3`)
+
 export function opendb(bacino) {
-  console.log("db.open()"); 
-  return new sqlite3.Database(dbName(bacino), sqlite3.OPEN_READONLY, (err)=> {err && console.log("ERR open db: "+err)});
+  const dbName = bacino => `dist/db/database${bacino}.sqlite3`
+  
+  console.log("db.open() "+dbPath(bacino)); 
+  return new sqlite3.Database(dbPath(bacino) /*, sqlite3.OPEN_READONLY, (err)=> {err && console.log("ERR open db: "+err)}*/);
 }
