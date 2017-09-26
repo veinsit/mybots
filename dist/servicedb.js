@@ -103,7 +103,7 @@ exports.getServizi = getServizi;
 // =================================================================================================
 function getOpendataUri(linea, dir01, dayOffset, trip_id) {
     return `${baseUiUri}${linea.bacino}/linee/${linea.route_id}/dir/${dir01}/g/${dayOffset}`
-        + (trip_id ? '/trip' + trip_id : '');
+        + (trip_id ? '/trip/' + trip_id : '');
 }
 exports.getOpendataUri = getOpendataUri;
 function getLinee(bacino) {

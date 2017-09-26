@@ -147,7 +147,7 @@ export function getServizi(bacino): Promise<any[]> {
 // =================================================================================================
 export function getOpendataUri(linea: Linea, dir01: number, dayOffset: number, trip_id?) {
   return `${baseUiUri}${linea.bacino}/linee/${linea.route_id}/dir/${dir01}/g/${dayOffset}`
-    + (trip_id ? '/trip' + trip_id : '')
+    + (trip_id ? '/trip/' + trip_id : '')
 }
 
 export function getLinee(bacino): Promise<any[]> {
