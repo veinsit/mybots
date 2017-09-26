@@ -43,7 +43,7 @@ exports.onLocationReceived = (chat, coords) => {
     _onLocationReceived(chat, coords, (nearestStop, lineePassanti, dist) => sayNearestStop(chat, coords, nearestStop, lineePassanti, dist));
     function _onLocationReceived(chat, coords, callback) {
         const bacino = 'FC';
-        var db = new sqlite3.Database(`dist/db/database${bacino}.sqlite3`, sqlite3.OPEN_READONLY); // TODO portare in servicedb dove ho dbName
+        const db = service.opendb(bacino);
         //    db.serialize(function() {
         let dist = 9e6;
         let nearestStop;
@@ -55,8 +55,11 @@ exports.onLocationReceived = (chat, coords) => {
                 nearestStop = row;
             }
         }, function () {
-            service.getLineeFermata(bacino, nearestStop.stop_id)
-                .then((numerilinea) => callback(nearestStop, numerilinea, dist));
+            service.getLineeFermataDB(db, nearestStop.stop_id)
+                .then((numerilinea) => {
+                service._close(db);
+                callback(nearestStop, numerilinea, dist);
+            });
         }); // end each
         //    });// end serialize
     }

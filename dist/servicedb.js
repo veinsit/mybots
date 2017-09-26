@@ -81,7 +81,7 @@ const sqlite3 = require('sqlite3').verbose();
 const utils = require("./utils");
 const dbName = bacino => `dist/db/database${bacino}.sqlite3`;
 function getServizi(bacino) {
-    return dbAllPromise(dbName(bacino), "select unique service_id from calendar_dates");
+    return dbAllPromise(bacino, "select unique service_id from calendar_dates");
 }
 exports.getServizi = getServizi;
 // =================================================================================================
@@ -90,14 +90,14 @@ exports.getServizi = getServizi;
 function getOpendataUri(linea, dir01, dayOffset) { return `${baseUiUri}${linea.bacino}/linee/${linea.route_id}/dir/${dir01}/g/${dayOffset}`; }
 exports.getOpendataUri = getOpendataUri;
 function getLinee(bacino) {
-    return dbAllPromise(dbName(bacino), Linea.queryGetAll());
+    return dbAllPromise(bacino, Linea.queryGetAll());
 }
 exports.getLinee = getLinee;
-function getLineeFermata(bacino, stop_id) {
+function getLineeFermataDB(db, stop_id) {
     const q = "SELECT a.route_id FROM trips a WHERE a.trip_id IN (SELECT b.trip_id FROM stop_times b WHERE b.stop_id='" + stop_id + "') GROUP BY a.route_id";
-    return dbAllPromise(dbName(bacino), q);
+    return dbAllPromiseDB(db, q);
 }
-exports.getLineeFermata = getLineeFermata;
+exports.getLineeFermataDB = getLineeFermataDB;
 // =================================================================================================
 //                Corse (trips)
 // =================================================================================================
@@ -149,7 +149,7 @@ exports.getTrips_WithShape = getTrips_WithShape;
 function _getTrips(bacino, route_id, dir01, dayOffset, getTripFunc) {
     const and_direction = (dir01 === 0 || dir01 === 1 ? ` and t.direction_id='${dir01}' ` : '');
     const date = utils.addDays(new Date(), dayOffset);
-    const db = new sqlite3.Database(dbName(bacino), sqlite3.OPEN_READONLY);
+    const db = opendb(bacino);
     // elenco di corse (trip_id) del servizio (service_id) di una data
     const q = `select t.trip_id from trips t 
       where t.route_id='${route_id}' ${and_direction} 
@@ -161,13 +161,13 @@ function _getTrips(bacino, route_id, dir01, dayOffset, getTripFunc) {
         return tripPromises;
     })
         .then((tripPromises) => {
-        db.close();
+        _close(db);
         return Promise.all(tripPromises);
     }); /*
     .catch((err) => {
-      db.close();
+      _close(db);
       console.log(err)
-    });*/
+    }); */
 }
 /*
 export function getCorseOggi(bacino, route_id, dir01, date?): Promise<any[]> {
@@ -180,7 +180,7 @@ const q = `select t.service_id, t.trip_id, t.shape_id from trips t
 where t.route_id='${route_id}' ${and_direction}
 and t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(d)}' )`;
 
-return dbAllPromise(dbName(bacino), q);
+return dbAllPromise(bacino, q);
 }
 */
 function getTripWithoutShape(db, route_id, trip_id) {
@@ -229,8 +229,8 @@ order by 1`;
 const q_trips = `select t.shape_id from trips t where t.trip_id = '${trip_id}'`
 
 return Promise.all([
-  dbAllPromise(dbName(bacino), q_stop_times),
-  dbAllPromise(dbName(bacino), q_trips)
+  dbAllPromise(bacino, q_stop_times),
+  dbAllPromise(bacino, q_trips)
     .then((rows) => {return {shapes:getShape(bacino, rows[0].shape_id), shape_id:rows[0].shape_id}},
        (err) => console.log(err)
     )   // ho una sola rows: rows[0] che è lo shape_id
@@ -258,7 +258,7 @@ export function getPassaggiCorsa(bacino, trip_id): Promise<any[]> {
   where st.trip_id='${trip_id}' and s.stop_name NOT LIKE 'Semafor%'
   order by st.departure_time`;
 
-  return dbAllPromise(dbName(bacino), q);
+  return dbAllPromise(bacino, q);
 }
 */
 /*
@@ -287,8 +287,8 @@ export function getOrarLinea(bacino, route_id, dir01, dayOffset: number): Promis
 // =================================================================================================
 function getShape(bacino, shape_id) {
     utils.assert(typeof bacino === 'string', "metodo getShape ");
-    var db = new sqlite3.Database(dbName(bacino), sqlite3.OPEN_READONLY);
-    return getShapeDB(db, shape_id).then((x) => { db.close(); return x; });
+    var db = opendb(bacino);
+    return getShapeDB(db, shape_id).then((x) => { _close(db); return x; });
 }
 exports.getShape = getShape;
 function getShapeDB(db, shape_id) {
@@ -299,7 +299,7 @@ function getShapeDB(db, shape_id) {
   order by shape_pt_seq`;
     //  console.log("getShape: " + shape_id)
     return new Promise(function (resolve, reject) {
-        //    var db = new sqlite3.Database(dbName(bacino), sqlite3.OPEN_READONLY);
+        //    var db = opendb(bacino);
         db.all(q, function (err, rows) {
             //    db.close();
             if (err)
@@ -317,7 +317,7 @@ function getLongestShape(bacino, route_id) {
   WHERE s.shape_id in (SELECT t.shape_id from trips t where t.route_id='${route_id}')
   GROUP BY s.shape_id
   ORDER BY numPoints desc`;
-    return dbAllPromise(dbName(bacino), q)
+    return dbAllPromise(bacino, q)
         .then((rows) => {
         //      console.log("Shape rows 2: " + JSON.stringify(rows[0])) // prendo la 0 perché sono ordinate DESC
         return rows[0].shape_id;
@@ -342,11 +342,11 @@ function getReducedLongestShape(bacino, route_id, n) {
 }
 exports.getReducedLongestShape = getReducedLongestShape;
 // ------------------------ utilities
-function dbAllPromise(dbname, query) {
+function dbAllPromise(bacino, query) {
     return new Promise(function (resolve, reject) {
-        var db = new sqlite3.Database(dbname, sqlite3.OPEN_READONLY);
+        var db = opendb(bacino);
         db.all(query, function (err, rows) {
-            db.close();
+            _close(db);
             if (err)
                 reject(err);
             else
@@ -365,4 +365,11 @@ function dbAllPromiseDB(db, query) {
         }); // end each
     }); // end Promise
 }
+function _close(db) { db.close(); console.log("db.close()"); }
+exports._close = _close;
+function opendb(bacino) {
+    console.log("db.open()");
+    return new sqlite3.Database(dbName(bacino), sqlite3.OPEN_READONLY, (err) => { err && console.log("ERR open db: " + err); });
+}
+exports.opendb = opendb;
 //# sourceMappingURL=servicedb.js.map

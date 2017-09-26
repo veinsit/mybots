@@ -58,7 +58,7 @@ export const onLocationReceived = (chat, coords) => {
     function _onLocationReceived(chat, coords, callback) {
 
         const bacino = 'FC'
-        var db = new sqlite3.Database(`dist/db/database${bacino}.sqlite3`, sqlite3.OPEN_READONLY); // TODO portare in servicedb dove ho dbName
+        const db = service.opendb(bacino);
 
         //    db.serialize(function() {
         let dist: number = 9e6
@@ -71,9 +71,11 @@ export const onLocationReceived = (chat, coords) => {
                 if (d < dist) { dist = d; nearestStop = row; }
             },
             function () {
-                service.getLineeFermata(bacino, nearestStop.stop_id)
-                    .then((numerilinea: string[]) =>
+                service.getLineeFermataDB(db, nearestStop.stop_id)
+                    .then((numerilinea: string[]) => {
+                        service._close(db);
                         callback(nearestStop, numerilinea, dist)
+                    }
                     );
             }
         ); // end each
