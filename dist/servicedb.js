@@ -367,9 +367,9 @@ function dbAllPromiseDB(db, query) {
 function _close(db) { db.close(); console.log("db.close()"); }
 exports._close = _close;
 const path = require('path');
-const dbPath = (bacino) => path.resolve(__dirname, `dist/db/database${bacino}.sqlite3`);
+const dbPath = (bacino) => path.resolve(__dirname, `db/database${bacino}.sqlite3`);
 function opendb(bacino) {
-    const dbName = bacino => `dist/db/database${bacino}.sqlite3`;
+    //  const dbName = bacino => `dist/db/database${bacino}.sqlite3`
     console.log("db.open() " + dbPath(bacino));
     return new sqlite3.Database(dbPath(bacino) /*, sqlite3.OPEN_READONLY, (err)=> {err && console.log("ERR open db: "+err)}*/);
 }
