@@ -1,0 +1,47 @@
+// percorso più lungo (nel senso cha ha più punti)
+function getLongestShape(bacino, route_id): Promise<ShapePoint[]> {
+  //percorso più lungo di una linea
+
+  const q = `SELECT s.shape_id, count(*) as numPoints
+  FROM shapes s 
+  WHERE s.shape_id in (SELECT t.shape_id from trips t where t.route_id='${route_id}')
+  GROUP BY s.shape_id
+  ORDER BY numPoints desc`
+
+  return dbAllPromise(bacino, q)
+    .then((rows) => {
+      //      console.log("ShapePoint rows 2: " + JSON.stringify(rows[0])) // prendo la 0 perché sono ordinate DESC
+      return rows[0].shape_id
+    })
+    .then((shape_id) => { console.log("shape_id " + shape_id); return getShape(bacino, shape_id) })
+}
+
+// n = quanti punti oltre al primo e ultimo
+export function getReducedLongestShape(bacino, route_id, n: number): Promise<ShapePoint[]> {
+
+  return getLongestShape(bacino, route_id)
+    .then((shape: ShapePoint[]): ShapePoint[] => {
+
+      if (n >= shape.length)
+        return shape;
+
+      let step = Math.floor(shape.length / (n + 1));
+      let new_shape: ShapePoint[] = []
+
+      for (let i = 0; i < n + 1; i++) {
+        new_shape.push(shape[i * step])
+      }
+      new_shape.push(shape[shape.length - 1])
+      // console.log("New shape: "+JSON.stringify(new_shape[0])) // prendo la 0 perché sono ordinate DESC
+
+      return new_shape;
+    })
+}
+
+
+export function getShape(bacino, shape_id): Promise<ShapePoint[]> {
+  utils.assert(typeof bacino === 'string', "metodo getShape ")
+  var db = opendb(bacino);
+  return getShapeDB(db, shape_id).then((x) => { _close(db); return x; })
+}
+

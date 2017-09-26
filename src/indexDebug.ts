@@ -21,6 +21,11 @@ export function goDebug(tpl) {
   tpl.init((_linee, err) => { linee = _linee/*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/ })
     .then(() => {
       const linea = linee.filter(l => l.route_id === 'F127')[0]
+
+      service.getTripsAndShapes('FC', linea.route_id, 0, 0)
+      .then((tas: service.TripsAndShapes) => {
+          console.log(JSON.stringify(tas.trips))
+      })
       //const p0:Promise<string> = linea.getGMapUrl(service) 
       /*
       const p1:Promise<any[]> = service.getTrips_Promises('FC', 'F127', 0)
@@ -30,7 +35,7 @@ export function goDebug(tpl) {
       }) 
       */
 
-      tpl.sayLineaTrovata_ListTemplate2(utils.fakechat, linea)
+//      tpl.sayLineaTrovata_ListTemplate2(utils.fakechat, linea)
 
       /*
       console.log(JSON.stringify(service.getTrips_WithShape('FC', 'F127', 0, 0)

@@ -84,4 +84,8 @@ function assert(condition, message) {
     }
 }
 exports.assert = assert;
+function removeDuplicates(arr) {
+    return Array.from(new Set(arr));
+}
+exports.removeDuplicates = removeDuplicates;
 //# sourceMappingURL=utils.js.map

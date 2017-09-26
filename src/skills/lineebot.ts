@@ -7,7 +7,7 @@ import emo = require("../assets/emoji");
 
 import service = require("../servicedb");
 type Linea = service.Linea;
-type Shape = service.Shape;
+type ShapePoint = service.ShapePoint;
 
 // var. globale inizializzata dalla init()
 let linee: Linea[] = []
@@ -129,11 +129,11 @@ export const searchLinea = (chat, askedLinea): boolean => {
     //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
 
     let search = askedLinea.toUpperCase()
-//    console.log(`searchLinea: searching for  route_short_name = ${search}`)
+    //    console.log(`searchLinea: searching for  route_short_name = ${search}`)
     let results: Linea[] = linee.filter(it => it.display_name === search)
 
     if (results.length === 0) {
-//        console.log(`searchLinea: not found! searching for route_id = ${search}`)
+        //        console.log(`searchLinea: not found! searching for route_id = ${search}`)
         // prova a cercare anche tra i codici linea
         results = linee.filter(it => it.route_id === search)
         if (results.length === 0) {
@@ -153,31 +153,33 @@ export const searchLinea = (chat, askedLinea): boolean => {
     (function loop(index) {
         var linea = results[index];
 
-        service.getReducedLongestShape(linea.bacino, linea.route_id, 20)
-            .then((shape: Shape[]) => {
-                items.push({ linea, shape })
-            })
-            .then(() => {
-                if (index < nresults - 1)
-                    loop(index + 1)
-                else {
-                    //                sayLineeTrovate_GenericTemplate(chat, items);
-                    if (items.length === 1)
-                        sayLineaTrovata_ListTemplate2(chat, items[0] /* {linea, shape }*/);
-                    else {
-                        chat.say({
-                            text: "Quale linea ?",
-                            buttons: items.map(i => {
-                                return {
-                                    type: 'postback',
-                                    title: i.linea.display_name + ' ' + i.linea.getCU(),
-                                    payload: 'TPL_ON_CODLINEA_' + i.linea.route_id
-                                }
-                            })
-                        })
-                    }
-                }
-            })
+        if (index < nresults - 1)
+            loop(index + 1)
+        else {
+            //                sayLineeTrovate_GenericTemplate(chat, items);
+            if (items.length === 1) {
+                let linea = items[0];
+                const dir01 = 0;
+                const dayOffset = 0
+                service.getTripsAndShapes('FC', linea.route_id, dir01, dayOffset)
+                    .then((tas: service.TripsAndShapes) => {
+                        sayLineaTrovata_ListTemplate2(chat, linea, tas, dir01, dayOffset);
+                    })
+            }
+            else {
+                chat.say({
+                    text: "Quale linea ?",
+                    buttons: items.map(i => {
+                        return {
+                            type: 'postback',
+                            title: i.linea.display_name + ' ' + i.linea.getCU(),
+                            payload: 'TPL_ON_CODLINEA_' + i.linea.route_id
+                        }
+                    })
+                })
+            }
+        }
+
     })(0)
 
     return true;
@@ -188,7 +190,7 @@ function sayLineeTrovate_GenericTemplate(chat, items) {  // items = array of {li
 
     // linea come item di un generic template
     // necessaria Promise perché per avere l'url deve leggere lo shape
-    function genericTemplateItem(linea: Linea, shape: Shape[]): Promise<any> {
+    function genericTemplateItem(linea: Linea, shape: ShapePoint[]): Promise<any> {
 
         return linea.getGMapUrl(service, "320x160")
             .then(function (url) {
@@ -291,36 +293,27 @@ export const webgetLinea = (bacino, route_id, dir01: number, dayOffset: number, 
     }
 
     const linea: Linea = arraylinee[0]
-
-    service.getTrips_WithShape(linea.bacino, linea.route_id, dir01, dayOffset) // oggi
-    .then((trips: service.Trip[]) => {
-        // prendi il trip[0] come rappresentativo TODO
-        const mainTrip: service.Trip = ( trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length) ) ? trips[1] : ( trips[0] || undefined) ;
-        res.render('linea', {
-            l: linea,
-            url: mainTrip.gmapUrl("320x320", undefined),
-            trips
+    service.getTripsAndShapes(bacino, linea.route_id, dir01, dayOffset)
+        .then((tas: service.TripsAndShapes) => {
+            res.render('linea', {
+                l: linea,
+                url: tas.gmapUrl("320x320", 20),
+                trips: tas.trips
+            })
         })
-    })
 
 }
 
-export function sayLineaTrovata_ListTemplate2(chat, item : any /* {linea, shape }*/) {
-    const linea:Linea = item.linea
-    const shape = item.shape
-    // TODO qui (ma non nel web) mettere una versione ridotta
-    service.getTrips_NoShape(linea.bacino, linea.route_id, 0, 0) // andata oggi
-        .then((trips: service.Trip[]) => { 
+export function sayLineaTrovata_ListTemplate2(chat, linea:Linea, tas: service.TripsAndShapes, dir01:number, dayOffset:number) {
+
             // prendi il trip[0] come rappresentativo TODO
-            const mainTrip: service.Trip = ( trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length) ) ? trips[1] : ( trips[0] || undefined);
-            const dir0 = mainTrip && (mainTrip.stop_times[0].stop_name + " >> " + mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name)  // [{trip_id, stop_sequence,  departure_time, stop_name,
-            const dir1 = mainTrip && (mainTrip.stop_times[mainTrip.stop_times.length - 1].stop_name + " >> " + mainTrip.stop_times[0].stop_name)  // [{trip_id, stop_sequence,  departure_time, stop_name,
+            //const mainTrip: service.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
             const options = { topElementStyle: 'large' }  // large o compact
-            const elements = [
+            chat.sendListTemplate([
                 {
                     title: linea.getTitle(),
-                    subtitle: dir0,
-                    image_url: mainTrip && mainTrip.gmapUrl("320x160", shape),
+                    subtitle: tas.getAsDir(),
+                    image_url: tas.gmapUrl("320x160", 20),
                     /* per ora no buttons sull'immagine      
                     "buttons": [
                       {
@@ -334,28 +327,27 @@ export function sayLineaTrovata_ListTemplate2(chat, item : any /* {linea, shape 
                     ]*/
                 },
                 {
-                    title: "Andata", subtitle: "orari oggi",
+                    title: tas.getAsDir(), subtitle: "orari oggi",
                     default_action: {
                         type: "web_url",
-                        url: service.getOpendataUri(linea, 0, 0),   // andata oggi
+                        url: service.getOpendataUri(linea, 0, dayOffset),   // andata oggi
                         webview_height_ratio: "tall",
                         // messenger_extensions: true,
                         //"fallback_url": "http://www.startromagna.it/"
                     }
                 },
                 {
-                    title: "Ritorno", subtitle: "orari oggi",
+                    title: tas.getDiDir(), subtitle: "orari oggi",
                     default_action: {
                         type: "web_url",
-                        url: service.getOpendataUri(linea, 1, 0),   // ritorno oggi
+                        url: service.getOpendataUri(linea, 1, dayOffset),   // ritorno oggi
                         webview_height_ratio: "tall",
                         // messenger_extensions: true,
                         //"fallback_url": "http://www.startromagna.it/"
                     }
                 }
-            ] // end elements
-            chat.sendListTemplate(elements, [], options)
-        })
+            ], // end elements
+            [], options)
 };
 
 

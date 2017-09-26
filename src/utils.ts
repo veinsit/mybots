@@ -91,3 +91,7 @@ export function assert(condition, message?) {
         throw message; // Fallback
     }
 }
+
+export function removeDuplicates(arr : any[]) : any[] {
+    return Array.from(new Set(arr))
+}
