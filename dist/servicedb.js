@@ -20,7 +20,6 @@ exports.Shape = Shape;
 class Linea {
     constructor(bacino, rec) {
         this.getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")";
-        this.getShape = (service) => service.getReducedLongestShape(this.bacino, this.route_id, 20);
         this.bacino = bacino;
         this.route_id = rec.route_id, this.route_short_name = rec.route_short_name, this.route_long_name = rec.route_short_name, this.route_type = rec.route_short_name;
         this.display_name = this._displayName(rec.route_id, rec.route_long_name);
@@ -65,6 +64,10 @@ class Linea {
         return { center: `${cu},Italy`, zoom: 11 };
     }
 } // end class Linea
+/*
+  getShape = (service): Promise<Shape[]> =>
+    service.getReducedLongestShape(this.bacino, this.route_id, 20)
+*/
 /*
 getGMapUrl = (service, size): Promise<string> =>
 this.getShape(service)
@@ -201,7 +204,7 @@ function getTripWithShape(db, route_id, trip_id) {
     const q_trips = `select MAX(t.shape_id) as shapeid from trips t where t.trip_id = '${trip_id}'`;
     return dbAllPromiseDB(db, q_trips)
         .then((rows) => rows[0].shapeid)
-        .then((shape_id) => getShape(db, shape_id)
+        .then((shape_id) => getShapeDB(db, shape_id)
         .then((shapes) => getTripWithoutShape(db, route_id, trip_id)
         .then((trip) => {
         trip.shapes = shapes;
@@ -281,8 +284,14 @@ export function getOrarLinea(bacino, route_id, dir01, dayOffset: number): Promis
 // =================================================================================================
 //                Shape
 // =================================================================================================
-function getShape(db, shape_id) {
-    utils.assert(db !== undefined && typeof db !== 'string');
+function getShape(bacino, shape_id) {
+    utils.assert(typeof bacino === 'string', "metodo getShape ");
+    var db = new sqlite3.Database(dbName(bacino), sqlite3.OPEN_READONLY);
+    return getShapeDB(db, shape_id).then((x) => { db.close(); return x; });
+}
+exports.getShape = getShape;
+function getShapeDB(db, shape_id) {
+    utils.assert(db !== undefined && typeof db.open === 'function', "metodo getShapeDB ");
     const q = `select shape_pt_lat, shape_pt_lon, CAST(shape_pt_sequence as INTEGER) as shape_pt_seq
   from shapes
   where shape_id = '${shape_id}'
@@ -299,7 +308,6 @@ function getShape(db, shape_id) {
         }); // end each
     }); // end Promise  
 }
-exports.getShape = getShape;
 // percorso più lungo (nel senso cha ha più punti)
 function getLongestShape(bacino, route_id) {
     //percorso più lungo di una linea
@@ -310,7 +318,7 @@ function getLongestShape(bacino, route_id) {
   ORDER BY numPoints desc`;
     return dbAllPromise(dbName(bacino), q)
         .then((rows) => {
-        console.log("Shape rows 2: " + JSON.stringify(rows[0])); // prendo la 0 perché sono ordinate DESC
+        //      console.log("Shape rows 2: " + JSON.stringify(rows[0])) // prendo la 0 perché sono ordinate DESC
         return rows[0].shape_id;
     })
         .then((shape_id) => { console.log("shape_id " + shape_id); return getShape(bacino, shape_id); });

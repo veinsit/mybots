@@ -84,7 +84,7 @@ export const pforeach = () : void => [1,2,3].forEach(it=>foreachvar.push(2*it))
 
 export function assert(condition, message?) {
     if (!condition) {
-        message = message || "Assertion failed";
+        message = message || "VP Assertion failed";
         if (typeof Error !== "undefined") {
             throw new Error(message);
         }

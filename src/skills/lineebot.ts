@@ -151,7 +151,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
     (function loop(index) {
         var linea = results[index];
 
-        linea.getShape(service)
+        service.getReducedLongestShape(linea.bacino, linea.route_id, 20)
             .then((shape: Shape[]) => {
                 items.push({ linea, shape })
             })
