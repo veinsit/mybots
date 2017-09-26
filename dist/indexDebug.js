@@ -5,7 +5,6 @@ require('dotenv').config();
 // https://www.messenger.com/t/thecvbot
 // Load emojis
 const utils = require("./utils");
-const service = require("./servicedb");
 /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/
 function goDebug(tpl) {
     let linee;
@@ -21,12 +20,17 @@ function goDebug(tpl) {
         })
         */
         tpl.sayLineaTrovata_ListTemplate2(utils.fakechat, linea);
+        /*
         console.log(JSON.stringify(service.getTrips_WithShape('FC', 'F127', 0, 0)
-            .then((trips) => {
+          .then((trips: service.Trip[]) => {
             // prendi il trip[0] come rappresentativo TODO
-            const mainTrip = trips[0];
-            console.log(JSON.stringify(trips[0]));
-        })));
+            const mainTrip: service.Trip = trips[0]
+  
+            console.log(JSON.stringify(trips[0]))
+  
+          })
+        ))
+        */
     });
 }
 exports.goDebug = goDebug;

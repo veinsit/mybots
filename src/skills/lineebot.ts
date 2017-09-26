@@ -58,7 +58,7 @@ export const onLocationReceived = (chat, coords) => {
     function _onLocationReceived(chat, coords, callback) {
 
         const bacino = 'FC'
-        var db = new sqlite3.Database(`dist/db/database${bacino}.sqlite3`); // TODO portare in servicedb dove ho dbName
+        var db = new sqlite3.Database(`dist/db/database${bacino}.sqlite3`, sqlite3.OPEN_READONLY); // TODO portare in servicedb dove ho dbName
 
         //    db.serialize(function() {
         let dist: number = 9e6

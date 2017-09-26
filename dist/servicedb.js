@@ -110,10 +110,11 @@ class StopTime {
 }
 exports.StopTime = StopTime;
 class Trip {
-    constructor(bacino, route_id, trip_id, shape_id, 
+    constructor(
+        //    readonly bacino: string,
+        route_id, trip_id, shape_id, 
         //    readonly dir01:number,
         stop_times, shapes) {
-        this.bacino = bacino;
         this.route_id = route_id;
         this.trip_id = trip_id;
         this.shape_id = shape_id;
@@ -134,28 +135,36 @@ class Trip {
 }
 exports.Trip = Trip;
 function getTrips_NoShape(bacino, route_id, dir01, dayOffset) {
-    return _getTrips(bacino, route_id, dir01, dayOffset, (b, r, t) => getTripWithoutShape(b, r, t));
+    return _getTrips(bacino, route_id, dir01, dayOffset, (db, r, t) => getTripWithoutShape(db, r, t));
 }
 exports.getTrips_NoShape = getTrips_NoShape;
 function getTrips_WithShape(bacino, route_id, dir01, dayOffset) {
-    return _getTrips(bacino, route_id, dir01, dayOffset, (b, r, t) => getTripWithShape(b, r, t));
+    return _getTrips(bacino, route_id, dir01, dayOffset, (db, r, t) => getTripWithShape(db, r, t));
 }
 exports.getTrips_WithShape = getTrips_WithShape;
 // serve per la pagina web
 function _getTrips(bacino, route_id, dir01, dayOffset, getTripFunc) {
-    const and_direction = (dir01 === 0 || dir01 === 1 ? ` and direction_id='${dir01}' ` : '');
+    const and_direction = (dir01 === 0 || dir01 === 1 ? ` and t.direction_id='${dir01}' ` : '');
     const date = utils.addDays(new Date(), dayOffset);
+    const db = new sqlite3.Database(dbName(bacino), sqlite3.OPEN_READONLY);
     // elenco di corse (trip_id) del servizio (service_id) di una data
     const q = `select t.trip_id from trips t 
       where t.route_id='${route_id}' ${and_direction} 
       and t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}' )`;
-    return dbAllPromise(dbName(bacino), q)
+    return dbAllPromiseDB(db, q)
         .then((rows) => {
         let tripPromises = [];
-        rows.forEach(r => tripPromises.push(getTripFunc(bacino, route_id, r.trip_id)));
+        rows.forEach(r => tripPromises.push(getTripFunc(db, route_id, r.trip_id)));
         return tripPromises;
-    }, (err) => console.log(err))
-        .then((tripPromises) => Promise.all(tripPromises));
+    })
+        .then((tripPromises) => {
+        db.close();
+        return Promise.all(tripPromises);
+    }); /*
+    .catch((err) => {
+      db.close();
+      console.log(err)
+    });*/
 }
 /*
 export function getCorseOggi(bacino, route_id, dir01, date?): Promise<any[]> {
@@ -171,7 +180,7 @@ and t.service_id in (SELECT service_id from calendar_dates where date='${utils.d
 return dbAllPromise(dbName(bacino), q);
 }
 */
-function getTripWithoutShape(bacino, route_id, trip_id) {
+function getTripWithoutShape(db, route_id, trip_id) {
     const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
     st.stop_id, s.stop_name, 
     st.arrival_time, st.departure_time, 
@@ -180,19 +189,20 @@ function getTripWithoutShape(bacino, route_id, trip_id) {
     join stops s on st.stop_id=s.stop_id 
     where st.trip_id='${trip_id}' and s.stop_name NOT LIKE 'Semafor%'
     order by 1`;
-    return dbAllPromise(dbName(bacino), q_stop_times)
+    return dbAllPromiseDB(db, q_stop_times)
         .then((rows) => {
-        return new Trip(bacino, route_id, trip_id, undefined, rows.map(r => new StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon)), undefined); // end new Trip
+        return new Trip(route_id, trip_id, undefined, rows.map(r => new StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon)), undefined); // end new Trip
     });
     // end Promise
 }
 exports.getTripWithoutShape = getTripWithoutShape;
-function getTripWithShape(bacino, route_id, trip_id) {
+function getTripWithShape(db, route_id, trip_id) {
+    utils.assert(db !== undefined && typeof db !== 'string');
     const q_trips = `select MAX(t.shape_id) as shapeid from trips t where t.trip_id = '${trip_id}'`;
-    return dbAllPromise(dbName(bacino), q_trips)
+    return dbAllPromiseDB(db, q_trips)
         .then((rows) => rows[0].shapeid)
-        .then((shape_id) => getShape(bacino, shape_id)
-        .then((shapes) => getTripWithoutShape(bacino, route_id, trip_id)
+        .then((shape_id) => getShape(db, shape_id)
+        .then((shapes) => getTripWithoutShape(db, route_id, trip_id)
         .then((trip) => {
         trip.shapes = shapes;
         trip.shape_id = shape_id;
@@ -200,29 +210,42 @@ function getTripWithShape(bacino, route_id, trip_id) {
     })));
 }
 exports.getTripWithShape = getTripWithShape;
-function getTripWithShape_OLD(bacino, route_id, trip_id) {
-    const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
-  st.stop_id, s.stop_name, 
-  st.arrival_time, st.departure_time, 
-  s.stop_lat, s.stop_lon
-  FROM stop_times st 
-  join stops s on st.stop_id=s.stop_id 
-  where st.trip_id='${trip_id}' and s.stop_name NOT LIKE 'Semafor%'
-  order by 1`;
-    const q_trips = `select t.shape_id from trips t where t.trip_id = '${trip_id}'`;
-    return Promise.all([
-        dbAllPromise(dbName(bacino), q_stop_times),
-        dbAllPromise(dbName(bacino), q_trips)
-            .then((rows) => { return { shapes: getShape(bacino, rows[0].shape_id), shape_id: rows[0].shape_id }; }, (err) => console.log(err)) // ho una sola rows: rows[0] che è lo shape_id
-    ])
-        .then((values) => {
-        const rows = values[0];
-        const shapes = values[1].shapes;
-        return new Trip(bacino, route_id, trip_id, values[1].shape_id, rows.map(r => new StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon)), shapes); // end new Trip
-    });
-    // end Promise
+/*
+export function getTripWithShape_OLD(bacino, route_id, trip_id): Promise<Trip> {
+    
+const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq,
+st.stop_id, s.stop_name,
+st.arrival_time, st.departure_time,
+s.stop_lat, s.stop_lon
+FROM stop_times st
+join stops s on st.stop_id=s.stop_id
+where st.trip_id='${trip_id}' and s.stop_name NOT LIKE 'Semafor%'
+order by 1`;
+
+const q_trips = `select t.shape_id from trips t where t.trip_id = '${trip_id}'`
+
+return Promise.all([
+  dbAllPromise(dbName(bacino), q_stop_times),
+  dbAllPromise(dbName(bacino), q_trips)
+    .then((rows) => {return {shapes:getShape(bacino, rows[0].shape_id), shape_id:rows[0].shape_id}},
+       (err) => console.log(err)
+    )   // ho una sola rows: rows[0] che è lo shape_id
+])
+  .then((values) => {
+    const rows = values[0]
+    const shapes: Shape[] = (values[1] as any).shapes as Shape[]
+
+    return new Trip(bacino, route_id, trip_id, (values[1] as any).shape_id,
+      rows.map(r => new StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon)),
+      shapes
+    ) // end new Trip
+
+  }
+)
+// end Promise
+
 }
-exports.getTripWithShape_OLD = getTripWithShape_OLD;
+*/
 /* vedi getTrip
 export function getPassaggiCorsa(bacino, trip_id): Promise<any[]> {
   const q = `select st.stop_sequence, st.trip_id, st.departure_time, s.stop_name, s.stop_lat, s.stop_lon
@@ -258,16 +281,17 @@ export function getOrarLinea(bacino, route_id, dir01, dayOffset: number): Promis
 // =================================================================================================
 //                Shape
 // =================================================================================================
-function getShape(bacino, shape_id) {
+function getShape(db, shape_id) {
+    utils.assert(db !== undefined && typeof db !== 'string');
     const q = `select shape_pt_lat, shape_pt_lon, CAST(shape_pt_sequence as INTEGER) as shape_pt_seq
   from shapes
   where shape_id = '${shape_id}'
   order by shape_pt_seq`;
     //  console.log("getShape: " + shape_id)
     return new Promise(function (resolve, reject) {
-        var db = new sqlite3.Database(dbName(bacino));
+        //    var db = new sqlite3.Database(dbName(bacino), sqlite3.OPEN_READONLY);
         db.all(q, function (err, rows) {
-            db.close();
+            //    db.close();
             if (err)
                 reject(err);
             else
@@ -311,9 +335,20 @@ exports.getReducedLongestShape = getReducedLongestShape;
 // ------------------------ utilities
 function dbAllPromise(dbname, query) {
     return new Promise(function (resolve, reject) {
-        var db = new sqlite3.Database(dbname); // , sqlite3.OPEN_READONLY);
+        var db = new sqlite3.Database(dbname, sqlite3.OPEN_READONLY);
         db.all(query, function (err, rows) {
             db.close();
+            if (err)
+                reject(err);
+            else
+                resolve(rows);
+        }); // end each
+    }); // end Promise
+}
+// con db già aperto
+function dbAllPromiseDB(db, query) {
+    return new Promise(function (resolve, reject) {
+        db.all(query, function (err, rows) {
             if (err)
                 reject(err);
             else

@@ -152,7 +152,7 @@ export class StopTime {
 export class Trip {
 
   constructor(
-    readonly bacino: string,
+//    readonly bacino: string,
     readonly route_id: string,
     readonly trip_id: string,
     public shape_id: string,
@@ -175,33 +175,44 @@ export class Trip {
     }
   }
 }
+
 export function getTrips_NoShape(bacino, route_id, dir01, dayOffset): Promise<Trip[]> {
-  return _getTrips(bacino, route_id, dir01, dayOffset, (b,r,t) => getTripWithoutShape(b,r,t) )
+  return _getTrips(bacino, route_id, dir01, dayOffset, (db,r,t) => getTripWithoutShape(db,r,t) )
 }
+
 export function getTrips_WithShape(bacino, route_id, dir01, dayOffset): Promise<Trip[]> {
-  return _getTrips(bacino, route_id, dir01, dayOffset, (b,r,t) => getTripWithShape(b,r,t) )
+  return _getTrips(bacino, route_id, dir01, dayOffset, (db,r,t) => getTripWithShape(db,r,t) )
 }
   
 // serve per la pagina web
-function _getTrips(bacino, route_id, dir01, dayOffset, getTripFunc : (b,r,t) => Promise<Trip>): Promise<Trip[]> {
+function _getTrips(bacino, route_id, dir01, dayOffset, getTripFunc : (db, r,t) => Promise<Trip>): Promise<Trip[]> {
 
-  const and_direction = (dir01 === 0 || dir01 === 1 ? ` and direction_id='${dir01}' ` : '')
+  const and_direction = (dir01 === 0 || dir01 === 1 ? ` and t.direction_id='${dir01}' ` : '')
   const date = utils.addDays(new Date(), dayOffset)
+
+  const db = new sqlite3.Database(dbName(bacino), sqlite3.OPEN_READONLY);
+  
 
   // elenco di corse (trip_id) del servizio (service_id) di una data
   const q = `select t.trip_id from trips t 
       where t.route_id='${route_id}' ${and_direction} 
       and t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}' )`;
 
-  return dbAllPromise(dbName(bacino), q)
+  return dbAllPromiseDB(db, q)
     .then((rows) => {
       let tripPromises: Promise<Trip>[] = []
-      rows.forEach(r => tripPromises.push(getTripFunc(bacino, route_id, r.trip_id)))
+      rows.forEach(r => tripPromises.push(getTripFunc(db, route_id, r.trip_id)))
       return tripPromises
-    },
-    (err) => console.log(err)
-    )
-    .then((tripPromises: Promise<Trip>[]) => Promise.all(tripPromises));
+    })
+    .then((tripPromises: Promise<Trip>[]) => { 
+        db.close(); 
+        return Promise.all(tripPromises);
+    })/*
+    .catch((err) => {
+      db.close(); 
+      console.log(err)
+    });*/
+
 }
 /*
 export function getCorseOggi(bacino, route_id, dir01, date?): Promise<any[]> {
@@ -217,7 +228,7 @@ and t.service_id in (SELECT service_id from calendar_dates where date='${utils.d
 return dbAllPromise(dbName(bacino), q);
 }
 */
-export function getTripWithoutShape(bacino, route_id, trip_id): Promise<Trip> {
+export function getTripWithoutShape(db, route_id, trip_id): Promise<Trip> {
   
     const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
     st.stop_id, s.stop_name, 
@@ -228,10 +239,10 @@ export function getTripWithoutShape(bacino, route_id, trip_id): Promise<Trip> {
     where st.trip_id='${trip_id}' and s.stop_name NOT LIKE 'Semafor%'
     order by 1`;
   
-    return dbAllPromise(dbName(bacino), q_stop_times)
+    return dbAllPromiseDB(db, q_stop_times)
       .then((rows) => {
   
-        return new Trip(bacino, route_id, trip_id, undefined,
+        return new Trip(route_id, trip_id, undefined,
           rows.map(r => new StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon)),
           undefined
         ) // end new Trip
@@ -244,15 +255,16 @@ export function getTripWithoutShape(bacino, route_id, trip_id): Promise<Trip> {
   
   
 
-export function getTripWithShape(bacino, route_id, trip_id): Promise<Trip> {
+export function getTripWithShape(db, route_id, trip_id): Promise<Trip> {
+  utils.assert(db!==undefined && typeof db !== 'string')
   const q_trips = `select MAX(t.shape_id) as shapeid from trips t where t.trip_id = '${trip_id}'`;
 
-  return dbAllPromise(dbName(bacino), q_trips)
+  return dbAllPromiseDB(db, q_trips)
   .then((rows:any[]) => rows[0].shapeid)  
   .then((shape_id) => 
-      getShape(bacino, shape_id)
+      getShape(db, shape_id)
         .then((shapes:Shape[]) => 
-            getTripWithoutShape(bacino, route_id, trip_id)
+            getTripWithoutShape(db, route_id, trip_id)
               .then((trip:Trip) => {
                 trip.shapes = shapes
                 trip.shape_id = shape_id
@@ -261,6 +273,7 @@ export function getTripWithShape(bacino, route_id, trip_id): Promise<Trip> {
       )
     )  
   }
+  /*
   export function getTripWithShape_OLD(bacino, route_id, trip_id): Promise<Trip> {
       
   const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
@@ -295,7 +308,7 @@ export function getTripWithShape(bacino, route_id, trip_id): Promise<Trip> {
   // end Promise
 
 }
-
+*/
 
 /* vedi getTrip
 export function getPassaggiCorsa(bacino, trip_id): Promise<any[]> {
@@ -336,8 +349,9 @@ export function getOrarLinea(bacino, route_id, dir01, dayOffset: number): Promis
 // =================================================================================================
 //                Shape
 // =================================================================================================
-export function getShape(bacino, shape_id): Promise<Shape[]> {
-
+export function getShape(db, shape_id): Promise<Shape[]> {
+  utils.assert(db!==undefined && typeof db !== 'string')
+  
   const q = `select shape_pt_lat, shape_pt_lon, CAST(shape_pt_sequence as INTEGER) as shape_pt_seq
   from shapes
   where shape_id = '${shape_id}'
@@ -346,9 +360,9 @@ export function getShape(bacino, shape_id): Promise<Shape[]> {
   //  console.log("getShape: " + shape_id)
 
   return new Promise<Shape[]>(function (resolve, reject) {
-    var db = new sqlite3.Database(dbName(bacino));
+//    var db = new sqlite3.Database(dbName(bacino), sqlite3.OPEN_READONLY);
     db.all(q, function (err, rows) {
-      db.close();
+  //    db.close();
       if (err) reject(err); else resolve(rows.map(r => new Shape(r)));
     }); // end each
   }) // end Promise  
@@ -402,7 +416,7 @@ export function getReducedLongestShape(bacino, route_id, n: number): Promise<Sha
 
 function dbAllPromise(dbname: string, query: string): Promise<any[]> {
   return new Promise(function (resolve, reject) {
-    var db = new sqlite3.Database(dbname) // , sqlite3.OPEN_READONLY);
+    var db = new sqlite3.Database(dbname, sqlite3.OPEN_READONLY);
     db.all(query, function (err, rows) {
       db.close();
       if (err) reject(err); else resolve(rows);
@@ -410,3 +424,11 @@ function dbAllPromise(dbname: string, query: string): Promise<any[]> {
   }) // end Promise
 }
 
+// con db già aperto
+function dbAllPromiseDB(db, query: string): Promise<any[]> {
+  return new Promise(function (resolve, reject) {
+    db.all(query, function (err, rows) {
+      if (err) reject(err); else resolve(rows);
+    }); // end each
+  }) // end Promise
+}
