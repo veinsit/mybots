@@ -160,7 +160,7 @@ export class Trip {
     public shapes: Shape[]
   ) { }
 
-  gmapUrl(size: string): string {
+  gmapUrl(size: string, _shape?): string {
 
     // https://developers.google.com/maps/documentation/static-maps/intro
 

@@ -123,7 +123,7 @@ class Trip {
         this.stop_times = stop_times;
         this.shapes = shapes;
     }
-    gmapUrl(size) {
+    gmapUrl(size, _shape) {
         // https://developers.google.com/maps/documentation/static-maps/intro
         if (!this.shapes || this.shapes.length < 2) {
             const center = { center: "Forlimpopoli, Italia", zoom: 12 }; // this.mapCenter()

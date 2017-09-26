@@ -163,7 +163,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
                 else {
                     //                sayLineeTrovate_GenericTemplate(chat, items);
                     if (items.length === 1)
-                        sayLineaTrovata_ListTemplate2(chat, items[0]);
+                        sayLineaTrovata_ListTemplate2(chat, items[0] /* {linea, shape }*/);
                     else {
                         chat.say({
                             text: "Quale linea ?",
@@ -298,14 +298,16 @@ export const webgetLinea = (bacino, route_id, dir01: number, dayOffset: number, 
         const mainTrip: service.Trip = ( trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length) ) ? trips[1] : ( trips[0] || undefined) ;
         res.render('linea', {
             l: linea,
-            url: mainTrip.gmapUrl("320x320"),
+            url: mainTrip.gmapUrl("320x320", undefined),
             trips
         })
     })
 
 }
 
-export function sayLineaTrovata_ListTemplate2(chat, linea: Linea) {
+export function sayLineaTrovata_ListTemplate2(chat, item : any /* {linea, shape }*/) {
+    const linea:Linea = item.linea
+    const shape = item.shape
     // TODO qui (ma non nel web) mettere una versione ridotta
     service.getTrips_NoShape(linea.bacino, linea.route_id, 0, 0) // andata oggi
         .then((trips: service.Trip[]) => { 
@@ -318,7 +320,7 @@ export function sayLineaTrovata_ListTemplate2(chat, linea: Linea) {
                 {
                     title: linea.getTitle(),
                     subtitle: dir0,
-                    image_url: mainTrip && mainTrip.gmapUrl("320x160"),
+                    image_url: mainTrip && mainTrip.gmapUrl("320x160", shape),
                     /* per ora no buttons sull'immagine      
                     "buttons": [
                       {
