@@ -203,7 +203,7 @@ function sayLineaTrovata_Generic(chat, linea: Linea, tas:service.TripsAndShapes,
     const _element = (t:service.Trip) => { return {
         title: t.getAsDir(),
         subtitle: 'partenza '+t.stop_times[0].departure_time + " da " + t.stop_times[0].stop_name,
-        image_url: tas.shapes.filter(s => s.shape_id===t.shape_id)[0].gmapUrl("300x300", 20),
+        image_url: tas.shapes.filter(s => s.shape_id===t.shape_id)[0].gmapUrl("280x140", 20),
         default_action: {
             type: "web_url",
             url: service.getOpendataUri(linea, 0, dayOffset, t.trip_id),   // andata oggi
@@ -216,7 +216,7 @@ function sayLineaTrovata_Generic(chat, linea: Linea, tas:service.TripsAndShapes,
     tas.trips.slice(0, 10).forEach(t => {
         elements.push(_element(t))
     })
-    chat.sendGenericTemplate(elements, {image_aspect_ratio:'square'})
+    chat.sendGenericTemplate(elements /* , {image_aspect_ratio:'square'} */)
     /*
     // posso avere 10 elements (utile per i trip ?)
     chat.sendGenericTemplate([
