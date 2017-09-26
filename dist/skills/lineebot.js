@@ -112,15 +112,16 @@ exports.searchLinea = (chat, askedLinea) => {
     let nresults = results.length;
     if (nresults > 4)
         nresults = 4;
-    let items = []; // items = linee
+    // ================ da qui ho results
+    let lineeTrovate = []; // items = linee
     (function loop(index) {
-        var linea = results[index];
+        lineeTrovate.push(results[index]);
         if (index < nresults - 1)
             loop(index + 1);
         else {
-            //                sayLineeTrovate_GenericTemplate(chat, items);
-            if (items.length === 1) {
-                let linea = items[0];
+            // ho finito il loop
+            if (lineeTrovate.length === 1) {
+                let linea = lineeTrovate[0];
                 const dir01 = 0;
                 const dayOffset = 0;
                 service.getTripsAndShapes('FC', linea.route_id, dir01, dayOffset)
@@ -129,15 +130,8 @@ exports.searchLinea = (chat, askedLinea) => {
                 });
             }
             else {
-                chat.say({
-                    text: "Quale linea ?",
-                    buttons: items.map(i => {
-                        return {
-                            type: 'postback',
-                            title: i.linea.display_name + ' ' + i.linea.getCU(),
-                            payload: 'TPL_ON_CODLINEA_' + i.linea.route_id
-                        };
-                    })
+                chat.say({ text: "Quale linea ?",
+                    buttons: lineeTrovate.map(l => utils.postbackBtn(l.display_name + ' ' + l.getCU(), 'TPL_ON_CODLINEA_' + l.route_id))
                 });
             }
         }

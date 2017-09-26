@@ -15,8 +15,8 @@ import menuAssets = require('./assets/menu')
 import service = require("./servicedb");
 
 /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/
-export function goDebug(tpl) {
-
+export function goDebug(tpl) { 
+    
   let linee;
   tpl.init((_linee, err) => { linee = _linee/*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/ })
     .then(() => {
@@ -26,6 +26,8 @@ export function goDebug(tpl) {
       .then((tas: service.TripsAndShapes) => {
           console.log(JSON.stringify(tas.trips))
       })
+
+
       //const p0:Promise<string> = linea.getGMapUrl(service) 
       /*
       const p1:Promise<any[]> = service.getTrips_Promises('FC', 'F127', 0)

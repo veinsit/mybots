@@ -7,7 +7,7 @@ if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC
 }
 
 const debug = process.env.DEBUG!==undefined ? parseInt(process.env.DEBUG) : false
-const useFakeChat = debug;
+const useFakeChat = true; // debug;
 
 // https://github.com/sotirelisc/tvakis
 // https://www.messenger.com/t/thecvbot
@@ -172,6 +172,7 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
 
 if (debug) {
   require("./indexDebug").goDebug(tpl)
+  bot.start(process.env.PORT || 3000)
 } else {
   tpl.init( (linee, err) => { /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/})
   .then(() =>

@@ -140,19 +140,21 @@ class StopTime {
 }
 exports.StopTime = StopTime;
 class TripsAndShapes {
-    constructor(trips, shapes) {
+    constructor(trips, // Map<string, Trip>,
+        shapes //Map<string, Shape>
+    ) {
         this.trips = trips;
-        this.shapes = shapes;
+        this.shapes = shapes; //Map<string, Shape>
     }
     // ritorna il trip 'più rappresentativo  (maggior numero di fermate)
     getMainTrip() {
-        const trips = Array.from(this.trips.values());
-        return trips
-            .filter(t => t.stop_times.length === Math.max(...trips.map(t => t.stop_times.length)))[0];
+        //const trips = Array.from(this.trips.values());
+        return this.trips
+            .filter(t => t.stop_times.length === Math.max(...this.trips.map(t => t.stop_times.length)))[0];
     }
     gmapUrl(size, n) {
         const mainTrip = this.getMainTrip();
-        const shape = this.shapes.get(mainTrip.shape_id);
+        const shape = this.shapes.filter(s => s.shape_id === mainTrip.shape_id)[0];
         return shape.gmapUrl(size, n);
     }
     getAsDir() {
@@ -185,22 +187,21 @@ function getTripsAndShapes(bacino, route_id, dir01, dayOffset) {
                 resolve(rows);
         }); // end each
     });
-    const ptrips = pkeys.then((rows) => Promise.all(rows.map(r => getTripDB(db, route_id, r.trip_id))));
+    const ptrips = pkeys.then((rows) => Promise.all(rows.map(r => getTripDB(db, route_id, r.trip_id, r.shape_id))));
     const pshapes = pkeys.then((rows) => Promise.all(utils.removeDuplicates(rows.map(r => r.shape_id)).map(s => getShapeDB(db, s))));
     return Promise.all([ptrips, pshapes])
         .then((values) => {
         _close(db);
-        let tas = new TripsAndShapes(new Map(), new Map());
+        let tas = new TripsAndShapes([], []);
         const trips = values[0];
         const shapes = values[1];
-        trips.forEach(t => tas.trips.set(t.trip_id, t));
-        shapes.forEach(s => tas.shapes.set(s.shape_id, s));
-        console.log(tas);
+        trips.forEach(t => tas.trips.push(t));
+        shapes.forEach(s => tas.shapes.push(s));
         return tas;
     });
 }
 exports.getTripsAndShapes = getTripsAndShapes;
-function getTripDB(db, route_id, trip_id) {
+function getTripDB(db, route_id, trip_id, shape_id) {
     utils.assert(db !== undefined && typeof db.all === 'function', "metodo getTripWithoutShape");
     const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
     st.stop_id, s.stop_name, 
@@ -212,7 +213,7 @@ function getTripDB(db, route_id, trip_id) {
     order by 1`;
     return dbAllPromiseDB(db, q_stop_times)
         .then((rows) => {
-        return new Trip(route_id, trip_id, undefined, rows.map(r => new StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon))); // end new Trip
+        return new Trip(route_id, trip_id, shape_id, rows.map(r => new StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon))); // end new Trip
     });
     // end Promise
 }
