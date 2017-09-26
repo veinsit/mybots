@@ -223,7 +223,6 @@ export class TripsAndShapes {
       : "Ritorno"
     )
   }
-
 }
 
 export function getTripsAndShapes(bacino, route_id, dir01, dayOffset): Promise<TripsAndShapes> {
@@ -232,7 +231,6 @@ export function getTripsAndShapes(bacino, route_id, dir01, dayOffset): Promise<T
   const date = utils.addDays(new Date(), dayOffset)
 
   const db = opendb(bacino);
-
 
   // elenco di corse (trip_id) del servizio (service_id) di una data
   const q = `select t.trip_id, t.shape_id from trips t 
