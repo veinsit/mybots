@@ -5,7 +5,7 @@ if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC
     require('dotenv').config();
 }
 const debug = process.env.DEBUG !== undefined ? parseInt(process.env.DEBUG) : false;
-const useFakeChat = true; // debug;
+const useFakeChat = false; // process.env.USE_FAKE_CHAT || false; // debug;
 // https://github.com/sotirelisc/tvakis
 // https://www.messenger.com/t/thecvbot
 // Load emojis
