@@ -229,6 +229,7 @@ return dbAllPromise(dbName(bacino), q);
 }
 */
 export function getTripWithoutShape(db, route_id, trip_id): Promise<Trip> {
+  utils.assert(db!==undefined && typeof db.all === 'function', "metodo getTripWithoutShape")
   
     const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
     st.stop_id, s.stop_name, 
@@ -256,7 +257,7 @@ export function getTripWithoutShape(db, route_id, trip_id): Promise<Trip> {
   
 
 export function getTripWithShape(db, route_id, trip_id): Promise<Trip> {
-  utils.assert(db!==undefined && typeof db !== 'string')
+  utils.assert(db!==undefined && typeof db.all === 'function', "metodo getTripWithShape")
   const q_trips = `select MAX(t.shape_id) as shapeid from trips t where t.trip_id = '${trip_id}'`;
 
   return dbAllPromiseDB(db, q_trips)
@@ -356,7 +357,7 @@ export function getShape(bacino, shape_id): Promise<Shape[]> {
 }
 
 function getShapeDB(db, shape_id): Promise<Shape[]> {
-  utils.assert(db!==undefined && typeof db.open === 'function', "metodo getShapeDB ")
+  utils.assert(db!==undefined && typeof db.all === 'function', "metodo getShapeDB ")
   
   const q = `select shape_pt_lat, shape_pt_lon, CAST(shape_pt_sequence as INTEGER) as shape_pt_seq
   from shapes
