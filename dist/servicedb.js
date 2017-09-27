@@ -3,93 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 if (!process.env.OPENDATAURIBASE) {
     require('dotenv').config();
 }
-class ShapePoint {
-    constructor(r) {
-        this.shape_pt_lat = r.shape_pt_lat;
-        this.shape_pt_lon = r.shape_pt_lon;
-        this.shape_pt_seq = r.shape_pt_seq;
-    }
-}
-exports.ShapePoint = ShapePoint;
-class Shape {
-    constructor(shape_id, points) {
-        this.shape_id = shape_id;
-        this.points = points;
-    }
-    getGStaticMapsPolyline(n) {
-        let step = Math.floor(this.points.length / (n + 1));
-        let new_shape = [];
-        for (let i = 0; i < n + 1; i++) {
-            new_shape.push(this.points[i * step]);
-        }
-        new_shape.push(this.points[this.points.length - 1]);
-        let x = [];
-        for (let i = 0; i < new_shape.length; i++)
-            x.push(`${new_shape[i].shape_pt_lat},${new_shape[i].shape_pt_lon}`);
-        return x.join('%7C');
-    }
-    gmapUrl(size, n) {
-        // https://developers.google.com/maps/documentation/static-maps/intro
-        if (!this.points || this.points.length < 2) {
-            const center = { center: "Forlimpopoli, Italia", zoom: 12 }; // this.mapCenter()
-            return utils.gStatMapUrl(`size=${size}&center=${center.center}&zoom=${center.zoom}`);
-        }
-        else {
-            const polyline = this.getGStaticMapsPolyline(n);
-            return utils.gStatMapUrl(`size=${size}&path=color:0xff0000%7Cweight:2%7C${polyline}`);
-        }
-    }
-}
-exports.Shape = Shape;
-class Linea {
-    constructor(bacino, rec) {
-        this.getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")";
-        this.bacino = bacino;
-        this.route_id = rec.route_id, this.route_short_name = rec.route_short_name, this.route_long_name = rec.route_short_name, this.route_type = rec.route_short_name;
-        this.display_name = this._displayName(rec.route_id, rec.route_long_name);
-    }
-    _displayName(c, ln) {
-        ln = ln.toUpperCase();
-        if (!ln.startsWith('LINEA '))
-            return ln;
-        ln = ln.substring(6);
-        if (ln.startsWith('FOA'))
-            return parseInt(ln.substring(3)).toString() + 'A';
-        if (ln.startsWith('FOS'))
-            return 'S' + parseInt(ln.substring(3)).toString();
-        if (ln.startsWith('FO') || ln.startsWith('CE') || ln.startsWith("S0"))
-            return parseInt(ln.substring(2)).toString();
-        if (ln.startsWith('R'))
-            return parseInt(ln.substring(1)).toString();
-        if (ln.endsWith('CO'))
-            return ln.substring(0, ln.length - 2);
-        return ln;
-    }
-    getAscDir() { return "Andata"; }
-    getDisDir() { return "Ritorno"; }
-    getSubtitle() {
-        //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
-        return this.route_long_name;
-    }
-    getCU() {
-        if (this.bacino === 'FC') {
-            if (this.route_id.indexOf("CE") >= 0)
-                return 'Cesena';
-            if (this.route_id.indexOf("FO") >= 0)
-                return 'Forlì';
-            if (this.route_id.indexOf("CO") >= 0)
-                return 'Cesenatico';
-            return 'Forlimpopoli';
-        }
-        return undefined;
-    }
-    mapCenter() {
-        const cu = this.getCU();
-        return { center: `${cu},Italy`, zoom: 11 };
-    }
-} // end class Linea
-Linea.queryGetAll = () => "SELECT route_id, route_short_name, route_long_name, route_type FROM routes";
-exports.Linea = Linea;
+const model = require("./model");
 const baseUri = process.env.OPENDATAURIBASE;
 const baseUiUri = process.env.OPENDATAURIBASE + "ui/tpl/";
 const sqlite3 = require('sqlite3').verbose();
@@ -107,7 +21,7 @@ function getOpendataUri(linea, dir01, dayOffset, trip_id) {
 }
 exports.getOpendataUri = getOpendataUri;
 function getLinee(bacino) {
-    return dbAllPromise(bacino, Linea.queryGetAll());
+    return dbAllPromise(bacino, model.Linea.queryGetAll());
 }
 exports.getLinee = getLinee;
 function getRouteIdsFermataDB(db, stop_id) {
@@ -115,78 +29,85 @@ function getRouteIdsFermataDB(db, stop_id) {
     return dbAllPromiseDB(db, q).then((a) => a.map(x => x.route_id));
 }
 exports.getRouteIdsFermataDB = getRouteIdsFermataDB;
+function getTripsFermataDB(db, stop_id, dayOffset) {
+    const q = `SELECT a.route_id 
+  FROM trips a 
+  WHERE a.trip_id IN (SELECT b.trip_id FROM stop_times b WHERE b.stop_id='" + stop_id + "') 
+  GROUP BY a.route_id`;
+    return dbAllPromiseDB(db, q).then((a) => a.map(x => x.route_id));
+}
+exports.getTripsFermataDB = getTripsFermataDB;
+class NearestStopsResult {
+    constructor(dist, stopSchedules) {
+        this.dist = dist;
+        this.stopSchedules = stopSchedules;
+    }
+}
+exports.NearestStopsResult = NearestStopsResult;
+// dayOffset serve per dare le corse (alla fermata più vicina) del giorno desiderato
+function getNearestStops(bacino, coords, dayOffset) {
+    return new Promise(function (resolve, reject) {
+        const db = opendb(bacino);
+        //    db.serialize(function() {
+        let dist = 9e6;
+        let tmps; // temp stop
+        db.each(model.Stop.queryGetAll(), (err, row) => {
+            let d = utils.distance(coords.lat, coords.long, row.stop_lat, row.stop_lon);
+            if (d < dist) {
+                dist = d;
+                tmps = row;
+            }
+        }, () => foundNearestStop(tmps, dist)); // end each
+        function foundNearestStop(tmps, dist) {
+            const nearestStop = new model.Stop(tmps.stop_id, tmps.stop_name, tmps.stop_lat, tmps.stop_lon);
+            const pkeys = getTripIdsAndShapeIdsDB_ByStop(db, nearestStop.stop_id, dayOffset);
+            /* const ptrips: Promise<Trip[]> = */
+            pkeys.then((rows) => Promise.all(rows.map(r => getTripDB(db, r.route_id, r.trip_id, r.shape_id))))
+                .then((trips) => {
+                _close(db);
+                let stopSchedule = new model.StopSchedule("", nearestStop, []);
+                //const trips: Trip[] = values[0] as Trip[]
+                trips.forEach(t => {
+                    stopSchedule.trips.push(t);
+                });
+                resolve(new NearestStopsResult([dist], [stopSchedule]));
+            });
+            /*
+                const pshapes: Promise<Shape[]> = pkeys.then(
+                  (rows: any[]) => Promise.all(utils.removeDuplicates(rows.map(r => r.shape_id)).map(s => getShapeDB(db, s)))
+                );
+            */
+            /*
+                  Promise.all([ptrips])
+                    .then((values) => {
+                      _close(db);
+            
+                      let stopSchedule = new model.StopSchedule("", nearestStop, []);
+                      const trips: Trip[] = values[0] as Trip[]
+            
+                      trips.forEach(t => { /* t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id); -----/
+                        stopSchedule.trips.push(t);
+                      })
+            
+                      resolve(new NearestStopsResult([dist], [stopSchedule]))
+                    });
+            */
+        } // end function foundNearestStop
+    }); // end return new Promise<NearestStopsResult>
+}
+exports.getNearestStops = getNearestStops;
 // =================================================================================================
 //                Corse (trips)
 // =================================================================================================
-class Trip {
-    constructor(
-        //    readonly bacino: string,
-        route_id, trip_id, shape_id, 
-        //    readonly dir01:number,
-        stop_times) {
-        this.route_id = route_id;
-        this.trip_id = trip_id;
-        this.shape_id = shape_id;
-        this.stop_times = stop_times;
-    }
-    getAsDir() {
-        return (this.stop_times ?
-            (this.stop_times[0].stop_name + " >> " + this.stop_times[this.stop_times.length - 1].stop_name)
-            : "Andata");
-    }
-    getDiDir() {
-        return (this.stop_times ?
-            (this.stop_times[this.stop_times.length - 1].stop_name + " >> " + this.stop_times[0].stop_name)
-            : "Ritorno");
-    }
-}
-exports.Trip = Trip;
-class StopTime {
-    constructor(stop_id, stop_name, arrival_time, departure_time, stop_lat, stop_lon) {
-        this.stop_id = stop_id;
-        this.stop_name = stop_name;
-        this.arrival_time = arrival_time;
-        this.departure_time = departure_time;
-        this.stop_lat = stop_lat;
-        this.stop_lon = stop_lon;
-    }
-}
-exports.StopTime = StopTime;
-class TripsAndShapes {
-    constructor(trips, // Map<string, Trip>,
-        shapes //Map<string, Shape>
-    ) {
-        this.trips = trips;
-        this.shapes = shapes; //Map<string, Shape>
-    }
-    // ritorna il trip 'più rappresentativo  (maggior numero di fermate)
-    getMainTrip() {
-        //const trips = Array.from(this.trips.values());
-        return this.trips
-            .filter(t => t.stop_times.length === Math.max(...this.trips.map(t => t.stop_times.length)))[0];
-    }
-    gmapUrl(size, n) {
-        const mainTrip = this.getMainTrip();
-        const shape = this.shapes.filter(s => s.shape_id === mainTrip.shape_id)[0];
-        return shape.gmapUrl(size, n);
-    }
-    getAsDir() {
-        return this.getMainTrip().getAsDir();
-    }
-    getDiDir() {
-        return this.getMainTrip().getDiDir();
-    }
-}
-exports.TripsAndShapes = TripsAndShapes;
-function getTripsAndShapes(bacino, route_id, dir01, dayOffset) {
+// Elenco (trip_id, shape_id) di una linea in un dato giorno
+function getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset) {
     const and_direction = (dir01 === 0 || dir01 === 1 ? ` and t.direction_id='${dir01}' ` : '');
     const date = utils.addDays(new Date(), dayOffset);
-    const db = opendb(bacino);
     // elenco di corse (trip_id) del servizio (service_id) di una data
     const q = `select t.trip_id, t.shape_id from trips t 
-        where t.route_id='${route_id}' ${and_direction} 
-        and t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}' )`;
-    const pkeys = new Promise(function (resolve, reject) {
+  where t.route_id='${route_id}' ${and_direction} 
+  and t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}' )`;
+    return new Promise(function (resolve, reject) {
         db.all(q, function (err, rows) {
             if (err)
                 reject(err);
@@ -194,15 +115,55 @@ function getTripsAndShapes(bacino, route_id, dir01, dayOffset) {
                 resolve(rows);
         }); // end each
     });
+}
+exports.getTripIdsAndShapeIdsDB_ByLinea = getTripIdsAndShapeIdsDB_ByLinea;
+// Elenco (trip_id, shape_id) di una fermata (entrambe i versi 0 e 1) in un dato giorno
+function getTripIdsAndShapeIdsDB_ByStop(db, stop_id, dayOffset) {
+    const date = utils.addDays(new Date(), dayOffset);
+    // elenco di corse (trip_id) del servizio (service_id) di una data
+    const q = `SELECT t.trip_id, t.shape_id 
+  FROM trips t 
+  WHERE  t.trip_id IN (SELECT DISTINCT b.trip_id FROM stop_times b WHERE b.stop_id='${stop_id}') 
+    AND  t.service_id IN (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}') `;
+    return new Promise(function (resolve, reject) {
+        db.all(q, function (err, rows) {
+            if (err)
+                reject(err);
+            else
+                resolve(rows);
+        }); // end each
+    });
+}
+exports.getTripIdsAndShapeIdsDB_ByStop = getTripIdsAndShapeIdsDB_ByStop;
+function getTripsAndShapes(bacino, route_id, dir01, dayOffset) {
+    /*
+      const and_direction = (dir01 === 0 || dir01 === 1 ? ` and t.direction_id='${dir01}' ` : '')
+      const date = utils.addDays(new Date(), dayOffset)
+    
+    
+      // elenco di corse (trip_id) del servizio (service_id) di una data
+      const q = `select t.trip_id, t.shape_id from trips t
+            where t.route_id='${route_id}' ${and_direction}
+            and t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}' )`;
+    
+      const pkeys: Promise<any[]> = new Promise<any[]>(function (resolve, reject) {
+        db.all(q, function (err, rows) {
+          if (err) reject(err);
+          else resolve(rows);
+        }); // end each
+      });
+    */
+    const db = opendb(bacino);
+    const pkeys = getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset);
     const ptrips = pkeys.then((rows) => Promise.all(rows.map(r => getTripDB(db, route_id, r.trip_id, r.shape_id))));
     const pshapes = pkeys.then((rows) => Promise.all(utils.removeDuplicates(rows.map(r => r.shape_id)).map(s => getShapeDB(db, s))));
     return Promise.all([ptrips, pshapes])
         .then((values) => {
         _close(db);
-        let tas = new TripsAndShapes([], []);
+        let tas = new model.TripsAndShapes([], []);
         const trips = values[0];
         const shapes = values[1];
-        trips.forEach(t => tas.trips.push(t));
+        trips.forEach(t => { t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id); tas.trips.push(t); });
         shapes.forEach(s => tas.shapes.push(s));
         return tas;
     });
@@ -220,7 +181,7 @@ function getTripDB(db, route_id, trip_id, shape_id) {
     order by 1`;
     return dbAllPromiseDB(db, q_stop_times)
         .then((rows) => {
-        return new Trip(route_id, trip_id, shape_id, rows.map(r => new StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon))); // end new Trip
+        return new model.Trip(route_id, trip_id, shape_id, rows.map(r => new model.StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon))); // end new Trip
     });
     // end Promise
 }
@@ -242,7 +203,7 @@ function getShapeDB(db, shape_id) {
             if (err)
                 reject(err);
             else
-                resolve(new Shape(shape_id, rows.map(r => new ShapePoint(r))));
+                resolve(new model.Shape(shape_id, rows.map(r => new model.ShapePoint(r))));
         }); // end each
     }); // end Promise  
 }

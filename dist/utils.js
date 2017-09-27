@@ -35,7 +35,9 @@ function gStatMapUrl(params) {
     return 'https://maps.googleapis.com/maps/api/staticmap?' + params + '&key=' + process.env.GOOGLE_STATICMAP_APIKEY;
 }
 exports.gStatMapUrl = gStatMapUrl;
+exports.gMapMarker = (la, lo, label, color) => `&markers=color:${color}%7Clabel:${label.substring(0, 1)}%7C${la},${lo}`;
 /*
+
 export function omStatMapUrl(params:string) : string {
     return "https://open.mapquestapi.com/staticmap/v4/getplacemap?key="+process.env.MAPQUEST_KEY+"&location=Los+Angeles,CA&size=600,400&zoom=9&showicon=red_1-1";
 }
@@ -84,8 +86,13 @@ function assert(condition, message) {
     }
 }
 exports.assert = assert;
+// arrays
 function removeDuplicates(arr) {
     return Array.from(new Set(arr));
 }
 exports.removeDuplicates = removeDuplicates;
+function find(arr, condition) {
+    return arr.filter(s => condition(s))[0];
+}
+exports.find = find;
 //# sourceMappingURL=utils.js.map

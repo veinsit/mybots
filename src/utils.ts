@@ -37,7 +37,11 @@ export function dateAaaaMmGg(d:Date) {
 export function gStatMapUrl(params:string) : string {
     return 'https://maps.googleapis.com/maps/api/staticmap?'+params+'&key='+process.env.GOOGLE_STATICMAP_APIKEY
 }
+export const gMapMarker = (la, lo, label, color) => `&markers=color:${color}%7Clabel:${label.substring(0, 1)}%7C${la},${lo}`;
+
+
 /*
+
 export function omStatMapUrl(params:string) : string {
     return "https://open.mapquestapi.com/staticmap/v4/getplacemap?key="+process.env.MAPQUEST_KEY+"&location=Los+Angeles,CA&size=600,400&zoom=9&showicon=red_1-1";
 }
@@ -92,6 +96,12 @@ export function assert(condition, message?) {
     }
 }
 
+// arrays
+
 export function removeDuplicates(arr : any[]) : any[] {
     return Array.from(new Set(arr))
+}
+
+export function find<T>(arr : T[], condition : (x)=>boolean) : T {
+    return arr.filter(s => condition(s))[0]
 }

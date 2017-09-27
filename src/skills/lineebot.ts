@@ -1,13 +1,21 @@
 "use strict";
 
-import utils = require("../utils");
+import ut = require("../utils");
 
 // Load emojis
 import emo = require("../assets/emoji");
 
-import service = require("../servicedb");
-type Linea = service.Linea;
-type ShapePoint = service.ShapePoint;
+import sv = require("../servicedb");
+const sqlite3 = require('sqlite3').verbose();
+
+import model = require("../model")
+type Linea = model.Linea
+type Stop = model.Stop
+type Trip = model.Trip
+type Shape = model.Shape
+type ShapePoint = model.ShapePoint
+type TripsAndShapes = model.TripsAndShapes
+type StopSchedule = model.StopSchedule
 
 // var. globale inizializzata dalla init()
 let linee: Linea[] = []
@@ -30,16 +38,76 @@ export const onMessage = (chat, text): boolean => {
     return searchLinea(chat, text);
 }
 
-export const onLocationReceived = (chat, coords) => {
+export function onLocationReceived(chat, coords) {
+
+    const bacino = 'FC'
+    //    const db = sv.opendb(bacino);
+
+    //    db.serialize(function() {
+    let dist: number = 9e6
+    let nearestStop;
+
+    sv.getNearestStops(bacino, coords, 0)
+        .then((nrs: sv.NearestStopsResult) => {
+            sayNearestStops(nrs)
+        })
+
+    function sayNearestStops(nrs: sv.NearestStopsResult) {
+        if (nrs.dist[0] > 8000)
+            chat && chat.say(`Mi dispiace, non c'è nessuna fermata nel raggio di 8 Km`, { typing: true })
+        else {
+            let nearestStop : Stop = nrs.stopSchedules[0].stop;
+            let routeIds = new Set
+            for(let trip of nrs.stopSchedules[0].trips) {
+                routeIds.add(trip.route_id)
+            }
+            let lineePassanti = Array.from(routeIds)
+            chat && chat.say(
+                `La fermata più vicina è ${nearestStop.stop_name} a ${nrs.dist[0].toFixed(0)} metri in linea d'aria`,
+                { typing: true })
+                .then(() => {
+                    const m1 = ut.gMapMarker(coords.lat, coords.long, 'P', 'blue')
+                    const m2 = ut.gMapMarker(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red')
+                    //        chat.sendAttachment('image', ut.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, {typing:true})
+                    chat.sendAttachment('image',
+                        ut.gStatMapUrl(`size=300x300${m1}${m2}`),
+                        undefined,
+                        { typing: true })
+                        .then(() => 
+                            chat.say('Ci passano le linee ' + lineePassanti.join(', ')).then(() => 
+                                chat.say(nrs.stopSchedules[0].trips.map(t=>
+                                    `${t.route_id}  ${t.trip_id} ${ t.stop_times.filter(x=>x.stop_id===nearestStop.stop_id)[0].departure_time}`).join('; '))
+                                /*
+export class StopSchedule {
+    constructor(
+        readonly desc: string,
+        readonly stop: Stop,
+        readonly trips: Trip[]
+    ) { }
+
+}                                */
+                            )
+                        )
+                })
+        }
+    }
+
+}
+
+
+export const onLocationReceived_OLD_ = (chat, coords) => {
 
     _onLocationReceived(chat, coords,
         (nearestStop, lineePassanti, dist) => sayNearestStop(chat, coords, nearestStop, lineePassanti, dist)
     )
 
+
+
+
     function _onLocationReceived(chat, coords, callback) {
 
         const bacino = 'FC'
-        const db = service.opendb(bacino);
+        const db = sv.opendb(bacino);
 
         //    db.serialize(function() {
         let dist: number = 9e6
@@ -48,13 +116,13 @@ export const onLocationReceived = (chat, coords) => {
         // These two queries will run sequentially.
         db.each("SELECT stop_id,stop_name,stop_lat,stop_lon FROM stops",
             function (err, row) {
-                let d = utils.distance(coords.lat, coords.long, row.stop_lat, row.stop_lon);
+                let d = ut.distance(coords.lat, coords.long, row.stop_lat, row.stop_lon);
                 if (d < dist) { dist = d; nearestStop = row; }
             },
             function () {
-                service.getRouteIdsFermataDB(db, nearestStop.stop_id)
+                sv.getRouteIdsFermataDB(db, nearestStop.stop_id)
                     .then((routeIds: string[]) => {
-                        service._close(db);
+                        sv._close(db);
                         callback(nearestStop, routeIds, dist)
                     }
                     );
@@ -62,7 +130,6 @@ export const onLocationReceived = (chat, coords) => {
         ); // end each
         //    });// end serialize
     }
-
     function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
         if (dist > 8000)
             chat && chat.say(`Mi dispiace, non c'è nessuna fermata nel raggio di 8 Km`, { typing: true })
@@ -71,11 +138,11 @@ export const onLocationReceived = (chat, coords) => {
                 `La fermata più vicina è ${nearestStop.stop_name} a ${dist.toFixed(0)} metri in linea d'aria`,
                 { typing: true })
                 .then(() => {
-                    const m1 = _mark(coords.lat, coords.long, 'P', 'blue')
-                    const m2 = _mark(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red')
-                    //        chat.sendAttachment('image', utils.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, {typing:true})
+                    const m1 = ut.gMapMarker(coords.lat, coords.long, 'P', 'blue')
+                    const m2 = ut.gMapMarker(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red')
+                    //        chat.sendAttachment('image', ut.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, {typing:true})
                     chat.sendAttachment('image',
-                        utils.gStatMapUrl(`size=300x300${m1}${m2}`),
+                        ut.gStatMapUrl(`size=300x300${m1}${m2}`),
                         undefined,
                         { typing: true })
                         .then(() => {
@@ -89,26 +156,21 @@ export const onLocationReceived = (chat, coords) => {
     }
 }// end onLocationReceived
 
-var sqlite3 = require('sqlite3').verbose();
-
-const _mark = (la, lo, label, color) => `&markers=color:${color}%7Clabel:${label.substring(0, 1)}%7C${la},${lo}`;
-
-
-
 
 // inizializza var globale 'linee'
 
 export const init = (callback?): Promise<any> => {
-    return service.getLinee('FC')
+    return sv.getLinee('FC')
         .then((rows: any[]) => {
-            linee = rows.map((row) => new service.Linea('FC', row));
+            linee = rows.map((row) => new model.Linea('FC', row));
             callback && callback(linee, undefined)
         });
 
 }
 
+// TODO : no var globale linee, leggi db tutte le volte
 export const searchLinea = (chat, askedLinea): boolean => {
-    //    service.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
+    //    sv.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
 
     let search = askedLinea.toUpperCase()
     //    console.log(`searchLinea: searching for  route_short_name = ${search}`)
@@ -144,8 +206,8 @@ export const searchLinea = (chat, askedLinea): boolean => {
                 let linea = lineeTrovate[0]
                 const dir01 = 0;
                 const dayOffset = 0
-                service.getTripsAndShapes('FC', linea.route_id, dir01, dayOffset)
-                    .then((tas: service.TripsAndShapes) => {
+                sv.getTripsAndShapes('FC', linea.route_id, dir01, dayOffset)
+                    .then((tas: model.TripsAndShapes) => {
                         sayLineaTrovata(chat, linea, tas, dir01, dayOffset);
                     })
             }
@@ -153,7 +215,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
                 chat.say({
                     text: "Quale linea ?",
                     buttons: lineeTrovate.map(l =>
-                        utils.postbackBtn(l.display_name + ' ' + l.getCU(), 'TPL_ON_CODLINEA_' + l.route_id)
+                        ut.postbackBtn(l.display_name + ' ' + l.getCU(), 'TPL_ON_CODLINEA_' + l.route_id)
                     )
                 })
             }
@@ -174,19 +236,19 @@ export const webgetLinea = (bacino, route_id, dir01: number, dayOffset: number, 
     }
 
     const linea: Linea = arraylinee[0]
-    service.getTripsAndShapes(bacino, linea.route_id, dir01, dayOffset)
-        .then((tas: service.TripsAndShapes) => {
+    sv.getTripsAndShapes(bacino, linea.route_id, dir01, dayOffset)
+        .then((tas: TripsAndShapes) => {
             res.render('linea', {
                 l: linea,
                 url: tas.gmapUrl("320x320", 20),
-                trips: trip_id ? tas.trips.filter(t=>t.trip_id===trip_id) : tas.trips
+                trips: trip_id ? tas.trips.filter(t => t.trip_id === trip_id) : tas.trips
             })
         })
 
 }
 
 
-export function sayLineaTrovata(chat, linea: Linea, tas: service.TripsAndShapes, dir01: number, dayOffset: number) {
+export function sayLineaTrovata(chat, linea: Linea, tas:TripsAndShapes, dir01: number, dayOffset: number) {
     const m = Math.random()
     if (m < 0.33)
         sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset);
@@ -196,27 +258,30 @@ export function sayLineaTrovata(chat, linea: Linea, tas: service.TripsAndShapes,
         sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
 }
 
-function sayLineaTrovata_Generic(chat, linea: Linea, tas:service.TripsAndShapes, dir01, dayOffset) {  // items = array of {linea, shape}
+function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dir01, dayOffset) {  // items = array of {linea, shape}
 
     //     options && options.imageAspectRatio && (payload.image_aspect_ratio = options.imageAspectRatio) && (delete options.imageAspectRatio);
 
-    const _element = (t:service.Trip) => { return {
-        title: t.getAsDir(),
-        subtitle: 'partenza '+t.stop_times[0].departure_time + " da " + t.stop_times[0].stop_name,
-        image_url: tas.shapes.filter(s => s.shape_id===t.shape_id)[0].gmapUrl("280x140", 20),
-        default_action: {
-            type: "web_url",
-            url: service.getOpendataUri(linea, 0, dayOffset, t.trip_id),   // andata oggi
-            webview_height_ratio: "tall",
-            // messenger_extensions: true,
-            //"fallback_url": "http://www.startromagna.it/"
+    const _element = (t: Trip) => {
+        return {
+            title: t.getAsDir(),
+            subtitle: 'partenza ' + t.stop_times[0].departure_time + " da " + t.stop_times[0].stop_name,
+            image_url: ut.find<Shape>(tas.shapes, s => s.shape_id === t.shape_id).gmapUrl("180x180", 20),
+            //        image_url: tas.shapes.filter(s => s.shape_id===t.shape_id)[0].gmapUrl("180x180", 20),
+            default_action: {
+                type: "web_url",
+                url: sv.getOpendataUri(linea, 0, dayOffset, t.trip_id),   // andata oggi
+                webview_height_ratio: "tall",
+                // messenger_extensions: true,
+                //"fallback_url": "http://www.startromagna.it/"
+            }
         }
-    }}
+    }
     let elements = []
     tas.trips.slice(0, 10).forEach(t => {
         elements.push(_element(t))
     })
-    chat.sendGenericTemplate(elements /* , {image_aspect_ratio:'square'} */)
+    chat.sendGenericTemplate(elements,  {image_aspect_ratio: 'square' })
     /*
     // posso avere 10 elements (utile per i trip ?)
     chat.sendGenericTemplate([
@@ -226,18 +291,18 @@ function sayLineaTrovata_Generic(chat, linea: Linea, tas:service.TripsAndShapes,
             image_url: tas.gmapUrl("320x160", 20),
             default_action: {
                 type: "web_url",
-                url: service.getOpendataUri(linea, 0, dayOffset),   // andata oggi
+                url: sv.getOpendataUri(linea, 0, dayOffset),   // andata oggi
                 webview_height_ratio: "tall",
                 // messenger_extensions: true,
                 //"fallback_url": "http://www.startromagna.it/"
             },
             buttons: [
-                //            utils.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_0_0`), // 0 sta per pagina 0
-                //            utils.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_1_0`), // 0 sta per pagina 0
+                //            ut.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_0_0`), // 0 sta per pagina 0
+                //            ut.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_1_0`), // 0 sta per pagina 0
 
-                utils.weburlBtn("Andata", service.getOpendataUri(linea, 0, dayOffset)),
-                utils.weburlBtn("Ritorno", service.getOpendataUri(linea, 0, dayOffset))
-                //                utils.weburlBtn("Sito R", service.getOpendataUri(linea,1))
+                ut.weburlBtn("Andata", sv.getOpendataUri(linea, 0, dayOffset)),
+                ut.weburlBtn("Ritorno", sv.getOpendataUri(linea, 0, dayOffset))
+                //                ut.weburlBtn("Sito R", sv.getOpendataUri(linea,1))
             ]
         }
     ]
@@ -246,10 +311,10 @@ function sayLineaTrovata_Generic(chat, linea: Linea, tas:service.TripsAndShapes,
 }
 
 
-export function sayLineaTrovata_ListLarge(chat, linea: Linea, tas: service.TripsAndShapes, dir01: number, dayOffset: number) {
+export function sayLineaTrovata_ListLarge(chat, linea: Linea, tas: TripsAndShapes, dir01: number, dayOffset: number) {
 
     // prendi il trip[0] come rappresentativo TODO
-    //const mainTrip: service.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
+    //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
     const options = { topElementStyle: 'large' }  // large o compact
     chat.sendListTemplate([
         {
@@ -272,7 +337,7 @@ export function sayLineaTrovata_ListLarge(chat, linea: Linea, tas: service.Trips
             title: tas.getAsDir(), subtitle: "orari oggi",
             default_action: {
                 type: "web_url",
-                url: service.getOpendataUri(linea, 0, dayOffset),   // andata oggi
+                url: sv.getOpendataUri(linea, 0, dayOffset),   // andata oggi
                 webview_height_ratio: "tall",
                 // messenger_extensions: true,
                 //"fallback_url": "http://www.startromagna.it/"
@@ -282,7 +347,7 @@ export function sayLineaTrovata_ListLarge(chat, linea: Linea, tas: service.Trips
             title: tas.getDiDir(), subtitle: "orari oggi",
             default_action: {
                 type: "web_url",
-                url: service.getOpendataUri(linea, 1, dayOffset),   // ritorno oggi
+                url: sv.getOpendataUri(linea, 1, dayOffset),   // ritorno oggi
                 webview_height_ratio: "tall",
                 // messenger_extensions: true,
                 //"fallback_url": "http://www.startromagna.it/"
@@ -292,17 +357,17 @@ export function sayLineaTrovata_ListLarge(chat, linea: Linea, tas: service.Trips
         [], options)
 };
 
-export function sayLineaTrovata_ListCompact(chat, linea: Linea, tas: service.TripsAndShapes, dir01: number, dayOffset: number) {
+export function sayLineaTrovata_ListCompact(chat, linea: Linea, tas: TripsAndShapes, dir01: number, dayOffset: number) {
 
     // prendi il trip[0] come rappresentativo TODO
-    //const mainTrip: service.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
+    //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
     const options = { topElementStyle: 'compact' }  // large o compact
     chat.sendListTemplate([
         {
             title: "Andata", subtitle: "orari oggi",
             default_action: {
                 type: "web_url",
-                url: service.getOpendataUri(linea, 0, 0),   // andata oggi
+                url: sv.getOpendataUri(linea, 0, 0),   // andata oggi
                 webview_height_ratio: "tall",
                 // messenger_extensions: true,
                 //"fallback_url": "http://www.startromagna.it/"
@@ -312,7 +377,7 @@ export function sayLineaTrovata_ListCompact(chat, linea: Linea, tas: service.Tri
             title: "Ritorno", subtitle: "orari oggi",
             default_action: {
                 type: "web_url",
-                url: service.getOpendataUri(linea, 1, 0),   // ritorno oggi
+                url: sv.getOpendataUri(linea, 1, 0),   // ritorno oggi
                 webview_height_ratio: "tall",
                 // messenger_extensions: true,
                 //"fallback_url": "http://www.startromagna.it/"
@@ -322,7 +387,7 @@ export function sayLineaTrovata_ListCompact(chat, linea: Linea, tas: service.Tri
             title: "Andata", subtitle: "orari domani",
             default_action: {
                 type: "web_url",
-                url: service.getOpendataUri(linea, 0, 1),   // andata oggi
+                url: sv.getOpendataUri(linea, 0, 1),   // andata oggi
                 webview_height_ratio: "tall",
                 // messenger_extensions: true,
                 //"fallback_url": "http://www.startromagna.it/"
@@ -332,7 +397,7 @@ export function sayLineaTrovata_ListCompact(chat, linea: Linea, tas: service.Tri
             title: "Ritorno", subtitle: "orari domani",
             default_action: {
                 type: "web_url",
-                url: service.getOpendataUri(linea, 1, 1),   // ritorno oggi
+                url: sv.getOpendataUri(linea, 1, 1),   // ritorno oggi
                 webview_height_ratio: "tall",
                 // messenger_extensions: true,
                 //"fallback_url": "http://www.startromagna.it/"
@@ -349,7 +414,7 @@ export function sayLineaTrovata_ListCompact(chat, linea: Linea, tas: service.Tri
 
     /*
 const displayOrariPage = (chat, route_id, dir01: number, page: number) => {
-    service.getCorseOggi('FC', route_id, dir01)
+    sv.getCorseOggi('FC', route_id, dir01)
         .then((data) =>
             onResultCorse(chat, data, route_id, dir01, page)
         )
@@ -381,7 +446,7 @@ const onResultCorse = (chat, data, route_id, dir01: number, page: number) => {
             title: "Corsa " + corsa.trip_id, // `${i+1}) partenza ${corsa.parte}`,
             subtitle: "sul percorso " + corsa.route_id, // corsa.DESC_PERCORSO + "  arriva alle " + corsa.arriva,
             // "image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",
-            buttons: utils.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + route_id + "_" + corsa.CORSA),
+            buttons: ut.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + route_id + "_" + corsa.CORSA),
         })
     } // end for
 
@@ -390,7 +455,7 @@ const onResultCorse = (chat, data, route_id, dir01: number, page: number) => {
     // emetti max 4 elementi
     chat.sendListTemplate(
         els,                                                      // PAGE_CORSE_F127_As_2
-        noNextPage() ? undefined : utils.singlePostbackBtn("Ancora", `TPL_PAGE_CORSE_${route_id}_${dir01}_${page + 1}`),
+        noNextPage() ? undefined : ut.singlePostbackBtn("Ancora", `TPL_PAGE_CORSE_${route_id}_${dir01}_${page + 1}`),
         { typing: true }
     )
 
@@ -398,7 +463,7 @@ const onResultCorse = (chat, data, route_id, dir01: number, page: number) => {
 
 
 const displayCorsa = (chat, route_id, corsa_id) => {
-    service.getCorseOggi('FC', route_id, 0)
+    sv.getCorseOggi('FC', route_id, 0)
         .then((data) =>
             onResultPassaggi(data, chat, route_id, corsa_id)
         )
@@ -419,7 +484,7 @@ export const webgetLinea = (bacino, route_id, dir01: number, giorno: number, req
         const linea: Linea = arraylinee[0]
         Promise.all([
             linea.getGMapUrl(service, "400x400"), // promise 0
-            service.getOrarLinea(bacino, route_id, dir01, giorno) // promise 1
+            sv.getOrarLinea(bacino, route_id, dir01, giorno) // promise 1
         ])
             .then((values) => {
                 res.render('linea', {

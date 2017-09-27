@@ -13,6 +13,15 @@ import prove = require("./skills/prove")
 import menuAssets = require('./assets/menu')
 
 import service = require("./servicedb");
+import model = require("./model")
+type Linea = model.Linea
+type Stop = model.Stop
+type Trip = model.Trip
+type Shape = model.Shape
+type ShapePoint = model.ShapePoint
+type TripsAndShapes = model.TripsAndShapes
+type StopSchedule = model.StopSchedule
+
 
 /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/
 export function goDebug(tpl) { 
@@ -23,7 +32,7 @@ export function goDebug(tpl) {
       const linea = linee.filter(l => l.route_id === 'F127')[0]
 
       service.getTripsAndShapes('FC', linea.route_id, 0, 0)
-      .then((tas: service.TripsAndShapes) => {
+      .then((tas: TripsAndShapes) => {
           console.log(JSON.stringify(tas.trips))
       })
 
