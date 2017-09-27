@@ -56,12 +56,13 @@ export function onLocationReceived(chat, coords) {
         if (nrs.dist[0] > 8000)
             chat && chat.say(`Mi dispiace, non c'è nessuna fermata nel raggio di 8 Km`, { typing: true })
         else {
-            let nearestStop : Stop = nrs.stopSchedules[0].stop;
+            let nearestStop: Stop = nrs.stopSchedules[0].stop;
             let routeIds = new Set
-            for(let trip of nrs.stopSchedules[0].trips) {
+            for (let trip of nrs.stopSchedules[0].trips) {
                 routeIds.add(trip.route_id)
             }
             let lineePassanti = Array.from(routeIds)
+
             chat && chat.say(
                 `La fermata più vicina è ${nearestStop.stop_name} a ${nrs.dist[0].toFixed(0)} metri in linea d'aria`,
                 { typing: true })
@@ -73,23 +74,24 @@ export function onLocationReceived(chat, coords) {
                         ut.gStatMapUrl(`size=300x300${m1}${m2}`),
                         undefined,
                         { typing: true })
-                        .then(() => 
-                            chat.say('Ci passano le linee ' + lineePassanti.join(', ')).then(() => 
-                                chat.say(nrs.stopSchedules[0].trips.map(t=>
-                                    `${t.route_id}  ${t.trip_id} ${ t.stop_times.filter(x=>x.stop_id===nearestStop.stop_id)[0].departure_time}`).join('; '))
-                                /*
-export class StopSchedule {
-    constructor(
-        readonly desc: string,
-        readonly stop: Stop,
-        readonly trips: Trip[]
-    ) { }
+                        .then(() =>
+                            chat.say('Ci passano le linee ' + lineePassanti.join(', ')).then(() => {
+                                for (let route_id of lineePassanti) {
+                                    chat.say(`${route_id}: ` + nrs.stopSchedules[0]
+                                        .trips
+                                        .filter(t => t.route_id === route_id)
+                                        .map(t => t.stop_times.filter(x => x.stop_id === nearestStop.stop_id)[0].departure_time)
+                                        .join(', ')
+                                    )
 
-}                                */
+                                }
+                            }
                             )
                         )
                 })
+
         }
+
     }
 
 }
@@ -248,7 +250,7 @@ export const webgetLinea = (bacino, route_id, dir01: number, dayOffset: number, 
 }
 
 
-export function sayLineaTrovata(chat, linea: Linea, tas:TripsAndShapes, dir01: number, dayOffset: number) {
+export function sayLineaTrovata(chat, linea: Linea, tas: TripsAndShapes, dir01: number, dayOffset: number) {
     const m = Math.random()
     if (m < 0.33)
         sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset);
@@ -281,7 +283,7 @@ function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dir01,
     tas.trips.slice(0, 10).forEach(t => {
         elements.push(_element(t))
     })
-    chat.sendGenericTemplate(elements,  {image_aspect_ratio: 'square' })
+    chat.sendGenericTemplate(elements, { image_aspect_ratio: 'square' })
     /*
     // posso avere 10 elements (utile per i trip ?)
     chat.sendGenericTemplate([

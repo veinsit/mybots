@@ -62,7 +62,9 @@ function getNearestStops(bacino, coords, dayOffset) {
             const nearestStop = new model.Stop(tmps.stop_id, tmps.stop_name, tmps.stop_lat, tmps.stop_lon);
             const pkeys = getTripIdsAndShapeIdsDB_ByStop(db, nearestStop.stop_id, dayOffset);
             /* const ptrips: Promise<Trip[]> = */
-            pkeys.then((rows) => Promise.all(rows.map(r => getTripDB(db, r.route_id, r.trip_id, r.shape_id))))
+            pkeys.then((rows) => Promise.all(
+            // chiedo il trip con gli orari SOLO per la fermata corrente
+            rows.map(r => getTripDB(db, r.route_id, r.trip_id, r.shape_id, nearestStop.stop_id))))
                 .then((trips) => {
                 _close(db);
                 let stopSchedule = new model.StopSchedule("", nearestStop, []);
@@ -121,7 +123,7 @@ exports.getTripIdsAndShapeIdsDB_ByLinea = getTripIdsAndShapeIdsDB_ByLinea;
 function getTripIdsAndShapeIdsDB_ByStop(db, stop_id, dayOffset) {
     const date = utils.addDays(new Date(), dayOffset);
     // elenco di corse (trip_id) del servizio (service_id) di una data
-    const q = `SELECT t.trip_id, t.shape_id 
+    const q = `SELECT t.trip_id, t.shape_id, t.route_id 
   FROM trips t 
   WHERE  t.trip_id IN (SELECT DISTINCT b.trip_id FROM stop_times b WHERE b.stop_id='${stop_id}') 
     AND  t.service_id IN (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}') `;
@@ -169,15 +171,19 @@ function getTripsAndShapes(bacino, route_id, dir01, dayOffset) {
     });
 }
 exports.getTripsAndShapes = getTripsAndShapes;
-function getTripDB(db, route_id, trip_id, shape_id) {
+//
+// parametro opzionale stop_id : se presente, prendo l'orario solo di quella fermata
+//
+function getTripDB(db, route_id, trip_id, shape_id, stop_id) {
     utils.assert(db !== undefined && typeof db.all === 'function', "metodo getTripWithoutShape");
+    const andStopIt = (stop_id ? ` AND s.stop_id='${stop_id}'` : ``);
     const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
     st.stop_id, s.stop_name, 
     st.arrival_time, st.departure_time, 
     s.stop_lat, s.stop_lon
     FROM stop_times st 
-    join stops s on st.stop_id=s.stop_id 
-    where st.trip_id='${trip_id}' and s.stop_name NOT LIKE 'Semafor%'
+    JOIN stops s on st.stop_id=s.stop_id 
+    WHERE st.trip_id='${trip_id}' and s.stop_name NOT LIKE 'Semafor%' ${andStopIt}
     order by 1`;
     return dbAllPromiseDB(db, q_stop_times)
         .then((rows) => {

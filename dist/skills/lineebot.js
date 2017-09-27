@@ -47,17 +47,15 @@ function onLocationReceived(chat, coords) {
                 const m2 = ut.gMapMarker(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red');
                 //        chat.sendAttachment('image', ut.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, {typing:true})
                 chat.sendAttachment('image', ut.gStatMapUrl(`size=300x300${m1}${m2}`), undefined, { typing: true })
-                    .then(() => chat.say('Ci passano le linee ' + lineePassanti.join(', ')).then(() => chat.say(nrs.stopSchedules[0].trips.map(t => `${t.route_id}  ${t.trip_id} ${t.stop_times.filter(x => x.stop_id === nearestStop.stop_id)[0].departure_time}`).join('; '))
-                /*
-export class StopSchedule {
-constructor(
-readonly desc: string,
-readonly stop: Stop,
-readonly trips: Trip[]
-) { }
-
-}                                */
-                ));
+                    .then(() => chat.say('Ci passano le linee ' + lineePassanti.join(', ')).then(() => {
+                    for (let route_id of lineePassanti) {
+                        chat.say(`${route_id}: ` + nrs.stopSchedules[0]
+                            .trips
+                            .filter(t => t.route_id === route_id)
+                            .map(t => t.stop_times.filter(x => x.stop_id === nearestStop.stop_id)[0].departure_time)
+                            .join(', '));
+                    }
+                }));
             });
         }
     }
