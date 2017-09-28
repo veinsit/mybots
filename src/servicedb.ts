@@ -98,9 +98,11 @@ export function getTripIdsAndShapeIds_ByStop(bacino, stop_id, dayOffset): Promis
         const stop = new model.Stop(s.stop_id, s.stop_name, s.stop_lat, s.stop_lon);
         getTripIdsAndShapeIdsDB_ByStop(db, stop, dayOffset) // otterrò trips di diverse linee
           .then((tripIdsAtStop: any[]) => {
+
             Promise.all(
               // chiedo il trip con gli orari SOLO per la fermata corrente
-              tripIdsAtStop.map(r => getTripDB(db, r.route_id, r.trip_id, r.shape_id, stop_id))
+              // FIXME :   no route_id ma linea !!!!
+              tripIdsAtStop.map(r => getTripDB(db, new model.Linea(bacino,r.route_id), r.trip_id, r.shape_id, stop_id))
             ).then((trips: Trip[]) => {
               // ho i trips alla i-esima nearest stop
               _close(db);

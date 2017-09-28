@@ -257,6 +257,8 @@ exports.webgetStopSchedule = (bacino, stopid, dayOffset, req, res) => {
         });
         res.render('fermata', {
             stop: ss.stop,
+            trips: ss.trips,
+            linee,
             tripsMap,
             url: ss.stop.gmapUrl("320x320", "F")
         });

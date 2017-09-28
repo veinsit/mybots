@@ -8,16 +8,26 @@ export class Linea {
     readonly route_id: string
     readonly route_short_name: string
     readonly route_long_name: string
-    readonly route_type: string
+
 
     public display_name: string // es. 1,2, 96A, 127, ecc
 
     constructor(bacino, rec: any) {
-        this.bacino = bacino
-        this.route_id = rec.route_id, this.route_short_name = rec.route_short_name, this.route_long_name = rec.route_short_name, this.route_type = rec.route_short_name
+        this.bacino = bacino 
+        if (rec.route_id) {
+            this.route_id = rec.route_id 
+            this.route_short_name = rec.route_short_name
+            this.route_long_name = rec.route_short_name 
 
-        this.display_name = this._displayName(rec.route_id, rec.route_long_name)
+            } else {
+            this.route_id = rec
+            this.route_short_name = rec
+            this.route_long_name = rec 
+  
+        }
+        this.display_name = this._displayName(this.route_id, this.route_long_name)
     }
+
 
     private _displayName(c: string, ln: string): string {
 

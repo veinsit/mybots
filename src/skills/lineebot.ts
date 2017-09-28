@@ -334,6 +334,8 @@ export const webgetStopSchedule = (bacino, stopid, dayOffset:number, req, res) =
 
         res.render('fermata', {
             stop: ss.stop,
+            trips:ss.trips,
+            linee,
             tripsMap, //: ss.trips,
             url : ss.stop.gmapUrl("320x320","F")
         })    

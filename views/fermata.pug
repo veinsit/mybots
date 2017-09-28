@@ -3,15 +3,8 @@ html
   head
     title= stop.stop_name
   body
+    h4= "Fermata "+stop.stop_name
     img(src=url)
-    div
-      table
-        tbody
-          tr
-            each linea in linee
-              td
-                b= linea
-          each irow in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
-            tr
-              each linea in linee
-                td= tripMaps.get(linea)[irow] && tripMaps.get(linea)[irow].stop_times[0].departure_time
+    ul 
+       each trip in trips
+          li=trip.linea.display_name+" "+trip.stop_times[0].departure_time.substring(0,5)

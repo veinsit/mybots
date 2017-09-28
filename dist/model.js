@@ -5,8 +5,17 @@ class Linea {
     constructor(bacino, rec) {
         this.getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")";
         this.bacino = bacino;
-        this.route_id = rec.route_id, this.route_short_name = rec.route_short_name, this.route_long_name = rec.route_short_name, this.route_type = rec.route_short_name;
-        this.display_name = this._displayName(rec.route_id, rec.route_long_name);
+        if (rec.route_id) {
+            this.route_id = rec.route_id;
+            this.route_short_name = rec.route_short_name;
+            this.route_long_name = rec.route_short_name;
+        }
+        else {
+            this.route_id = rec;
+            this.route_short_name = rec;
+            this.route_long_name = rec;
+        }
+        this.display_name = this._displayName(this.route_id, this.route_long_name);
     }
     _displayName(c, ln) {
         ln = ln.toUpperCase();
