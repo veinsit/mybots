@@ -95,4 +95,11 @@ function find(arr, condition) {
     return arr.filter(s => condition(s))[0];
 }
 exports.find = find;
+function loop(i, n, action) {
+    if (i < n) {
+        action(i);
+        loop(i + 1, n, action);
+    }
+}
+exports.loop = loop;
 //# sourceMappingURL=utils.js.map

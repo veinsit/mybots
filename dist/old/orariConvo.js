@@ -84,7 +84,7 @@ const convo_Orari = (convo, linea) => {
         //--------------------- convo ask
         convo.ask(
         // question : string or object or function(convo)
-        convo => { convo_showPage(convo); }, // produce i postback NEXT_PAGE_CORSE e ON_CORSA_XXX
+            convo => { convo_showPage(convo); }, // produce i postback NEXT_PAGE_CORSE e ON_CORSA_XXX
         // answer : The answer function will be called whenever the user replies to the question with a text message or quick reply.
         (payload, convo, data) => { utils.sayThenEnd(convo, "Conversazione terminata"); }, 
         // callbacks

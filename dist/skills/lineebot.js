@@ -32,35 +32,97 @@ function onLocationReceived(chat, coords) {
         sayNearestStops(nrs);
     });
     function sayNearestStops(nrs) {
-        if (nrs.dist[0] > 8000)
-            chat && chat.say(`Mi dispiace, non c'è nessuna fermata nel raggio di 8 Km`, { typing: true });
-        else {
-            let nearestStop = nrs.stopSchedules[0].stop;
+        //sayNearestStops_Text(nrs)
+        sayNearestStops_ListTemplate(nrs);
+    }
+    function sayNearestStops_ListTemplate(nrs) {
+        const mp = ut.gMapMarker(coords.lat, coords.long, 'P', 'blue');
+        const mf0 = ut.gMapMarker(nrs[0].stopSchedules.stop.stop_lat, nrs[0].stopSchedules.stop.stop_lon, 'F', 'red');
+        chat.sendAttachment('image', ut.gStatMapUrl(`size=300x300${mp}${mf0}`), undefined, { typing: true })
+            .then(() => sendStopsAsListTemplate(nrs));
+        function listTemplateElement(i, ss, dist) {
             let routeIds = new Set;
-            for (let trip of nrs.stopSchedules[0].trips) {
+            for (let trip of ss.trips) {
                 routeIds.add(trip.route_id);
             }
             let lineePassanti = Array.from(routeIds);
-            chat && chat.say(`La fermata più vicina è ${nearestStop.stop_name} a ${nrs.dist[0].toFixed(0)} metri in linea d'aria`, { typing: true })
-                .then(() => {
-                const m1 = ut.gMapMarker(coords.lat, coords.long, 'P', 'blue');
-                const m2 = ut.gMapMarker(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red');
-                //        chat.sendAttachment('image', ut.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, {typing:true})
-                chat.sendAttachment('image', ut.gStatMapUrl(`size=300x300${m1}${m2}`), undefined, { typing: true })
-                    .then(() => chat.say('Ci passano le linee ' + lineePassanti.join(', ')).then(() => {
-                    for (let route_id of lineePassanti) {
-                        chat.say(`${route_id}: ` + nrs.stopSchedules[0]
-                            .trips
-                            .filter(t => t.route_id === route_id)
-                            .map(t => t.stop_times.filter(x => x.stop_id === nearestStop.stop_id)[0].departure_time)
-                            .join(', '));
-                    }
-                }));
-            });
+            const mf = ut.gMapMarker(ss.stop.stop_lat, ss.stop.stop_lon, `${i + 1}`, 'red');
+            return {
+                title: ss.stop.stop_name,
+                subtitle: "Linee " + lineePassanti.join(','),
+                image_url: ut.gStatMapUrl(`size=120x120${mp}${mf}`),
+                buttons: [ut.postbackBtn("Orari", "TPL_STOPSCHED_0_" + ss.stop.stop_id)] // 0 = oggi
+            };
         }
-    }
+        function sendStopsAsListTemplate(nrs) {
+            const elements = [];
+            for (var index = 0; index < nrs.length; index++) {
+                elements.push(listTemplateElement(index, nrs[index].stopSchedules, nrs[index].dist));
+            }
+            chat.sendListTemplate(elements, [], { topElementStyle: 'compact' });
+        } // end function sendStops_ListTemplate
+    } // end function sayNearestStops_ListTemplate
 }
 exports.onLocationReceived = onLocationReceived;
+/*
+export function onLocationReceived_OLD_2_(chat, coords) {
+    
+        const bacino = 'FC'
+        //    const db = sv.opendb(bacino);
+    
+        //    db.serialize(function() {
+        let dist: number = 9e6
+        let nearestStop;
+    
+        sv.getNearestStops(bacino, coords, 0)
+            .then((nrs: sv.NearestStopsResult) => {
+                sayNearestStops_Text(nrs)
+            })
+    
+        function sayNearestStops_Text(nrs: sv.NearestStopsResult) {
+            if (nrs.dist[0] > 8000)
+                chat && chat.say(`Mi dispiace, non c'è nessuna fermata nel raggio di 8 Km`, { typing: true })
+            else {
+                let nearestStop: Stop = nrs.stopSchedules[0].stop;
+                let routeIds = new Set
+                for (let trip of nrs.stopSchedules[0].trips) {
+                    routeIds.add(trip.route_id)
+                }
+                let lineePassanti = Array.from(routeIds)
+    
+                chat && chat.say(
+                    `La fermata più vicina è ${nearestStop.stop_name} a ${nrs.dist[0].toFixed(0)} metri in linea d'aria`,
+                    { typing: true })
+                    .then(() => {
+                        const m1 = ut.gMapMarker(coords.lat, coords.long, 'P', 'blue')
+                        const m2 = ut.gMapMarker(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red')
+                        //        chat.sendAttachment('image', ut.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, {typing:true})
+                        chat.sendAttachment('image',
+                            ut.gStatMapUrl(`size=300x300${m1}${m2}`),
+                            undefined,
+                            { typing: true })
+                            .then(() =>
+                                chat.say('Ci passano le linee ' + lineePassanti.join(', ')).then(() => {
+                                    for (let route_id of lineePassanti) {
+                                        chat.say(`${route_id}: ` + nrs.stopSchedules[0]
+                                            .trips
+                                            .filter(t => t.route_id === route_id)
+                                            .map(t => t.stop_times.filter(x => x.stop_id === nearestStop.stop_id)[0].departure_time)
+                                            .join(', ')
+                                        )
+    
+                                    }
+                                }
+                                )
+                            )
+                    })
+    
+            }
+    
+        }
+    
+    }
+    */
 exports.onLocationReceived_OLD_ = (chat, coords) => {
     _onLocationReceived(chat, coords, (nearestStop, lineePassanti, dist) => sayNearestStop(chat, coords, nearestStop, lineePassanti, dist));
     function _onLocationReceived(chat, coords, callback) {

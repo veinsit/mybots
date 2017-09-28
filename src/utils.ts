@@ -105,3 +105,10 @@ export function removeDuplicates(arr : any[]) : any[] {
 export function find<T>(arr : T[], condition : (x)=>boolean) : T {
     return arr.filter(s => condition(s))[0]
 }
+
+export function loop(i:number, n:number, action : (ii:number) => any) {
+    if (i < n) {
+      action(i);
+      loop(i+1, n, action);              
+    }
+  }

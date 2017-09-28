@@ -50,80 +50,77 @@ export function getTripsFermataDB(db, stop_id, dayOffset: number): Promise<Trip[
   return dbAllPromiseDB(db, q).then((a: any[]) => a.map(x => x.route_id));
 }
 
-export class NearestStopResult {
+export class NearestStopsResult {
   constructor(
-    readonly dist: number,
-    readonly stopSchedules: StopSchedule
+    readonly dist: number[],
+    readonly stopSchedules: StopSchedule[]
   ) { }
 }
 
 // dayOffset serve per dare le corse (alla fermata più vicina) del giorno desiderato
-export function getNearestStops(bacino, coords, dayOffset): Promise<NearestStopResult[]> {
+export function getNearestStops(bacino, coords, dayOffset): Promise<NearestStopsResult> {
 
-  return new Promise<NearestStopResult[]>(function (resolve, reject) {
+  return new Promise<NearestStopsResult>(function (resolve, reject) {
 
     const db = opendb(bacino);
 
-    let dst: number[] = [9e6,9e6,9e6,9e6]
-    let tps: any[] = [{},{},{},{}]
+    //    db.serialize(function() {
+    let dist: number = 9e6
+    let tmps: any; // temp stop
 
     db.each(model.Stop.queryGetAll(),
-    (err, row) => {
-      let d = utils.distance(coords.lat, coords.long, row.stop_lat, row.stop_lon);
-      //if (d < dist) { dist = d; tmps = row; }
-
-      for(let i=0; i< dst.length; i++) {
-        if (d<dst[i]) {
-
-          for(let j=dst.length-1; j>i ; j--) {
-            dst[j] = dst[j-1]; tps[j] = tps[j-1]; 
-          }
-            
-          dst[i] = d; tps[i] = row;
-          break;
-        }
-      }
-    },
-      () => foundNearestStops(tps, dst)
+      (err, row) => {
+        let d = utils.distance(coords.lat, coords.long, row.stop_lat, row.stop_lon);
+        if (d < dist) { dist = d; tmps = row; }
+      },
+      () => foundNearestStop(tmps, dist)
     ); // end each
 
 
-    function foundNearestStops(tmps:any[], dist: number[]) {
-      const nearestStops: model.Stop[] = tmps.map(s=> new model.Stop(s.stop_id, s.stop_name, s.stop_lat, s.stop_lon));
+    function foundNearestStop(tmps, dist: number) {
+      const nearestStop: model.Stop = new model.Stop(tmps.stop_id, tmps.stop_name, tmps.stop_lat, tmps.stop_lon)
 
-      const pStopsArray : Promise<any[]>[] = nearestStops.map(s=>getTripIdsAndShapeIdsDB_ByStop(db, s.stop_id, dayOffset));
+      const pkeys = getTripIdsAndShapeIdsDB_ByStop(db, nearestStop.stop_id, dayOffset);
 
-      Promise.all(pStopsArray)
-      .then((keysArray:(any[])[]) => { // any = {route_id, trip_id, shape_id}
-          console.log(keysArray);
-          const results : NearestStopResult[] = []
-          const pstops = []
-          utils.loop(0, keysArray.length, function(i:number) {
-              const tripIdsAtStop = keysArray[i];
-              const pstop =Promise.all(
-                  // chiedo il trip con gli orari SOLO per la fermata corrente
-                  tripIdsAtStop.map(r => getTripDB(db, r.route_id, r.trip_id, r.shape_id, nearestStops[i].stop_id))
-              ).then((trips:Trip[]) => {
-                  // ho i trips alla i-esima nearest stop
-                  console.log(`stop ${nearestStops[i]}: ${trips.length} trips`)
-                  let stopSchedule = new model.StopSchedule("", tmps[i], trips);
-                  // trips.forEach(t => { /* t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id); */
-                    // stopSchedule.trips.push(t);
-                  //})
-                  return new NearestStopResult(dist[i], stopSchedule)
-              })
+      /* const ptrips: Promise<Trip[]> = */
+      pkeys.then((rows: any[]) => // t.trip_id, t.shape_id, t.route_id 
+        Promise.all(
+            // chiedo il trip con gli orari SOLO per la fermata corrente
+          rows.map(r => getTripDB(db, r.route_id, r.trip_id, r.shape_id, nearestStop.stop_id))
+        )
+      )
+      .then((trips: Trip[]) => {
+        _close(db);
 
-              pstops.push(pstop)
-          })
-          Promise.all(pstops)
-            .then((values : NearestStopResult[]) => {
-                _close(db); 
-                resolve(values);
-            })
+        let stopSchedule = new model.StopSchedule("", nearestStop, []);
+        //const trips: Trip[] = values[0] as Trip[]
+
+        trips.forEach(t => { /* t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id); */
+          stopSchedule.trips.push(t);
+        })
+
+        resolve(new NearestStopsResult([dist], [stopSchedule]))
       })
-
-      // questo sarebbe pèr 1 stop :  = getTripIdsAndShapeIdsDB_ByStop(db, nearestStop.stop_id, dayOffset);
-
+      /*        
+          const pshapes: Promise<Shape[]> = pkeys.then(
+            (rows: any[]) => Promise.all(utils.removeDuplicates(rows.map(r => r.shape_id)).map(s => getShapeDB(db, s)))
+          );
+      */
+      /*
+            Promise.all([ptrips])
+              .then((values) => {
+                _close(db);
+      
+                let stopSchedule = new model.StopSchedule("", nearestStop, []);
+                const trips: Trip[] = values[0] as Trip[]
+      
+                trips.forEach(t => { /* t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id); -----/
+                  stopSchedule.trips.push(t);
+                })
+      
+                resolve(new NearestStopsResult([dist], [stopSchedule]))
+              });
+      */
     } // end function foundNearestStop
   }); // end return new Promise<NearestStopsResult>
 
