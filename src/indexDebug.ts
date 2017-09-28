@@ -39,11 +39,12 @@ export function goDebug(tpl) {
     // tpl.onLocationReceived(utils.fakechat, {lat:44.225084, long:12.058301});
 
     service.getTripIdsAndShapeIds_ByStop('FC', '3322', 0).then((ss:model.StopSchedule) => {
+        /*
       console.log( {
           stop: ss.stop,
           trips: ss.trips,
           url : ss.stop.gmapUrl("320x320","F")
-      })    
+      })    */
   })
     })
 }

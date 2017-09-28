@@ -3,8 +3,17 @@ html
   head
     title= stop.stop_name
   body
-    h4= "Fermata "+stop.stop_name
+    h3= "Fermata "+stop.stop_name
     img(src=url)
-    ul 
-       each trip in trips
-          li=trip.linea.display_name+" "+trip.stop_times[0].departure_time.substring(0,5)
+    h4= descOrari
+    div
+      table
+        thead
+          tr
+            each rt in tripsByRouteId 
+              th= rt[0]
+        tbody
+          each irow in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]
+            tr           
+              each rt in tripsByRouteId  
+                td(style='padding:2 5 2 5;')= rt && (rt[1])[irow] && ( (rt[1])[irow].stop_times[0].departure_time.substring(0,5) + ' verso '+(rt[1])[irow].getLastStopName())

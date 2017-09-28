@@ -50,19 +50,18 @@ export function onLocationReceived(chat, coords) {
     let nearestStop;
 
     // marker per coords
-    const mp = ut.gMapMarker(coords.lat, coords.long, 'P', 'blue')
+    const mp = ut.gMapMarker(coords.lat, coords.long, undefined, 'blue')
 
     sv.getNearestStops(bacino, coords, 0, 4)
-        .then((nrs: sv.NearestStopResult[]) => {
-            chat.say("Ecco le fermate più vicine (in linea d'aria)", {typing:true})
-            .then(() =>
-                sayNearestStops(nrs)
-            )
-        }
+    .then((nrs: sv.NearestStopResult[]) => {
+        chat.say("Ecco le fermate più vicine (in linea d'aria)", { typing: true })
+        .then(() =>
+            sayNearestStops(nrs)
         )
+    })
 
     function sayNearestStops(nrs: sv.NearestStopResult[]) {
-        
+
         // crea la stringa per i markers
         let markers = mp
         for (let i = 0; i < nrs.length; i++) {
@@ -71,17 +70,16 @@ export function onLocationReceived(chat, coords) {
         }
 
         // invia mappa con markers
-        chat.sendAttachment('image',  ut.gStatMapUrl(`size=300x300${markers}`), undefined,
+        chat.sendAttachment('image', ut.gStatMapUrl(`size=300x300${markers}`), undefined,
             { typing: true })
-        .then(() => {
-            const elements = []
-            for (var index = 0; index < nrs.length; index++) {
-                elements.push(stopTemplateElement(bacino, index, nrs[index].stopSchedules, nrs[index].dist, mp));
-            }
-            // chat.sendListTemplate(elements, [], { topElementStyle: 'compact' })
-            chat.sendGenericTemplate(elements, { image_aspect_ratio: 'square' })
-    
-        });
+            .then(() => {
+                const elements = []
+                for (var index = 0; index < nrs.length; index++) {
+                    elements.push(stopTemplateElement(bacino, index, nrs[index].stopSchedules, nrs[index].dist, mp));
+                }
+                // chat.sendListTemplate(elements, [], { topElementStyle: 'compact' })
+                chat.sendGenericTemplate(elements, { image_aspect_ratio: 'square' })
+            });
     }
 }
 
@@ -90,18 +88,18 @@ function stopTemplateElement(bacino, i: number, ss: StopSchedule, dist: number, 
 
     let routeIds = new Set
     for (let trip of ss.trips) {
-        routeIds.add(trip.linea.route_id)
+        routeIds.add(trip.route_id)
     }
     let lineePassanti = Array.from(routeIds)
-    const mf = ss.stop.gStopMarker((i+1).toString());
+    const mf = ss.stop.gStopMarker((i + 1).toString());
 
     return {
         title: ss.stop.stop_name + (dist ? " a " + Math.floor(dist) + "m (l.d'a.)" : ''),
         subtitle: "Linee " + lineePassanti.join(', '),
         image_url: ut.gStatMapUrl(`size=120x120${mp}${mf}`),
-//        buttons: [ut.postbackBtn("Orari", "TPL_STOPSCHED_0_" + ss.stop.stop_id)] // 0 = oggi
+        //        buttons: [ut.postbackBtn("Orari", "TPL_STOPSCHED_0_" + ss.stop.stop_id)] // 0 = oggi
         buttons: [
-            ut.weburlBtn("Orari Oggi",   sv.getStopScheduleUri(bacino, ss.stop.stop_id, 0)),
+            ut.weburlBtn("Orari Oggi", sv.getStopScheduleUri(bacino, ss.stop.stop_id, 0)),
             //ut.weburlBtn("Orari Domani", sv.getStopScheduleUri(bacino, ss.stop.stop_id, 1)),
         ]
     }
@@ -169,68 +167,6 @@ export function onLocationReceived_OLD_2_(chat, coords) {
     }
     */
 
-export const onLocationReceived_OLD_ = (chat, coords) => {
-
-    _onLocationReceived(chat, coords,
-        (nearestStop, lineePassanti, dist) => sayNearestStop(chat, coords, nearestStop, lineePassanti, dist)
-    )
-
-
-
-
-    function _onLocationReceived(chat, coords, callback) {
-
-        const bacino = 'FC'
-        const db = sv.opendb(bacino);
-
-        //    db.serialize(function() {
-        let dist: number = 9e6
-        let nearestStop;
-
-        // These two queries will run sequentially.
-        db.each("SELECT stop_id,stop_name,stop_lat,stop_lon FROM stops",
-            function (err, row) {
-                let d = ut.distance(coords.lat, coords.long, row.stop_lat, row.stop_lon);
-                if (d < dist) { dist = d; nearestStop = row; }
-            },
-            function () {
-                sv.getRouteIdsFermataDB(db, nearestStop.stop_id)
-                    .then((routeIds: string[]) => {
-                        sv._close(db);
-                        callback(nearestStop, routeIds, dist)
-                    }
-                    );
-            }
-        ); // end each
-        //    });// end serialize
-    }
-    function sayNearestStop(chat, coords, nearestStop, lineePassanti, dist) {
-        if (dist > 8000)
-            chat && chat.say(`Mi dispiace, non c'è nessuna fermata nel raggio di 8 Km`, { typing: true })
-        else {
-            chat && chat.say(
-                `La fermata più vicina è ${nearestStop.stop_name} a ${dist.toFixed(0)} metri in linea d'aria`,
-                { typing: true })
-                .then(() => {
-                    const m1 = ut.gMapMarker(coords.lat, coords.long, 'P', 'blue')
-                    const m2 = ut.gMapMarker(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red')
-                    //        chat.sendAttachment('image', ut.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, {typing:true})
-                    chat.sendAttachment('image',
-                        ut.gStatMapUrl(`size=300x300${m1}${m2}`),
-                        undefined,
-                        { typing: true })
-                        .then(() => {
-                            chat.say({
-                                text: 'Ci passano le linee ' + lineePassanti.join(', '),
-                                quickReplies: lineePassanti, // .map(l=>linee.filter(x=>x.route_id===l)),
-                            })
-                        })
-                })
-        }
-    }
-}// end onLocationReceived
-
-
 // inizializza var globale 'linee'
 
 export const init = (callback?): Promise<any> => {
@@ -260,7 +196,7 @@ export const searchLinea = (chat, askedLinea): boolean => {
         }
     }
 
-    console.log(`searchLinea ${search} : OK`)
+    //console.log(`searchLinea ${search} : OK`)
     let nresults = results.length
 
     if (nresults > 4)
@@ -310,7 +246,7 @@ export const webgetLinea = (bacino, route_id, dir01: number, dayOffset: number, 
     }
 
     const linea: Linea = arraylinee[0]
-    sv.getTripsAndShapes(bacino, linea, dir01, dayOffset)
+    sv.getTripsAndShapes(bacino, linea.route_id, dir01, dayOffset)
         .then((tas: TripsAndShapes) => {
             res.render('linea', {
                 l: linea,
@@ -321,25 +257,28 @@ export const webgetLinea = (bacino, route_id, dir01: number, dayOffset: number, 
 }
 
 
-export const webgetStopSchedule = (bacino, stopid, dayOffset:number, req, res) => {
-    sv.getTripIdsAndShapeIds_ByStop(bacino, stopid, dayOffset).then((ss:model.StopSchedule) => {
-        const linee = Array.from(new Set(ss.trips.map(t=>t.linea.display_name))); // array di numeri linea univoci
-        const tripsMap : Map<string, Trip[]> = new Map;
-        ss.trips.forEach(t => {
-            if ( ! tripsMap.has(t.linea.display_name) )
-                tripsMap.set(t.linea.display_name, [t])
-            else
-                tripsMap.get(t.linea.display_name).push(t)
-        });
+export const webgetStopSchedule = (bacino, stop_id, dayOffset: number, req, res) => {
+    sv.getTripIdsAndShapeIds_ByStop(bacino, stop_id, dayOffset)
+        .then((ss: model.StopSchedule) => {
+            if (ss) {
+                const routeIds = Array.from(new Set(ss.trips.map(t => t.route_id))); // array di numeri linea univoci
 
-        res.render('fermata', {
-            stop: ss.stop,
-            trips:ss.trips,
-            linee,
-            tripsMap, //: ss.trips,
-            url : ss.stop.gmapUrl("320x320","F")
-        })    
-    })
+                // [  [route_id,[...trips]] ,  ]
+                let tripsByRouteId = []
+                routeIds.forEach(ri => tripsByRouteId.push([ri, ss.trips.filter(t => t.route_id === ri)]))
+                res.render('fermata', {
+                    stop: ss.stop,
+                    descOrari : "Orari di "+ut.formatDate(ut.addDays(new Date(), dayOffset)),
+                    tripsByRouteId,
+                    url: ss.stop.gmapUrl("480x480", '.')
+                })
+            }
+            else {
+                res.render('error', {
+                    message: `Fermata ${stop_id} non esistente`
+                })
+            }
+        })
 
 }
 
@@ -352,7 +291,7 @@ export function sayLineaTrovata(chat, linea: Linea, tas: TripsAndShapes, dir01: 
     else if (m < 0.66)
         sayLineaTrovata_ListLarge(chat, linea, tas, dir01, dayOffset);
     else */
-        sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
+    sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
 }
 
 function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dir01, dayOffset) {  // items = array of {linea, shape}

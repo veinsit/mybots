@@ -69,10 +69,10 @@ class Stop {
         this.stop_lon = stop_lon;
     }
     gmapUrl(size, n) {
-        return utils.gStatMapUrl(`size=${size}${this.gStopMarker(n)}`);
+        return utils.gStatMapUrl(`size=${size}${n ? this.gStopMarker(n) : ""}`);
     }
     gStopMarker(n) {
-        return utils.gMapMarker(this.stop_lat, this.stop_lon, `${n}`, 'red');
+        return utils.gMapMarker(this.stop_lat, this.stop_lon, n, 'red');
     }
 }
 Stop.queryGetAll = () => "SELECT stop_id,stop_name,stop_lat,stop_lon FROM stops";
@@ -90,11 +90,12 @@ exports.StopTime = StopTime;
 class Trip {
     constructor(
         //    readonly bacino: string,
-        //        readonly route_id: string,
-        linea, trip_id, shape_id, 
+        route_id, 
+        //readonly linea: Linea,
+        trip_id, shape_id, 
         //    readonly dir01:number,
         stop_times) {
-        this.linea = linea;
+        this.route_id = route_id;
         this.trip_id = trip_id;
         this.shape_id = shape_id;
         this.stop_times = stop_times;
@@ -109,6 +110,11 @@ class Trip {
             (this.stop_times[this.stop_times.length - 1].stop_name + " >> " + this.stop_times[0].stop_name)
             : "Ritorno");
     }
+    getLastStopName() {
+        return (this.stop_times && this.stop_times.length > 1 ?
+            (this.stop_times[this.stop_times.length - 1].stop_name)
+            : "--");
+    }
 }
 exports.Trip = Trip;
 class StopSchedule {
@@ -120,11 +126,11 @@ class StopSchedule {
 }
 exports.StopSchedule = StopSchedule;
 class TripsAndShapes {
-    constructor(linea, // Map<string, Trip>,
+    constructor(route_id, // Map<string, Trip>,
         trips, // Map<string, Trip>,
         shapes //Map<string, Shape>
     ) {
-        this.linea = linea;
+        this.route_id = route_id;
         this.trips = trips;
         this.shapes = shapes; //Map<string, Shape>
     }

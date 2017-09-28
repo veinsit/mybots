@@ -17,10 +17,21 @@ export function dateAaaaMmGg(d: Date) {
     return d.getFullYear().toString() + pad2zero(d.getMonth() + 1) + pad2zero(d.getDate())
 }
 
+export function formatDate(date) {
+
+    var day = date.getDate();
+    var monthIndex = date.getMonth();
+    var year = date.getFullYear();
+    const dw = ['domenica', 'lunedì','martedì','mercoledì','giovedì','venerdì','sabato']
+
+    return dw[date.getDay()]+' '+day + '/' + (monthIndex + 1).toString() + '/' + year;
+}
+
 export function gStatMapUrl(params: string): string {
     return 'https://maps.googleapis.com/maps/api/staticmap?' + params + '&key=' + process.env.GOOGLE_STATICMAP_APIKEY
 }
-export const gMapMarker = (la, lo, label, color) => `&markers=color:${color}%7Clabel:${label.substring(0, 1)}%7C${la},${lo}`;
+//export const gMapMarker = (la, lo, label, color) => `&markers=color:${color}%7Clabel:${label.substring(0, 1)}%7C${la},${lo}`;
+export const gMapMarker = (la, lo, label, color) => `&markers=color:${color}${label ? "%7Clabel:" + label.substring(0, 1) : ""}%7C${la},${lo}`;
 
 
 /*
@@ -112,12 +123,12 @@ export const sayThenDo = (convo, text, action) => {
         action && action(convo)
 }
 
-export const sayManyTexts = (chat, elements:string[]) => {
+export const sayManyTexts = (chat, elements: string[]) => {
     function loop(i: number) {
         if (i < elements.length) {
-            chat.say(elements[i]).then(()=>loop(i + 1))
+            chat.say(elements[i]).then(() => loop(i + 1))
         }
-    }(0)
+    } (0)
 }
 
 

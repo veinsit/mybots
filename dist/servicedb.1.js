@@ -163,7 +163,7 @@ function getTripsAndShapes(bacino, linea, dir01, dayOffset) {
     return Promise.all([ptrips, pshapes])
         .then((values) => {
         _close(db);
-        let tas = new model.TripsAndShapes(linea, [], []);
+        let tas = new model.TripsAndShapes(linea.route_id, [], []);
         const trips = values[0];
         const shapes = values[1];
         trips.forEach(t => { t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id); tas.trips.push(t); });

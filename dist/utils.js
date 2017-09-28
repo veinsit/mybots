@@ -17,11 +17,20 @@ function dateAaaaMmGg(d) {
     return d.getFullYear().toString() + pad2zero(d.getMonth() + 1) + pad2zero(d.getDate());
 }
 exports.dateAaaaMmGg = dateAaaaMmGg;
+function formatDate(date) {
+    var day = date.getDate();
+    var monthIndex = date.getMonth();
+    var year = date.getFullYear();
+    const dw = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
+    return dw[date.getDay()] + ' ' + day + '/' + (monthIndex + 1).toString() + '/' + year;
+}
+exports.formatDate = formatDate;
 function gStatMapUrl(params) {
     return 'https://maps.googleapis.com/maps/api/staticmap?' + params + '&key=' + process.env.GOOGLE_STATICMAP_APIKEY;
 }
 exports.gStatMapUrl = gStatMapUrl;
-exports.gMapMarker = (la, lo, label, color) => `&markers=color:${color}%7Clabel:${label.substring(0, 1)}%7C${la},${lo}`;
+//export const gMapMarker = (la, lo, label, color) => `&markers=color:${color}%7Clabel:${label.substring(0, 1)}%7C${la},${lo}`;
+exports.gMapMarker = (la, lo, label, color) => `&markers=color:${color}${label ? "%7Clabel:" + label.substring(0, 1) : ""}%7C${la},${lo}`;
 /*
 
 export function omStatMapUrl(params:string) : string {

@@ -104,12 +104,12 @@ export class Stop {
     public static queryGetById = (id) =>
         Stop.queryGetAll() + " WHERE stop_id='"+id+"'";
 
-    gmapUrl(size, n): string {
-        return utils.gStatMapUrl(`size=${size}${this.gStopMarker(n)}`)
+    gmapUrl(size, n?): string {
+        return utils.gStatMapUrl(`size=${size}${ n ? this.gStopMarker(n):""}`)
     }
 
     gStopMarker(n): string {
-        return utils.gMapMarker(this.stop_lat, this.stop_lon, `${n}`, 'red')
+        return utils.gMapMarker(this.stop_lat, this.stop_lon, n, 'red')
     }
 
 }
@@ -134,8 +134,8 @@ export class Trip {
 
     constructor(
         //    readonly bacino: string,
-        //        readonly route_id: string,
-        readonly linea: Linea,
+        readonly route_id: string,
+        //readonly linea: Linea,
         readonly trip_id: string,
         public shape_id: string,
         //    readonly dir01:number,
@@ -158,6 +158,12 @@ export class Trip {
         )
     }
 
+    getLastStopName() {
+        return (this.stop_times && this.stop_times.length > 1 ?
+            ( this.stop_times[this.stop_times.length - 1].stop_name)
+            : "--"
+        )
+    }
 
 }
 
@@ -171,7 +177,7 @@ export class StopSchedule {
 
 export class TripsAndShapes {
     constructor(
-        public readonly linea: Linea, // Map<string, Trip>,
+        public readonly route_id: string, // Map<string, Trip>,
         public readonly trips: Trip[], // Map<string, Trip>,
         public readonly shapes: Shape[] //Map<string, Shape>
     ) { }
