@@ -36,28 +36,14 @@ export function goDebug(tpl) {
           console.log(JSON.stringify(tas.trips))
       })
 */
-  tpl.onLocationReceived(utils.fakechat, {lat:44.225084, long:12.058301});
-      //const p0:Promise<string> = linea.getGMapUrl(service) 
-      /*
-      const p1:Promise<any[]> = service.getTrips_Promises('FC', 'F127', 0)
-      Promise.all([p1]).then((values)=> {
-        console.log(values[0])
-        //console.log(values[1])
-      }) 
-      */
+    // tpl.onLocationReceived(utils.fakechat, {lat:44.225084, long:12.058301});
 
-//      tpl.sayLineaTrovata_ListTemplate2(utils.fakechat, linea)
-
-      /*
-      console.log(JSON.stringify(service.getTrips_WithShape('FC', 'F127', 0, 0)
-        .then((trips: service.Trip[]) => {
-          // prendi il trip[0] come rappresentativo TODO
-          const mainTrip: service.Trip = trips[0]
-
-          console.log(JSON.stringify(trips[0]))
-
-        })
-      ))
-      */
+    service.getTripIdsAndShapeIds_ByStop('FC', '3322', 0).then((ss:model.StopSchedule) => {
+      console.log( {
+          stop: ss.stop,
+          trips: ss.trips,
+          url : ss.stop.gmapUrl("320x320","F")
+      })    
+  })
     })
 }

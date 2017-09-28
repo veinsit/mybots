@@ -75,14 +75,19 @@ exports.MinFinder = MinFinder;
 function getTripIdsAndShapeIds_ByStop(bacino, stop_id, dayOffset) {
     const db = opendb(bacino);
     return new Promise((resolve, reject) => {
-        getTripIdsAndShapeIdsDB_ByStop(db, stop_id, dayOffset)
-            .then((tripIdsAtStop) => {
-            Promise.all(
-            // chiedo il trip con gli orari SOLO per la fermata corrente
-            tripIdsAtStop.map(r => getTripDB(db, r.route_id, r.trip_id, r.shape_id, stop_id))).then((trips) => {
-                // ho i trips alla i-esima nearest stop
-                _close(db);
-                resolve(new model.StopSchedule("", new model.Stop(stop_id, "no name", 0, 0), trips));
+        dbAllPromiseDB(db, model.Stop.queryGetById(stop_id))
+            .then((res) => {
+            const s = res[0];
+            const stop = new model.Stop(s.stop_id, s.stop_name, s.stop_lat, s.stop_lon);
+            getTripIdsAndShapeIdsDB_ByStop(db, stop, dayOffset) // otterrò trips di diverse linee
+                .then((tripIdsAtStop) => {
+                Promise.all(
+                // chiedo il trip con gli orari SOLO per la fermata corrente
+                tripIdsAtStop.map(r => getTripDB(db, r.route_id, r.trip_id, r.shape_id, stop_id))).then((trips) => {
+                    // ho i trips alla i-esima nearest stop
+                    _close(db);
+                    resolve(new model.StopSchedule("", stop, trips));
+                });
             });
         });
     });
@@ -111,7 +116,7 @@ function getNearestStops(bacino, coords, dayOffset = 0, maxNum = 4) {
             } */
         }, () => foundNearestStops(minFinder.getResults().tps, minFinder.getResults().dst)); // end each
         function foundNearestStops(nearestStops, dist) {
-            const pStopsArray = nearestStops.map(st => getTripIdsAndShapeIdsDB_ByStop(db, st.stop_id, dayOffset));
+            const pStopsArray = nearestStops.map((stop) => getTripIdsAndShapeIdsDB_ByStop(db, stop, dayOffset));
             Promise.all(pStopsArray)
                 .then((keysArray) => {
                 //console.log(keysArray);
@@ -146,12 +151,12 @@ exports.getNearestStops = getNearestStops;
 //                Corse (trips)
 // =================================================================================================
 // Elenco (trip_id, shape_id) di una linea in un dato giorno
-function getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset) {
+function getTripIdsAndShapeIdsDB_ByLinea(db, linea, dir01, dayOffset) {
     const and_direction = (dir01 === 0 || dir01 === 1 ? ` and t.direction_id='${dir01}' ` : '');
     const date = utils.addDays(new Date(), dayOffset);
     // elenco di corse (trip_id) del servizio (service_id) di una data
     const q = `select t.trip_id, t.shape_id from trips t 
-  where t.route_id='${route_id}' ${and_direction} 
+  where t.route_id='${linea.route_id}' ${and_direction} 
   and t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}' )`;
     return new Promise(function (resolve, reject) {
         db.all(q, function (err, rows) {
@@ -164,13 +169,14 @@ function getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset) {
 }
 exports.getTripIdsAndShapeIdsDB_ByLinea = getTripIdsAndShapeIdsDB_ByLinea;
 // Elenco (trip_id, shape_id) di una fermata (entrambe i versi 0 e 1) in un dato giorno
-function getTripIdsAndShapeIdsDB_ByStop(db, stop_id, dayOffset) {
+function getTripIdsAndShapeIdsDB_ByStop(db, stop, dayOffset) {
     const date = utils.addDays(new Date(), dayOffset);
     // elenco di corse (trip_id) del servizio (service_id) di una data
-    const q = `SELECT t.trip_id, t.shape_id, t.route_id 
+    const q = `SELECT t.route_id, t.trip_id, t.shape_id 
   FROM trips t 
-  WHERE  t.trip_id IN (SELECT DISTINCT b.trip_id FROM stop_times b WHERE b.stop_id='${stop_id}') 
-    AND  t.service_id IN (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}') `;
+  WHERE  t.trip_id IN (SELECT DISTINCT b.trip_id FROM stop_times b WHERE b.stop_id='${stop.stop_id}') 
+    AND  t.service_id IN (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}')
+  ORDER BY 1,2`;
     return new Promise(function (resolve, reject) {
         db.all(q, function (err, rows) {
             if (err)
@@ -180,7 +186,7 @@ function getTripIdsAndShapeIdsDB_ByStop(db, stop_id, dayOffset) {
         }); // end each
     });
 }
-function getTripsAndShapes(bacino, route_id, dir01, dayOffset) {
+function getTripsAndShapes(bacino, linea, dir01, dayOffset) {
     /*
       const and_direction = (dir01 === 0 || dir01 === 1 ? ` and t.direction_id='${dir01}' ` : '')
       const date = utils.addDays(new Date(), dayOffset)
@@ -199,13 +205,13 @@ function getTripsAndShapes(bacino, route_id, dir01, dayOffset) {
       });
     */
     const db = opendb(bacino);
-    const pkeys = getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset);
-    const ptrips = pkeys.then((rows) => Promise.all(rows.map(r => getTripDB(db, route_id, r.trip_id, r.shape_id))));
+    const pkeys = getTripIdsAndShapeIdsDB_ByLinea(db, linea, dir01, dayOffset);
+    const ptrips = pkeys.then((rows) => Promise.all(rows.map(r => getTripDB(db, linea, r.trip_id, r.shape_id))));
     const pshapes = pkeys.then((rows) => Promise.all(utils.removeDuplicates(rows.map(r => r.shape_id)).map(s => getShapeDB(db, s))));
     return Promise.all([ptrips, pshapes])
         .then((values) => {
         _close(db);
-        let tas = new model.TripsAndShapes([], []);
+        let tas = new model.TripsAndShapes(linea, [], []);
         const trips = values[0];
         const shapes = values[1];
         trips.forEach(t => { t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id); tas.trips.push(t); });
@@ -217,7 +223,7 @@ exports.getTripsAndShapes = getTripsAndShapes;
 //
 // parametro opzionale stop_id : se presente, prendo l'orario solo di quella fermata
 //
-function getTripDB(db, route_id, trip_id, shape_id, stop_id) {
+function getTripDB(db, linea, trip_id, shape_id, stop_id) {
     utils.assert(db !== undefined && typeof db.all === 'function', "metodo getTripWithoutShape");
     const andStopIt = (stop_id ? ` AND s.stop_id='${stop_id}'` : ``);
     const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
@@ -230,7 +236,7 @@ function getTripDB(db, route_id, trip_id, shape_id, stop_id) {
     order by 1`;
     return dbAllPromiseDB(db, q_stop_times)
         .then((rows) => {
-        return new model.Trip(route_id, trip_id, shape_id, rows.map(r => new model.StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon))); // end new Trip
+        return new model.Trip(linea, trip_id, shape_id, rows.map(r => new model.StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon))); // end new Trip
     });
     // end Promise
 }

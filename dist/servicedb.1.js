@@ -138,7 +138,7 @@ function getTripIdsAndShapeIdsDB_ByStop(db, stop_id, dayOffset) {
     });
 }
 exports.getTripIdsAndShapeIdsDB_ByStop = getTripIdsAndShapeIdsDB_ByStop;
-function getTripsAndShapes(bacino, route_id, dir01, dayOffset) {
+function getTripsAndShapes(bacino, linea, dir01, dayOffset) {
     /*
       const and_direction = (dir01 === 0 || dir01 === 1 ? ` and t.direction_id='${dir01}' ` : '')
       const date = utils.addDays(new Date(), dayOffset)
@@ -157,13 +157,13 @@ function getTripsAndShapes(bacino, route_id, dir01, dayOffset) {
       });
     */
     const db = opendb(bacino);
-    const pkeys = getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset);
-    const ptrips = pkeys.then((rows) => Promise.all(rows.map(r => getTripDB(db, route_id, r.trip_id, r.shape_id))));
+    const pkeys = getTripIdsAndShapeIdsDB_ByLinea(db, linea, dir01, dayOffset);
+    const ptrips = pkeys.then((rows) => Promise.all(rows.map(r => getTripDB(db, linea, r.trip_id, r.shape_id))));
     const pshapes = pkeys.then((rows) => Promise.all(utils.removeDuplicates(rows.map(r => r.shape_id)).map(s => getShapeDB(db, s))));
     return Promise.all([ptrips, pshapes])
         .then((values) => {
         _close(db);
-        let tas = new model.TripsAndShapes([], []);
+        let tas = new model.TripsAndShapes(linea, [], []);
         const trips = values[0];
         const shapes = values[1];
         trips.forEach(t => { t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id); tas.trips.push(t); });

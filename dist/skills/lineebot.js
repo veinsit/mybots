@@ -29,9 +29,10 @@ function onLocationReceived(chat, coords) {
     let nearestStop;
     // marker per coords
     const mp = ut.gMapMarker(coords.lat, coords.long, 'P', 'blue');
-    sv.getNearestStops(bacino, coords, 0, 6)
+    sv.getNearestStops(bacino, coords, 0, 4)
         .then((nrs) => {
-        chat.say("Ecco le fermate più vicine (in linea d'aria)").then(() => sayNearestStops(nrs));
+        chat.say("Ecco le fermate più vicine (in linea d'aria)", { typing: true })
+            .then(() => sayNearestStops(nrs));
     });
     function sayNearestStops(nrs) {
         // crea la stringa per i markers
@@ -57,13 +58,13 @@ exports.onLocationReceived = onLocationReceived;
 function stopTemplateElement(bacino, i, ss, dist, mp) {
     let routeIds = new Set;
     for (let trip of ss.trips) {
-        routeIds.add(trip.route_id);
+        routeIds.add(trip.linea.route_id);
     }
     let lineePassanti = Array.from(routeIds);
     const mf = ss.stop.gStopMarker((i + 1).toString());
     return {
-        title: ss.stop.stop_name + (dist ? " a " + dist + "m (l.d'a.)" : ''),
-        subtitle: "Linee " + lineePassanti.join(','),
+        title: ss.stop.stop_name + (dist ? " a " + Math.floor(dist) + "m (l.d'a.)" : ''),
+        subtitle: "Linee " + lineePassanti.join(', '),
         image_url: ut.gStatMapUrl(`size=120x120${mp}${mf}`),
         //        buttons: [ut.postbackBtn("Orari", "TPL_STOPSCHED_0_" + ss.stop.stop_id)] // 0 = oggi
         buttons: [
@@ -213,7 +214,7 @@ exports.searchLinea = (chat, askedLinea) => {
                 let linea = lineeTrovate[0];
                 const dir01 = 0;
                 const dayOffset = 0;
-                sv.getTripsAndShapes('FC', linea.route_id, dir01, dayOffset)
+                sv.getTripsAndShapes('FC', linea, dir01, dayOffset)
                     .then((tas) => {
                     sayLineaTrovata(chat, linea, tas, dir01, dayOffset);
                 });
@@ -235,7 +236,7 @@ exports.webgetLinea = (bacino, route_id, dir01, dayOffset, req, res, trip_id) =>
         return;
     }
     const linea = arraylinee[0];
-    sv.getTripsAndShapes(bacino, linea.route_id, dir01, dayOffset)
+    sv.getTripsAndShapes(bacino, linea, dir01, dayOffset)
         .then((tas) => {
         res.render('linea', {
             l: linea,
@@ -246,21 +247,30 @@ exports.webgetLinea = (bacino, route_id, dir01, dayOffset, req, res, trip_id) =>
 };
 exports.webgetStopSchedule = (bacino, stopid, dayOffset, req, res) => {
     sv.getTripIdsAndShapeIds_ByStop(bacino, stopid, dayOffset).then((ss) => {
+        const linee = Array.from(new Set(ss.trips.map(t => t.linea.display_name))); // array di numeri linea univoci
+        const tripsMap = new Map;
+        ss.trips.forEach(t => {
+            if (!tripsMap.has(t.linea.display_name))
+                tripsMap.set(t.linea.display_name, [t]);
+            else
+                tripsMap.get(t.linea.display_name).push(t);
+        });
         res.render('fermata', {
             stop: ss.stop,
-            trips: ss.trips,
+            tripsMap,
             url: ss.stop.gmapUrl("320x320", "F")
         });
     });
 };
 function sayLineaTrovata(chat, linea, tas, dir01, dayOffset) {
     const m = Math.random();
+    /*
     if (m < 0.33)
         sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset);
     else if (m < 0.66)
         sayLineaTrovata_ListLarge(chat, linea, tas, dir01, dayOffset);
-    else
-        sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
+    else */
+    sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
 }
 exports.sayLineaTrovata = sayLineaTrovata;
 function sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset) {

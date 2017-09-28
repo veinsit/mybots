@@ -71,6 +71,8 @@ export class Linea {
         return { center: `${cu},Italy`, zoom: 11 }
     }
 
+    toString() {return this.display_name}
+
     public static queryGetAll = () =>
         "SELECT route_id, route_short_name, route_long_name, route_type FROM routes"
 
@@ -89,12 +91,15 @@ export class Stop {
     public static queryGetAll = () =>
         "SELECT stop_id,stop_name,stop_lat,stop_lon FROM stops"
 
+    public static queryGetById = (id) =>
+        Stop.queryGetAll() + " WHERE stop_id='"+id+"'";
+
     gmapUrl(size, n): string {
         return utils.gStatMapUrl(`size=${size}${this.gStopMarker(n)}`)
     }
 
-    gStopMarker(n) : string {
-        return  utils.gMapMarker(this.stop_lat, this.stop_lon, `${n}`, 'red')
+    gStopMarker(n): string {
+        return utils.gMapMarker(this.stop_lat, this.stop_lon, `${n}`, 'red')
     }
 
 }
@@ -116,16 +121,18 @@ export class StopTime extends Stop {
 // helper class per associare una lista di orari a una linea
 
 export class Trip {
-    public shape?: Shape
 
     constructor(
         //    readonly bacino: string,
-        readonly route_id: string,
+        //        readonly route_id: string,
+        readonly linea: Linea,
         readonly trip_id: string,
         public shape_id: string,
         //    readonly dir01:number,
         public stop_times: StopTime[]
     ) { }
+
+    public shape?: Shape
 
     getAsDir() {
         return (this.stop_times ?
@@ -150,11 +157,11 @@ export class StopSchedule {
         readonly stop: Stop,
         readonly trips: Trip[]
     ) { }
-
 }
 
 export class TripsAndShapes {
     constructor(
+        public readonly linea: Linea, // Map<string, Trip>,
         public readonly trips: Trip[], // Map<string, Trip>,
         public readonly shapes: Shape[] //Map<string, Shape>
     ) { }

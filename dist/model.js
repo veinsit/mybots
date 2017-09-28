@@ -47,6 +47,7 @@ class Linea {
         const cu = this.getCU();
         return { center: `${cu},Italy`, zoom: 11 };
     }
+    toString() { return this.display_name; }
 } // end class Linea
 Linea.queryGetAll = () => "SELECT route_id, route_short_name, route_long_name, route_type FROM routes";
 Linea.queryGetById = (route_id) => Linea.queryGetAll() + ` where route_id='${route_id}'`;
@@ -66,6 +67,7 @@ class Stop {
     }
 }
 Stop.queryGetAll = () => "SELECT stop_id,stop_name,stop_lat,stop_lon FROM stops";
+Stop.queryGetById = (id) => Stop.queryGetAll() + " WHERE stop_id='" + id + "'";
 exports.Stop = Stop;
 class StopTime extends Stop {
     constructor(stop_id, stop_name, arrival_time, departure_time, stop_lat, stop_lon) {
@@ -79,10 +81,11 @@ exports.StopTime = StopTime;
 class Trip {
     constructor(
         //    readonly bacino: string,
-        route_id, trip_id, shape_id, 
+        //        readonly route_id: string,
+        linea, trip_id, shape_id, 
         //    readonly dir01:number,
         stop_times) {
-        this.route_id = route_id;
+        this.linea = linea;
         this.trip_id = trip_id;
         this.shape_id = shape_id;
         this.stop_times = stop_times;
@@ -108,9 +111,11 @@ class StopSchedule {
 }
 exports.StopSchedule = StopSchedule;
 class TripsAndShapes {
-    constructor(trips, // Map<string, Trip>,
+    constructor(linea, // Map<string, Trip>,
+        trips, // Map<string, Trip>,
         shapes //Map<string, Shape>
     ) {
+        this.linea = linea;
         this.trips = trips;
         this.shapes = shapes; //Map<string, Shape>
     }
