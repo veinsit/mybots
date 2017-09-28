@@ -88,6 +88,15 @@ export class Stop {
 
     public static queryGetAll = () =>
         "SELECT stop_id,stop_name,stop_lat,stop_lon FROM stops"
+
+    gmapUrl(size, n): string {
+        return utils.gStatMapUrl(`size=${size}${this.gStopMarker(n)}`)
+    }
+
+    gStopMarker(n) : string {
+        return  utils.gMapMarker(this.stop_lat, this.stop_lon, `${n}`, 'red')
+    }
+
 }
 
 export class StopTime extends Stop {

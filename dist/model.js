@@ -58,6 +58,12 @@ class Stop {
         this.stop_lat = stop_lat;
         this.stop_lon = stop_lon;
     }
+    gmapUrl(size, n) {
+        return utils.gStatMapUrl(`size=${size}${this.gStopMarker(n)}`);
+    }
+    gStopMarker(n) {
+        return utils.gMapMarker(this.stop_lat, this.stop_lon, `${n}`, 'red');
+    }
 }
 Stop.queryGetAll = () => "SELECT stop_id,stop_name,stop_lat,stop_lon FROM stops";
 exports.Stop = Stop;

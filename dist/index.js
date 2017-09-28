@@ -19,18 +19,16 @@ const app = express();
 app.set('views', './views');
 app.set('view engine', 'pug');
 // ------- web 
-app.get("/", (req, res) => {
-    res.send("Hello !");
-});
+const baseUriBacino = "/ui/tpl/:bacino";
+app.get("/", (req, res) => res.send("Hello !"));
 //        ui/tpl/    FC /linee/  FO04  /   0  /d   /0
-app.get("/ui/tpl/:bacino/linee/:routeid/dir/:dir01/g/:giorno", (req, res) => {
-    //  console.log("GET /ui/tpl/:bacino/linee/:giorno/:dir01/:routeid "+req.params.routeid)
-    tpl.webgetLinea(req.params.bacino, req.params.routeid, parseInt(req.params.dir01), parseInt(req.params.giorno), req, res);
-});
-app.get("/ui/tpl/:bacino/linee/:routeid/dir/:dir01/g/:giorno/trip/:trip", (req, res) => {
-    //  console.log("GET /ui/tpl/:bacino/linee/:giorno/:dir01/:routeid "+req.params.routeid)
-    tpl.webgetLinea(req.params.bacino, req.params.routeid, parseInt(req.params.dir01), parseInt(req.params.giorno), req, res, req.params.trip);
-});
+app.get(baseUriBacino + "/linee/:routeid/dir/:dir01/g/:giorno", (req, res) => 
+//  console.log("GET /ui/tpl/:bacino/linee/:giorno/:dir01/:routeid "+req.params.routeid)
+tpl.webgetLinea(req.params.bacino, req.params.routeid, parseInt(req.params.dir01), parseInt(req.params.giorno), req, res));
+app.get(baseUriBacino + "/linee/:routeid/dir/:dir01/g/:giorno/trip/:trip", (req, res) => 
+//  console.log("GET /ui/tpl/:bacino/linee/:giorno/:dir01/:routeid "+req.params.routeid)
+tpl.webgetLinea(req.params.bacino, req.params.routeid, parseInt(req.params.dir01), parseInt(req.params.giorno), req, res, req.params.trip));
+app.get(baseUriBacino + "/stops/:stopid/g/:giorno", (req, res) => tpl.webgetStopSchedule(req.params.bacino, req.params.stopid, parseInt(req.params.giorno), req, res));
 // tutto quello qui sopre deve essere PRIMA di new BootBot
 // ============================================================= end web
 const skills = [tpl, prove];

@@ -1,0 +1,18 @@
+
+html
+  head
+    title= stop.stop_name
+  body
+    table
+      tr
+        td
+          img(src=url)
+        td= l.getTitle()
+
+    div
+      table
+        tbody
+          each irow in [0]
+            tr
+              each trip in trips
+                td= trip.stop_times[irow] && (trip.stop_times[irow].departure_time.substring(0,5) +' '+trip.stop_times[irow].stop_name)

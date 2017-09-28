@@ -2,11 +2,11 @@
 
 
 if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC
-     || !process.env.GOOGLE_STATICMAP_APIKEY || !process.env.OPENDATAURIBASE) {
-   require('dotenv').config()
+  || !process.env.GOOGLE_STATICMAP_APIKEY || !process.env.OPENDATAURIBASE) {
+  require('dotenv').config()
 }
 
-const debug = process.env.DEBUG!==undefined ? parseInt(process.env.DEBUG) : false
+const debug = process.env.DEBUG !== undefined ? parseInt(process.env.DEBUG) : false
 const useFakeChat = false; // process.env.USE_FAKE_CHAT || false; // debug;
 
 // https://github.com/sotirelisc/tvakis
@@ -26,22 +26,25 @@ app.set('views', './views')
 app.set('view engine', 'pug')
 // ------- web 
 
-app.get("/", (req, res) => {
+const baseUriBacino = "/ui/tpl/:bacino"
+app.get("/", (req, res) => 
   res.send("Hello !")
-  }
 )
 //        ui/tpl/    FC /linee/  FO04  /   0  /d   /0
-app.get("/ui/tpl/:bacino/linee/:routeid/dir/:dir01/g/:giorno", (req, res) => {
-//  console.log("GET /ui/tpl/:bacino/linee/:giorno/:dir01/:routeid "+req.params.routeid)
-  tpl.webgetLinea(req.params.bacino, req.params.routeid, parseInt(req.params.dir01), parseInt(req.params.giorno),req, res)
-  }
-)
-app.get("/ui/tpl/:bacino/linee/:routeid/dir/:dir01/g/:giorno/trip/:trip", (req, res) => {
+app.get(baseUriBacino+"/linee/:routeid/dir/:dir01/g/:giorno", (req, res) => 
   //  console.log("GET /ui/tpl/:bacino/linee/:giorno/:dir01/:routeid "+req.params.routeid)
-    tpl.webgetLinea(req.params.bacino, req.params.routeid, parseInt(req.params.dir01), parseInt(req.params.giorno),req, res, req.params.trip)
-    }
-  )
-  // tutto quello qui sopre deve essere PRIMA di new BootBot
+  tpl.webgetLinea(req.params.bacino, req.params.routeid, parseInt(req.params.dir01), parseInt(req.params.giorno), req, res)
+)
+app.get(baseUriBacino+"/linee/:routeid/dir/:dir01/g/:giorno/trip/:trip", (req, res) => 
+  //  console.log("GET /ui/tpl/:bacino/linee/:giorno/:dir01/:routeid "+req.params.routeid)
+  tpl.webgetLinea(req.params.bacino, req.params.routeid, parseInt(req.params.dir01), parseInt(req.params.giorno), req, res, req.params.trip)
+)
+app.get(baseUriBacino+"/stops/:stopid/g/:giorno", (req, res) => 
+
+  tpl.webgetStopSchedule(req.params.bacino, req.params.stopid, parseInt(req.params.giorno), req, res)
+)
+
+// tutto quello qui sopre deve essere PRIMA di new BootBot
 // ============================================================= end web
 
 const skills = [tpl, prove]
@@ -67,33 +70,33 @@ let emoji = require('./assets/emoji')
 
 const poster_url = "https://image.tmdb.org/t/p/w640"
 
-const startKeys = ['hello','hi','hey','ehi','start','inizia','ciao','salve','chat','parla']
+const startKeys = ['hello', 'hi', 'hey', 'ehi', 'start', 'inizia', 'ciao', 'salve', 'chat', 'parla']
 bot.on('message', (payload, chat) => {
   const fid = payload.sender.id
   const text = payload.message.text.toLowerCase()
-  
+
   if (useFakeChat)
     chat = utils.fakechat
 
-  console.log("sender.id = " + fid+"; text="+text)
+  console.log("sender.id = " + fid + "; text=" + text)
 
-  if (startKeys.filter(it=>it===text).length > 0) {
+  if (startKeys.filter(it => it === text).length > 0) {
     chat.sendTypingIndicator(500)
       .then(() =>
         showIntro(chat)
       )
 
-      return;
+    return;
   }
 
   let gestitoDaModulo = false
   for (let s of skills) {
-    if (gestitoDaModulo=s.onMessage(chat,text))
+    if (gestitoDaModulo = s.onMessage(chat, text))
       break;
   }
 
- if (!gestitoDaModulo) {
-      chat.say("Non ho capito ...")
+  if (!gestitoDaModulo) {
+    chat.say("Non ho capito ...")
   }
 }) // end bot.on('message', ..)
 
@@ -115,7 +118,7 @@ bot.on('message', (payload, chat) => {
 */
 bot.on('attachment', (payload, chat) => {
   console.log('Att:' + JSON.stringify(payload.message.attachments[0]));
-  
+
   if (useFakeChat)
     chat = utils.fakechat
 
@@ -130,10 +133,10 @@ bot.on('postback', (payload, chat, data) => {
   if (useFakeChat)
     chat = utils.fakechat
 
-  
+
   let gestitoDaModulo = false
   for (let s of skills) {
-    if (gestitoDaModulo=s.onPostback(pl, chat, data))
+    if (gestitoDaModulo = s.onPostback(pl, chat, data))
       break;
   }
 
@@ -179,10 +182,10 @@ if (debug) {
   require("./indexDebug").goDebug(tpl)
   bot.start(process.env.PORT || 3000)
 } else {
-  tpl.init( (linee, err) => { /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/})
-  .then(() =>
-    bot.start(process.env.PORT || 3000)
-  )
+  tpl.init((linee, err) => { /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/ })
+    .then(() =>
+      bot.start(process.env.PORT || 3000)
+    )
 }
 
 

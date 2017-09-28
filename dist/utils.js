@@ -1,20 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isNumeric = (x) => !isNaN(x);
-exports.postbackBtn = (title, payload) => { return { title, type: "postback", payload }; };
-exports.weburlBtn = (title, url) => { return { type: "web_url", url, title }; };
-exports.singlePostbackBtn = (title, payload) => [exports.postbackBtn(title, payload)];
-exports.sayThenEnd = (convo, text) => { convo.say(text).then(() => convo.end()); };
-exports.sayThenDo = (convo, text, action) => {
-    if (text)
-        convo.say(text).then(() => action && action(convo));
-    else
-        action && action(convo);
-};
-exports.postbackEvent = (token, callback) => ({
-    event: 'postback' + (token ? ':' + token : ''),
-    callback
-});
 // Calculates the days difference between two dates
 function getDaysDifference(date1, date2) {
     let timeDiff = Math.abs(date2.getTime() - date1.getTime());
@@ -102,4 +88,29 @@ function loop(i, n, action) {
     }
 }
 exports.loop = loop;
+// ==============================================================
+//                      BootBot
+// ==============================================================
+exports.postbackBtn = (title, payload) => { return { title, type: "postback", payload }; };
+exports.weburlBtn = (title, url) => { return { type: "web_url", url, title }; };
+exports.singlePostbackBtn = (title, payload) => [exports.postbackBtn(title, payload)];
+exports.sayThenEnd = (convo, text) => { convo.say(text).then(() => convo.end()); };
+exports.sayThenDo = (convo, text, action) => {
+    if (text)
+        convo.say(text).then(() => action && action(convo));
+    else
+        action && action(convo);
+};
+exports.sayManyTexts = (chat, elements) => {
+    function loop(i) {
+        if (i < elements.length) {
+            chat.say(elements[i]).then(() => loop(i + 1));
+        }
+    }
+    (0);
+};
+exports.postbackEvent = (token, callback) => ({
+    event: 'postback' + (token ? ':' + token : ''),
+    callback
+});
 //# sourceMappingURL=utils.js.map
