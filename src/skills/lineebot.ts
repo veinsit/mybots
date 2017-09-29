@@ -20,12 +20,12 @@ type StopSchedule = model.StopSchedule
 // var. globale inizializzata dalla init()
 // let linee: Linea[] = []
 //var bacino = 'FC'
+const bacino='FC'
 
 // =======================================================  exports
 export const PB_TPL = 'TPL_';
 
 export const onPostback = (pl: string, chat, data): boolean => {
-    const bacino='FC'
     
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
         const route_id = pl.substring(16);
@@ -49,7 +49,7 @@ export const onPostback = (pl: string, chat, data): boolean => {
 }
 
 export const onMessage = (chat, text): boolean => {
-    const bacino='FC'
+ //   const bacino='FC'
     
     console.log("linee.ts: onMessage: " + text);
     if (text.startsWith("linea ")) {
@@ -61,7 +61,7 @@ export const onMessage = (chat, text): boolean => {
 }
 
 export function onLocationReceived(chat, coords) {
-    const bacino='FC'
+   // const bacino='FC'
     //    const db = sv.opendb(bacino);
 
     //    db.serialize(function() {
@@ -101,8 +101,8 @@ export function onLocationReceived(chat, coords) {
             });
     }
 }
-export const webgetStopSchedule = (bacino, stop_id, dayOffset: number, req, res) => {
-    sv.getTripIdsAndShapeIds_ByStop(bacino, stop_id, dayOffset)
+export const webgetStopSchedule = (b, stop_id, dayOffset: number, req, res) => {
+    sv.getTripIdsAndShapeIds_ByStop(b, stop_id, dayOffset)
         .then((ss: model.StopSchedule) => {
             if (ss) {
                 const routeIds = Array.from(new Set(ss.trips.map(t => t.route_id))); // array di numeri linea univoci
@@ -126,9 +126,9 @@ export const webgetStopSchedule = (bacino, stop_id, dayOffset: number, req, res)
 
 }
 
-export const webgetLinea = (bacino, route_id, dir01: number, dayOffset: number, req, res, trip_id?) => {
+export const webgetLinea = (b, route_id, dir01: number, dayOffset: number, req, res, trip_id?) => {
 
-    _searchLinea_ByRouteId(bacino, route_id, dir01, dayOffset)
+    _searchLinea_ByRouteId(b, route_id, dir01, dayOffset)
         .then((lineaAndTas) => {
             if (lineaAndTas !== undefined) {
                 res.render('linea', {
@@ -237,7 +237,7 @@ export const init = (callback?): Promise<any> => {
 
 }
 */
-function _searchLinea_ByRouteId(chat, bacino, route_id, dir01 = 0, dayOffset = 0): Promise<any> {
+function _searchLinea_ByRouteId(bacino, route_id, dir01 = 0, dayOffset = 0): Promise<any> {
     //const dir01 = 0;
     // const dayOffset = 0
     return sv.getLinea_ByRouteId(bacino, route_id)
