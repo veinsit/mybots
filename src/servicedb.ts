@@ -232,7 +232,7 @@ function getTripIdsAndShapeIdsDB_ByStop(db, stop_id, dayOffset): Promise<any[]> 
   });
 }
 
-export function getTripsAndShapes(bacino, route_id, dir01, dayOffset): Promise<TripsAndShapes> {
+export function getTripsAndShapes(bacino, route_id:string, dir01, dayOffset:number): Promise<TripsAndShapes> {
   /*
     const and_direction = (dir01 === 0 || dir01 === 1 ? ` and t.direction_id='${dir01}' ` : '')
     const date = utils.addDays(new Date(), dayOffset)

@@ -181,7 +181,7 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
 })
 
 if (debug) {
-  // require("./indexDebug").goDebug(tpl)
+  require("./indexDebug").goDebug(tpl)
   bot.start(process.env.PORT || 3000)
 } else {
   bot.start(process.env.PORT || 3000)
