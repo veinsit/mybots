@@ -29,16 +29,17 @@ function getLinee_All(bacino) {
 }
 exports.getLinee_All = getLinee_All;
 function getLinea_ByRouteId(bacino, route_id) {
-    return dbAllPromiseGeneric(bacino, model.Linea.queryGetById(route_id))
-        .then((linee) => linee[0]);
+    return dbAllPromise(bacino, model.Linea.queryGetById(route_id))
+        .then((rows) => new model.Linea(bacino, rows[0]));
 }
 exports.getLinea_ByRouteId = getLinea_ByRouteId;
-function getLineaDB_ByRouteId(db, route_id) {
+function getLineaDB_ByRouteId(db, bacino, route_id) {
     return dbAllPromiseDB(db, model.Linea.queryGetById(route_id))
-        .then((linee) => linee[0]);
+        .then((rows) => new model.Linea(bacino, rows[0]));
 }
 function getLinee_ByShortName(bacino, short_name) {
-    return dbAllPromiseGeneric(bacino, model.Linea.queryGetByShortName(short_name));
+    return dbAllPromise(bacino, model.Linea.queryGetByShortName(short_name))
+        .then((rows) => rows.map(r => new model.Linea(bacino, r)));
 }
 exports.getLinee_ByShortName = getLinee_ByShortName;
 function getRouteIdsFermataDB(db, stop_id) {
@@ -184,7 +185,7 @@ function getTripsAndShapes(bacino, route_id, dir01, dayOffset) {
       });
     */
     const db = opendb(bacino);
-    const plinea = getLineaDB_ByRouteId(db, route_id);
+    const plinea = getLineaDB_ByRouteId(db, bacino, route_id);
     const pkeys = getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset);
     const ptrips = pkeys.then((rows) => Promise.all(rows.map(r => getTripDB(db, route_id, r.trip_id, r.shape_id))));
     const pshapes = pkeys.then((rows) => Promise.all(utils.removeDuplicates(rows.map(r => r.shape_id)).map(s => getShapeDB(db, s))));
@@ -243,18 +244,17 @@ function getShapeDB(db, shape_id) {
     }); // end Promise  
 }
 // ------------------------ utilities
-function dbAllPromiseGeneric(bacino, query) {
-    return new Promise(function (resolve, reject) {
-        var db = opendb(bacino);
-        db.all(query, function (err, rows) {
-            _close(db);
-            if (err)
-                reject(err);
-            else
-                resolve(rows);
-        }); // end each
-    }); // end Promise
+/*
+function dbAllPromiseGeneric(bacino: string, query: string): Promise<any[]> {
+  return new Promise(function (resolve, reject) {
+    var db = opendb(bacino);
+    db.all(query, function (err, rows) {
+      _close(db);
+      if (err) reject(err); else resolve(rows);
+    }); // end each
+  }) // end Promise
 }
+*/
 function dbAllPromise(bacino, query) {
     return new Promise(function (resolve, reject) {
         var db = opendb(bacino);

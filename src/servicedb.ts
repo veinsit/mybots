@@ -39,18 +39,18 @@ export function getLinee_All(bacino): Promise<any[]> {
 }
 
 export function getLinea_ByRouteId(bacino, route_id) : Promise<Linea> {
-  return dbAllPromiseGeneric<Linea[]>(bacino, model.Linea.queryGetById(route_id))
-    .then((linee:Linea[]) => linee[0]);
+  return dbAllPromise(bacino, model.Linea.queryGetById(route_id))
+    .then((rows:any[]) => new model.Linea(bacino, rows[0]));
 }
 
-function getLineaDB_ByRouteId(db, route_id) : Promise<Linea> {
+function getLineaDB_ByRouteId(db, bacino, route_id) : Promise<Linea> {
   return dbAllPromiseDB(db, model.Linea.queryGetById(route_id))
-    .then((linee:Linea[]) => linee[0]);
+    .then((rows:any[]) => new model.Linea(bacino, rows[0]))
 }
 
 export function getLinee_ByShortName(bacino, short_name) : Promise<Linea[]> {
-  return dbAllPromiseGeneric<Linea[]>(bacino, model.Linea.queryGetByShortName(short_name))
-
+  return dbAllPromise(bacino, model.Linea.queryGetByShortName(short_name))
+    .then((rows:any[]) => rows.map(r => new model.Linea(bacino, r)));
 }
 
 export function getRouteIdsFermataDB(db, stop_id): Promise<string[]> {
@@ -229,7 +229,7 @@ export function getTripsAndShapes(bacino, route_id:string, dir01, dayOffset:numb
     });
   */
   const db = opendb(bacino);
-  const plinea = getLineaDB_ByRouteId(db, route_id)
+  const plinea = getLineaDB_ByRouteId(db, bacino, route_id)
   const pkeys = getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset);
 
   const ptrips: Promise<Trip[]> = pkeys.then(
@@ -312,7 +312,8 @@ function getShapeDB(db, shape_id): Promise<Shape> {
 
 
 // ------------------------ utilities
-function dbAllPromiseGeneric<T>(bacino: string, query: string): Promise<T> {
+/*
+function dbAllPromiseGeneric(bacino: string, query: string): Promise<any[]> {
   return new Promise(function (resolve, reject) {
     var db = opendb(bacino);
     db.all(query, function (err, rows) {
@@ -321,7 +322,7 @@ function dbAllPromiseGeneric<T>(bacino: string, query: string): Promise<T> {
     }); // end each
   }) // end Promise
 }
-
+*/
 function dbAllPromise(bacino: string, query: string): Promise<any[]> {
   return new Promise(function (resolve, reject) {
     var db = opendb(bacino);
