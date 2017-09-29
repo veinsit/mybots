@@ -12,21 +12,18 @@ exports.PB_TPL = 'TPL_';
 exports.onPostback = (pl, chat, data) => {
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
         const route_id = pl.substring(16);
-        const dir01 = 0;
-        const dayOffset = 0;
-        //        _searchLinea_ByRouteId(bacino, route_id, dir01, dayOffset)
-        sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
-            .then((tas) => {
-            if (tas !== undefined) {
-                sayLineaTrovata(chat, tas, dir01, dayOffset);
-            }
-            else {
-                chat.say(`Non ho trovato la linea ${route_id}`);
-            }
-        });
+        onCodlinea(chat, route_id);
         return true;
     }
     return false;
+};
+const onCodlinea = (chat, route_id) => {
+    const dir01 = 0;
+    const dayOffset = 0;
+    sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
+        .then((tas) => {
+        sayLineaTrovata(chat, tas, dir01, dayOffset);
+    });
 };
 exports.onMessage = (chat, text) => {
     //   const bacino='FC'
@@ -98,9 +95,13 @@ exports.webgetLinea = (b, route_id, dir01, dayOffset, req, res, trip_id) => {
     sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
         .then((tas) => {
         if (tas !== undefined) {
+            const url = tas.gmapUrl("320x320", 20); // può essere undefined se non ho trips
+            const descOrari = url ? "Orari di " + ut.formatDate(ut.addDays(new Date(), dayOffset)) :
+                ut.formatDate(ut.addDays(new Date(), dayOffset)) + " non ci sono corse";
             res.render('linea', {
                 l: tas.linea,
-                url: tas.gmapUrl("320x320", 20),
+                descOrari,
+                url,
                 trips: trip_id ? tas.trips.filter(t => t.trip_id === trip_id) : tas.trips
             });
         }
@@ -199,10 +200,18 @@ export const init = (callback?): Promise<any> => {
 const searchLinea_ByShortName = (chat, bacino, short_name) => {
     sv.getLinee_ByShortName(bacino, short_name)
         .then((lineeTrovate) => {
-        chat.say({
-            text: "Quale linea ?",
-            buttons: lineeTrovate.map(l => ut.postbackBtn(l.route_id, 'TPL_ON_CODLINEA_' + l.route_id))
-        });
+        if (lineeTrovate.length > 1) {
+            chat.say({
+                text: "Quale linea ?",
+                buttons: lineeTrovate.map(l => ut.postbackBtn(l.route_id, 'TPL_ON_CODLINEA_' + l.route_id))
+            });
+        }
+        else if (lineeTrovate.length === 1) {
+            onCodlinea(chat, lineeTrovate[0].route_id);
+        }
+        else {
+            chat.say("Non ho trovato la linea " + short_name);
+        }
     });
 };
 function sayLineaTrovata(chat, tas, dir01, dayOffset) {

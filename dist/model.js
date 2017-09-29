@@ -142,6 +142,7 @@ class TripsAndShapes {
         this.shapes = shapes; //Map<string, Shape>
     }
     // ritorna il trip 'più rappresentativo  (maggior numero di fermate)
+    // può essere undefined se in questo giorno non ho trips
     getMainTrip() {
         //const trips = Array.from(this.trips.values());
         return this.trips
@@ -149,8 +150,9 @@ class TripsAndShapes {
     }
     gmapUrl(size, n) {
         const mainTrip = this.getMainTrip();
-        const shape = this.shapes.filter(s => s.shape_id === mainTrip.shape_id)[0];
-        return shape.gmapUrl(size, n);
+        const shape = mainTrip && this.shapes.filter(s => s.shape_id === mainTrip.shape_id)[0];
+        return shape ? shape.gmapUrl(size, n) : undefined;
+        //  : utils.gStatMapUrl(`size=${size}&center=Forlimpopoli&zoom=10`);
     }
     getAsDir() {
         return this.getMainTrip().getAsDir();
