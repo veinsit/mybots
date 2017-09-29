@@ -14,10 +14,11 @@ exports.onPostback = (pl, chat, data) => {
         const route_id = pl.substring(16);
         const dir01 = 0;
         const dayOffset = 0;
-        _searchLinea_ByRouteId(bacino, route_id, dir01, dayOffset)
-            .then((lineaAndTas) => {
-            if (lineaAndTas !== undefined) {
-                sayLineaTrovata(chat, lineaAndTas.linea, lineaAndTas.tas, dir01, dayOffset);
+        //        _searchLinea_ByRouteId(bacino, route_id, dir01, dayOffset)
+        sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
+            .then((tas) => {
+            if (tas !== undefined) {
+                sayLineaTrovata(chat, tas, dir01, dayOffset);
             }
             else {
                 chat.say(`Non ho trovato la linea ${route_id}`);
@@ -93,13 +94,14 @@ exports.webgetStopSchedule = (b, stop_id, dayOffset, req, res) => {
     });
 };
 exports.webgetLinea = (b, route_id, dir01, dayOffset, req, res, trip_id) => {
-    _searchLinea_ByRouteId(b, route_id, dir01, dayOffset)
-        .then((lineaAndTas) => {
-        if (lineaAndTas !== undefined) {
+    //        _searchLinea_ByRouteId(bacino, route_id, dir01, dayOffset)
+    sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
+        .then((tas) => {
+        if (tas !== undefined) {
             res.render('linea', {
-                l: lineaAndTas.linea,
-                url: lineaAndTas.tas.gmapUrl("320x320", 20),
-                trips: trip_id ? lineaAndTas.tas.trips.filter(t => t.trip_id === trip_id) : lineaAndTas.tas.trips
+                l: tas.linea,
+                url: tas.gmapUrl("320x320", 20),
+                trips: trip_id ? tas.trips.filter(t => t.trip_id === trip_id) : tas.trips
             });
         }
         else {
@@ -194,21 +196,6 @@ export const init = (callback?): Promise<any> => {
 
 }
 */
-function _searchLinea_ByRouteId(bacino, route_id, dir01 = 0, dayOffset = 0) {
-    //const dir01 = 0;
-    // const dayOffset = 0
-    return sv.getLinea_ByRouteId(bacino, route_id)
-        .then((linea) => {
-        if (linea !== undefined) {
-            sv.getTripsAndShapes(bacino, linea.route_id, dir01, dayOffset)
-                .then((tas) => {
-                return { linea, tas };
-            });
-        }
-        else
-            return undefined;
-    });
-}
 const searchLinea_ByShortName = (chat, bacino, short_name) => {
     sv.getLinee_ByShortName(bacino, short_name)
         .then((lineeTrovate) => {
@@ -218,7 +205,7 @@ const searchLinea_ByShortName = (chat, bacino, short_name) => {
         });
     });
 };
-function sayLineaTrovata(chat, linea, tas, dir01, dayOffset) {
+function sayLineaTrovata(chat, tas, dir01, dayOffset) {
     const m = Math.random();
     /*
     if (m < 0.33)
@@ -228,7 +215,7 @@ function sayLineaTrovata(chat, linea, tas, dir01, dayOffset) {
     else
     sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
     */
-    sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset);
+    sayLineaTrovata_ListCompact(chat, tas, dir01, dayOffset);
 }
 exports.sayLineaTrovata = sayLineaTrovata;
 function sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset) {
@@ -309,7 +296,7 @@ function sayLineaTrovata_ListLarge(chat, linea, tas, dir01, dayOffset) {
 }
 exports.sayLineaTrovata_ListLarge = sayLineaTrovata_ListLarge;
 ;
-function sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset) {
+function sayLineaTrovata_ListCompact(chat, tas, dir01, dayOffset) {
     // prendi il trip[0] come rappresentativo TODO
     //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
     const options = { topElementStyle: 'compact' }; // large o compact
@@ -318,7 +305,7 @@ function sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset) {
             title: "Andata", subtitle: "orari oggi",
             default_action: {
                 type: "web_url",
-                url: sv.getOpendataUri(linea, 0, 0),
+                url: sv.getOpendataUri(tas.linea, 0, 0),
                 webview_height_ratio: "tall",
             }
         },
@@ -326,7 +313,7 @@ function sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset) {
             title: "Ritorno", subtitle: "orari oggi",
             default_action: {
                 type: "web_url",
-                url: sv.getOpendataUri(linea, 1, 0),
+                url: sv.getOpendataUri(tas.linea, 1, 0),
                 webview_height_ratio: "tall",
             }
         },
@@ -334,7 +321,7 @@ function sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset) {
             title: "Andata", subtitle: "orari domani",
             default_action: {
                 type: "web_url",
-                url: sv.getOpendataUri(linea, 0, 1),
+                url: sv.getOpendataUri(tas.linea, 0, 1),
                 webview_height_ratio: "tall",
             }
         },
@@ -342,7 +329,7 @@ function sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset) {
             title: "Ritorno", subtitle: "orari domani",
             default_action: {
                 type: "web_url",
-                url: sv.getOpendataUri(linea, 1, 1),
+                url: sv.getOpendataUri(tas.linea, 1, 1),
                 webview_height_ratio: "tall",
             }
         }

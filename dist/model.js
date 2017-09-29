@@ -132,10 +132,12 @@ class StopSchedule {
 exports.StopSchedule = StopSchedule;
 class TripsAndShapes {
     constructor(route_id, // Map<string, Trip>,
+        linea, // Map<string, Trip>,
         trips, // Map<string, Trip>,
         shapes //Map<string, Shape>
     ) {
         this.route_id = route_id;
+        this.linea = linea;
         this.trips = trips;
         this.shapes = shapes; //Map<string, Shape>
     }

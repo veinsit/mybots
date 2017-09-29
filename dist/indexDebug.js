@@ -7,8 +7,8 @@ require('dotenv').config();
 const utils = require("./utils");
 /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/
 function goDebug(tpl) {
-    tpl.onPostback("TPL_ON_CODLINEA_FO11", utils.fakechat, {});
-    tpl.onMessage(utils.fakechat, "12");
+    tpl.onPostback("TPL_ON_CODLINEA_FO04", utils.fakechat, {});
+    //tpl.onMessage(utils.fakechat, "12")
     /*
       service.getTripsAndShapes('FC', linea.route_id, 0, 0)
       .then((tas: TripsAndShapes) => {

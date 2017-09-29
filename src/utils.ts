@@ -107,6 +107,34 @@ export function loop(i: number, n: number, action: (ii: number) => any) {
     }
 }
 
+export class MinFinder<T> {
+    private dst: number[];
+    private tps: T[];
+  
+    constructor(maxNum: number, readonly isBetter: (a, b) => boolean) {
+      this.dst = new Array(maxNum); this.dst.fill(9e6);
+      this.tps = new Array(maxNum); this.tps.fill(null);
+    }
+  
+    addNumber(newNumber: number, object: T) {
+      for (let i = 0; i < this.dst.length; i++) {
+        if (this.isBetter(newNumber, this.dst[i])) {
+  
+          for (let j = this.dst.length - 1; j > i; j--) {
+            this.dst[j] = this.dst[j - 1];
+            this.tps[j] = this.tps[j - 1];
+          }
+  
+          this.dst[i] = newNumber;
+          this.tps[i] = object;
+          break;
+        }
+      }
+    }
+  
+    getResults() { return { dst: this.dst, tps: this.tps }; }
+  }//end class
+
 // ==============================================================
 //                      BootBot
 // ==============================================================

@@ -43,6 +43,11 @@ export function getLinea_ByRouteId(bacino, route_id) : Promise<Linea> {
     .then((linee:Linea[]) => linee[0]);
 }
 
+function getLineaDB_ByRouteId(db, route_id) : Promise<Linea> {
+  return dbAllPromiseDB(db, model.Linea.queryGetById(route_id))
+    .then((linee:Linea[]) => linee[0]);
+}
+
 export function getLinee_ByShortName(bacino, short_name) : Promise<Linea[]> {
   return dbAllPromiseGeneric<Linea[]>(bacino, model.Linea.queryGetByShortName(short_name))
 
@@ -69,34 +74,6 @@ export class NearestStopResult {
     readonly stopSchedules: StopSchedule
   ) { }
 }
-
-export class MinFinder<T> {
-  private dst: number[];
-  private tps: T[];
-
-  constructor(maxNum: number, readonly isBetter: (a, b) => boolean) {
-    this.dst = new Array(maxNum); this.dst.fill(9e6);
-    this.tps = new Array(maxNum); this.tps.fill(null);
-  }
-
-  addNumber(newNumber: number, object: T) {
-    for (let i = 0; i < this.dst.length; i++) {
-      if (this.isBetter(newNumber, this.dst[i])) {
-
-        for (let j = this.dst.length - 1; j > i; j--) {
-          this.dst[j] = this.dst[j - 1];
-          this.tps[j] = this.tps[j - 1];
-        }
-
-        this.dst[i] = newNumber;
-        this.tps[i] = object;
-        break;
-      }
-    }
-  }
-
-  getResults() { return { dst: this.dst, tps: this.tps }; }
-}//end class
 
 export function getTripIdsAndShapeIds_ByStop(bacino, stop_id, dayOffset): Promise<StopSchedule> {
   const db = opendb(bacino);
@@ -138,7 +115,7 @@ export function getNearestStops(bacino, coords, dayOffset: number = 0, maxNum: n
 
     const db = opendb(bacino);
 
-    const minFinder: MinFinder<model.Stop> = new MinFinder(maxNum, (a, b) => a < b)
+    const minFinder: utils.MinFinder<model.Stop> = new utils.MinFinder(maxNum, (a, b) => a < b)
     db.each(model.Stop.queryGetAll(),
       (err, row) => {
           minFinder.addNumber(
@@ -193,7 +170,7 @@ export function getNearestStops(bacino, coords, dayOffset: number = 0, maxNum: n
 // =================================================================================================
 
 // Elenco (trip_id, shape_id) di una linea in un dato giorno
-export function getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset): Promise<any[]> {
+function getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset): Promise<any[]> {
 
   const and_direction = (dir01 === 0 || dir01 === 1 ? ` and t.direction_id='${dir01}' ` : '')
   const date = utils.addDays(new Date(), dayOffset)
@@ -252,6 +229,7 @@ export function getTripsAndShapes(bacino, route_id:string, dir01, dayOffset:numb
     });
   */
   const db = opendb(bacino);
+  const plinea = getLineaDB_ByRouteId(db, route_id)
   const pkeys = getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset);
 
   const ptrips: Promise<Trip[]> = pkeys.then(
@@ -263,10 +241,10 @@ export function getTripsAndShapes(bacino, route_id:string, dir01, dayOffset:numb
   );
 
 
-  return Promise.all([ptrips, pshapes])
+  return Promise.all([ptrips, pshapes, plinea])
     .then((values) => {
       _close(db);
-      let tas = new model.TripsAndShapes(route_id, [], []);
+      let tas = new model.TripsAndShapes(route_id, values[2] as Linea, [], []);
       const trips: Trip[] = values[0] as Trip[]
       const shapes: Shape[] = values[1] as Shape[]
       trips.forEach(t => { t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id); tas.trips.push(t); })

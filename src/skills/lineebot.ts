@@ -33,16 +33,16 @@ export const onPostback = (pl: string, chat, data): boolean => {
         const dir01 = 0;
         const dayOffset = 0;
 
-        _searchLinea_ByRouteId(bacino, route_id, dir01, dayOffset)
-            .then((lineaAndTas) => {
-                if (lineaAndTas !== undefined) {
-                    sayLineaTrovata(chat, lineaAndTas.linea, lineaAndTas.tas, dir01, dayOffset);
-                }
-                else {
-                    chat.say(`Non ho trovato la linea ${route_id}`)
-                }
-
-            })
+//        _searchLinea_ByRouteId(bacino, route_id, dir01, dayOffset)
+        sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
+        .then((tas:TripsAndShapes) => {
+            if (tas !== undefined) {
+                sayLineaTrovata(chat, tas, dir01, dayOffset);
+            }
+            else {
+                chat.say(`Non ho trovato la linea ${route_id}`)
+            }
+        })
         return true;
     }
     return false;
@@ -127,19 +127,21 @@ export const webgetStopSchedule = (b, stop_id, dayOffset: number, req, res) => {
 }
 
 export const webgetLinea = (b, route_id, dir01: number, dayOffset: number, req, res, trip_id?) => {
+//        _searchLinea_ByRouteId(bacino, route_id, dir01, dayOffset)
+    sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
+    .then((tas:TripsAndShapes) => {
+        if (tas !== undefined) {
+            res.render('linea', {
+                l: tas.linea,
+                url: tas.gmapUrl("320x320", 20),
+                trips: trip_id ? tas.trips.filter(t => t.trip_id === trip_id) : tas.trips
+            })
+        } else {
+            res.send("Linea non trovata: " + route_id)
+        }
+    })
 
-    _searchLinea_ByRouteId(b, route_id, dir01, dayOffset)
-        .then((lineaAndTas) => {
-            if (lineaAndTas !== undefined) {
-                res.render('linea', {
-                    l: lineaAndTas.linea,
-                    url: lineaAndTas.tas.gmapUrl("320x320", 20),
-                    trips: trip_id ? lineaAndTas.tas.trips.filter(t => t.trip_id === trip_id) : lineaAndTas.tas.trips
-                })
-            } else {
-                res.send("Linea non trovata: " + route_id)
-            }
-        })
+
 }
 
 
@@ -237,21 +239,6 @@ export const init = (callback?): Promise<any> => {
 
 }
 */
-function _searchLinea_ByRouteId(bacino, route_id, dir01 = 0, dayOffset = 0): Promise<any> {
-    //const dir01 = 0;
-    // const dayOffset = 0
-    return sv.getLinea_ByRouteId(bacino, route_id)
-        .then((linea: Linea) => {
-            if (linea !== undefined) {
-                sv.getTripsAndShapes(bacino, linea.route_id, dir01, dayOffset)
-                    .then((tas: model.TripsAndShapes) => {
-                        return { linea, tas }
-                    })
-            }
-            else
-                return undefined;
-        })
-}
 
 const searchLinea_ByShortName = (chat, bacino, short_name) => {
 
@@ -271,7 +258,7 @@ const searchLinea_ByShortName = (chat, bacino, short_name) => {
 
 
 
-export function sayLineaTrovata(chat, linea: Linea, tas: TripsAndShapes, dir01: number, dayOffset: number) {
+export function sayLineaTrovata(chat, tas: TripsAndShapes, dir01: number, dayOffset: number) {
     const m = Math.random()
     /*
     if (m < 0.33)
@@ -281,7 +268,7 @@ export function sayLineaTrovata(chat, linea: Linea, tas: TripsAndShapes, dir01: 
     else 
     sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
     */
-    sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset);
+    sayLineaTrovata_ListCompact(chat, tas, dir01, dayOffset);
 }
 
 function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dir01, dayOffset) {  // items = array of {linea, shape}
@@ -383,7 +370,7 @@ export function sayLineaTrovata_ListLarge(chat, linea: Linea, tas: TripsAndShape
         [], options)
 };
 
-export function sayLineaTrovata_ListCompact(chat, linea: Linea, tas: TripsAndShapes, dir01: number, dayOffset: number) {
+export function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dir01: number, dayOffset: number) {
 
     // prendi il trip[0] come rappresentativo TODO
     //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
@@ -393,7 +380,7 @@ export function sayLineaTrovata_ListCompact(chat, linea: Linea, tas: TripsAndSha
             title: "Andata", subtitle: "orari oggi",
             default_action: {
                 type: "web_url",
-                url: sv.getOpendataUri(linea, 0, 0),   // andata oggi
+                url: sv.getOpendataUri(tas.linea, 0, 0),   // andata oggi
                 webview_height_ratio: "tall",
                 // messenger_extensions: true,
                 //"fallback_url": "http://www.startromagna.it/"
@@ -403,7 +390,7 @@ export function sayLineaTrovata_ListCompact(chat, linea: Linea, tas: TripsAndSha
             title: "Ritorno", subtitle: "orari oggi",
             default_action: {
                 type: "web_url",
-                url: sv.getOpendataUri(linea, 1, 0),   // ritorno oggi
+                url: sv.getOpendataUri(tas.linea, 1, 0),   // ritorno oggi
                 webview_height_ratio: "tall",
                 // messenger_extensions: true,
                 //"fallback_url": "http://www.startromagna.it/"
@@ -413,7 +400,7 @@ export function sayLineaTrovata_ListCompact(chat, linea: Linea, tas: TripsAndSha
             title: "Andata", subtitle: "orari domani",
             default_action: {
                 type: "web_url",
-                url: sv.getOpendataUri(linea, 0, 1),   // andata oggi
+                url: sv.getOpendataUri(tas.linea, 0, 1),   // andata oggi
                 webview_height_ratio: "tall",
                 // messenger_extensions: true,
                 //"fallback_url": "http://www.startromagna.it/"
@@ -423,14 +410,14 @@ export function sayLineaTrovata_ListCompact(chat, linea: Linea, tas: TripsAndSha
             title: "Ritorno", subtitle: "orari domani",
             default_action: {
                 type: "web_url",
-                url: sv.getOpendataUri(linea, 1, 1),   // ritorno oggi
+                url: sv.getOpendataUri(tas.linea, 1, 1),   // ritorno oggi
                 webview_height_ratio: "tall",
                 // messenger_extensions: true,
                 //"fallback_url": "http://www.startromagna.it/"
             }
         }
     ], // end elements
-        [], options)
+    [], options)
 };
 
 

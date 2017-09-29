@@ -191,6 +191,7 @@ export class StopSchedule {
 export class TripsAndShapes {
     constructor(
         public readonly route_id: string, // Map<string, Trip>,
+        public readonly linea:Linea, // Map<string, Trip>,
         public readonly trips: Trip[], // Map<string, Trip>,
         public readonly shapes: Shape[] //Map<string, Shape>
     ) { }
