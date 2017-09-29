@@ -19,19 +19,18 @@ type StopSchedule = model.StopSchedule
 
 // var. globale inizializzata dalla init()
 // let linee: Linea[] = []
-var bacino = 'FC'
+//var bacino = 'FC'
 
 // =======================================================  exports
 export const PB_TPL = 'TPL_';
 
 export const onPostback = (pl: string, chat, data): boolean => {
-    if (bacino===undefined)
-        bacino='FC'
-
+    const bacino='FC'
+    
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
         const route_id = pl.substring(16);
 
-        const dir01 =0;
+        const dir01 = 0;
         const dayOffset = 0;
 
         _searchLinea_ByRouteId(bacino, route_id, dir01, dayOffset)
@@ -50,9 +49,8 @@ export const onPostback = (pl: string, chat, data): boolean => {
 }
 
 export const onMessage = (chat, text): boolean => {
-    if (bacino===undefined)
-        bacino='FC'
-
+    const bacino='FC'
+    
     console.log("linee.ts: onMessage: " + text);
     if (text.startsWith("linea ")) {
         text = text.substring(6)
@@ -63,6 +61,7 @@ export const onMessage = (chat, text): boolean => {
 }
 
 export function onLocationReceived(chat, coords) {
+    const bacino='FC'
     //    const db = sv.opendb(bacino);
 
     //    db.serialize(function() {
@@ -102,6 +101,47 @@ export function onLocationReceived(chat, coords) {
             });
     }
 }
+export const webgetStopSchedule = (bacino, stop_id, dayOffset: number, req, res) => {
+    sv.getTripIdsAndShapeIds_ByStop(bacino, stop_id, dayOffset)
+        .then((ss: model.StopSchedule) => {
+            if (ss) {
+                const routeIds = Array.from(new Set(ss.trips.map(t => t.route_id))); // array di numeri linea univoci
+
+                // [  [route_id,[...trips]] ,  ]
+                let tripsByRouteId = []
+                routeIds.forEach(ri => tripsByRouteId.push([ri, ss.trips.filter(t => t.route_id === ri)]))
+                res.render('fermata', {
+                    stop: ss.stop,
+                    descOrari: "Orari di " + ut.formatDate(ut.addDays(new Date(), dayOffset)),
+                    tripsByRouteId,
+                    url: ss.stop.gmapUrl("480x480", '.')
+                })
+            }
+            else {
+                res.render('error', {
+                    message: `Fermata ${stop_id} non esistente`
+                })
+            }
+        })
+
+}
+
+export const webgetLinea = (bacino, route_id, dir01: number, dayOffset: number, req, res, trip_id?) => {
+
+    _searchLinea_ByRouteId(bacino, route_id, dir01, dayOffset)
+        .then((lineaAndTas) => {
+            if (lineaAndTas !== undefined) {
+                res.render('linea', {
+                    l: lineaAndTas.linea,
+                    url: lineaAndTas.tas.gmapUrl("320x320", 20),
+                    trips: trip_id ? lineaAndTas.tas.trips.filter(t => t.trip_id === trip_id) : lineaAndTas.tas.trips
+                })
+            } else {
+                res.send("Linea non trovata: " + route_id)
+            }
+        })
+}
+
 
 // ok sia per List che per generic
 function stopTemplateElement(bacino, i: number, ss: StopSchedule, dist: number, mp: string): any {
@@ -197,29 +237,13 @@ export const init = (callback?): Promise<any> => {
 
 }
 */
-export const webgetLinea = (_bacino, route_id, dir01: number, dayOffset: number, req, res, trip_id?) => {
-
-    _searchLinea_ByRouteId(_bacino, route_id, dir01, dayOffset)
-        .then((lineaAndTas) => {
-            if (lineaAndTas !== undefined) {
-                res.render('linea', {
-                    l: lineaAndTas.linea,
-                    url: lineaAndTas.tas.gmapUrl("320x320", 20),
-                    trips: trip_id ? lineaAndTas.tas.trips.filter(t => t.trip_id === trip_id) : lineaAndTas.tas.trips
-                })
-            } else {
-                res.send("Linea non trovata: " + route_id)
-            }
-        })
-}
-
-function _searchLinea_ByRouteId(chat, _bacino, route_id, dir01 = 0, dayOffset = 0): Promise<any> {
+function _searchLinea_ByRouteId(chat, bacino, route_id, dir01 = 0, dayOffset = 0): Promise<any> {
     //const dir01 = 0;
     // const dayOffset = 0
-    return sv.getLinea_ByRouteId(_bacino, route_id)
+    return sv.getLinea_ByRouteId(bacino, route_id)
         .then((linea: Linea) => {
             if (linea !== undefined) {
-                sv.getTripsAndShapes(_bacino, linea.route_id, dir01, dayOffset)
+                sv.getTripsAndShapes(bacino, linea.route_id, dir01, dayOffset)
                     .then((tas: model.TripsAndShapes) => {
                         return { linea, tas }
                     })
@@ -245,30 +269,6 @@ const searchLinea_ByShortName = (chat, bacino, short_name) => {
 
 
 
-export const webgetStopSchedule = (_bacino, stop_id, dayOffset: number, req, res) => {
-    sv.getTripIdsAndShapeIds_ByStop(_bacino, stop_id, dayOffset)
-        .then((ss: model.StopSchedule) => {
-            if (ss) {
-                const routeIds = Array.from(new Set(ss.trips.map(t => t.route_id))); // array di numeri linea univoci
-
-                // [  [route_id,[...trips]] ,  ]
-                let tripsByRouteId = []
-                routeIds.forEach(ri => tripsByRouteId.push([ri, ss.trips.filter(t => t.route_id === ri)]))
-                res.render('fermata', {
-                    stop: ss.stop,
-                    descOrari: "Orari di " + ut.formatDate(ut.addDays(new Date(), dayOffset)),
-                    tripsByRouteId,
-                    url: ss.stop.gmapUrl("480x480", '.')
-                })
-            }
-            else {
-                res.render('error', {
-                    message: `Fermata ${stop_id} non esistente`
-                })
-            }
-        })
-
-}
 
 
 export function sayLineaTrovata(chat, linea: Linea, tas: TripsAndShapes, dir01: number, dayOffset: number) {

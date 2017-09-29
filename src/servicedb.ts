@@ -42,6 +42,7 @@ export function getLinea_ByRouteId(bacino, route_id) : Promise<Linea> {
   return dbAllPromiseGeneric<Linea[]>(bacino, model.Linea.queryGetById(route_id))
     .then((linee:Linea[]) => linee[0]);
 }
+
 export function getLinee_ByShortName(bacino, short_name) : Promise<Linea[]> {
   return dbAllPromiseGeneric<Linea[]>(bacino, model.Linea.queryGetByShortName(short_name))
 

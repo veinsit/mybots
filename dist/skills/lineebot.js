@@ -5,12 +5,11 @@ const sv = require("../servicedb");
 const sqlite3 = require('sqlite3').verbose();
 // var. globale inizializzata dalla init()
 // let linee: Linea[] = []
-var bacino = 'FC';
+//var bacino = 'FC'
 // =======================================================  exports
 exports.PB_TPL = 'TPL_';
 exports.onPostback = (pl, chat, data) => {
-    if (bacino === undefined)
-        bacino = 'FC';
+    const bacino = 'FC';
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
         const route_id = pl.substring(16);
         const dir01 = 0;
@@ -29,8 +28,7 @@ exports.onPostback = (pl, chat, data) => {
     return false;
 };
 exports.onMessage = (chat, text) => {
-    if (bacino === undefined)
-        bacino = 'FC';
+    const bacino = 'FC';
     console.log("linee.ts: onMessage: " + text);
     if (text.startsWith("linea ")) {
         text = text.substring(6);
@@ -40,6 +38,7 @@ exports.onMessage = (chat, text) => {
     return true;
 };
 function onLocationReceived(chat, coords) {
+    const bacino = 'FC';
     //    const db = sv.opendb(bacino);
     //    db.serialize(function() {
     let dist = 9e6;
@@ -71,6 +70,43 @@ function onLocationReceived(chat, coords) {
     }
 }
 exports.onLocationReceived = onLocationReceived;
+exports.webgetStopSchedule = (bacino, stop_id, dayOffset, req, res) => {
+    sv.getTripIdsAndShapeIds_ByStop(bacino, stop_id, dayOffset)
+        .then((ss) => {
+        if (ss) {
+            const routeIds = Array.from(new Set(ss.trips.map(t => t.route_id))); // array di numeri linea univoci
+            // [  [route_id,[...trips]] ,  ]
+            let tripsByRouteId = [];
+            routeIds.forEach(ri => tripsByRouteId.push([ri, ss.trips.filter(t => t.route_id === ri)]));
+            res.render('fermata', {
+                stop: ss.stop,
+                descOrari: "Orari di " + ut.formatDate(ut.addDays(new Date(), dayOffset)),
+                tripsByRouteId,
+                url: ss.stop.gmapUrl("480x480", '.')
+            });
+        }
+        else {
+            res.render('error', {
+                message: `Fermata ${stop_id} non esistente`
+            });
+        }
+    });
+};
+exports.webgetLinea = (bacino, route_id, dir01, dayOffset, req, res, trip_id) => {
+    _searchLinea_ByRouteId(bacino, route_id, dir01, dayOffset)
+        .then((lineaAndTas) => {
+        if (lineaAndTas !== undefined) {
+            res.render('linea', {
+                l: lineaAndTas.linea,
+                url: lineaAndTas.tas.gmapUrl("320x320", 20),
+                trips: trip_id ? lineaAndTas.tas.trips.filter(t => t.trip_id === trip_id) : lineaAndTas.tas.trips
+            });
+        }
+        else {
+            res.send("Linea non trovata: " + route_id);
+        }
+    });
+};
 // ok sia per List che per generic
 function stopTemplateElement(bacino, i, ss, dist, mp) {
     let routeIds = new Set;
@@ -158,28 +194,13 @@ export const init = (callback?): Promise<any> => {
 
 }
 */
-exports.webgetLinea = (_bacino, route_id, dir01, dayOffset, req, res, trip_id) => {
-    _searchLinea_ByRouteId(_bacino, route_id, dir01, dayOffset)
-        .then((lineaAndTas) => {
-        if (lineaAndTas !== undefined) {
-            res.render('linea', {
-                l: lineaAndTas.linea,
-                url: lineaAndTas.tas.gmapUrl("320x320", 20),
-                trips: trip_id ? lineaAndTas.tas.trips.filter(t => t.trip_id === trip_id) : lineaAndTas.tas.trips
-            });
-        }
-        else {
-            res.send("Linea non trovata: " + route_id);
-        }
-    });
-};
-function _searchLinea_ByRouteId(chat, _bacino, route_id, dir01 = 0, dayOffset = 0) {
+function _searchLinea_ByRouteId(chat, bacino, route_id, dir01 = 0, dayOffset = 0) {
     //const dir01 = 0;
     // const dayOffset = 0
-    return sv.getLinea_ByRouteId(_bacino, route_id)
+    return sv.getLinea_ByRouteId(bacino, route_id)
         .then((linea) => {
         if (linea !== undefined) {
-            sv.getTripsAndShapes(_bacino, linea.route_id, dir01, dayOffset)
+            sv.getTripsAndShapes(bacino, linea.route_id, dir01, dayOffset)
                 .then((tas) => {
                 return { linea, tas };
             });
@@ -195,28 +216,6 @@ const searchLinea_ByShortName = (chat, bacino, short_name) => {
             text: "Quale linea ?",
             buttons: lineeTrovate.map(l => ut.postbackBtn(l.route_id, 'TPL_ON_CODLINEA_' + l.route_id))
         });
-    });
-};
-exports.webgetStopSchedule = (_bacino, stop_id, dayOffset, req, res) => {
-    sv.getTripIdsAndShapeIds_ByStop(_bacino, stop_id, dayOffset)
-        .then((ss) => {
-        if (ss) {
-            const routeIds = Array.from(new Set(ss.trips.map(t => t.route_id))); // array di numeri linea univoci
-            // [  [route_id,[...trips]] ,  ]
-            let tripsByRouteId = [];
-            routeIds.forEach(ri => tripsByRouteId.push([ri, ss.trips.filter(t => t.route_id === ri)]));
-            res.render('fermata', {
-                stop: ss.stop,
-                descOrari: "Orari di " + ut.formatDate(ut.addDays(new Date(), dayOffset)),
-                tripsByRouteId,
-                url: ss.stop.gmapUrl("480x480", '.')
-            });
-        }
-        else {
-            res.render('error', {
-                message: `Fermata ${stop_id} non esistente`
-            });
-        }
     });
 };
 function sayLineaTrovata(chat, linea, tas, dir01, dayOffset) {
