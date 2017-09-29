@@ -34,8 +34,17 @@ export function getStopScheduleUri(bacino, stop_id, dayOffset) {
   return `${baseUiUri}${bacino}/stops/${stop_id}/g/${dayOffset}`
 }
 
-export function getLinee(bacino): Promise<any[]> {
+export function getLinee_All(bacino): Promise<any[]> {
   return dbAllPromise(bacino, model.Linea.queryGetAll());
+}
+
+export function getLinea_ByRouteId(bacino, route_id) : Promise<Linea> {
+  return dbAllPromiseGeneric<Linea[]>(bacino, model.Linea.queryGetById(route_id))
+    .then((linee:Linea[]) => linee[0]);
+}
+export function getLinee_ByShortName(bacino, short_name) : Promise<Linea[]> {
+  return dbAllPromiseGeneric<Linea[]>(bacino, model.Linea.queryGetByShortName(short_name))
+
 }
 
 export function getRouteIdsFermataDB(db, stop_id): Promise<string[]> {
@@ -324,6 +333,15 @@ function getShapeDB(db, shape_id): Promise<Shape> {
 
 
 // ------------------------ utilities
+function dbAllPromiseGeneric<T>(bacino: string, query: string): Promise<T> {
+  return new Promise(function (resolve, reject) {
+    var db = opendb(bacino);
+    db.all(query, function (err, rows) {
+      _close(db);
+      if (err) reject(err); else resolve(rows);
+    }); // end each
+  }) // end Promise
+}
 
 function dbAllPromise(bacino: string, query: string): Promise<any[]> {
   return new Promise(function (resolve, reject) {

@@ -18,15 +18,18 @@ type TripsAndShapes = model.TripsAndShapes
 type StopSchedule = model.StopSchedule
 
 // var. globale inizializzata dalla init()
-let linee: Linea[] = []
+// let linee: Linea[] = []
+const bacino = 'FC'
 
 // =======================================================  exports
 export const PB_TPL = 'TPL_';
-export const onPostback = (pl: string, chat, data): boolean => {
-    if (pl.startsWith("TPL_ON_CODLINEA_")) {
-        return searchLinea(chat, pl.substring(16))
-    }
 
+export const onPostback = (pl: string, chat, data): boolean => {
+
+    if (pl.startsWith("TPL_ON_CODLINEA_")) {
+        searchLinea_ByRouteId(chat, bacino, pl.substring(16));
+        return true;
+    }
     return false;
 }
 
@@ -35,14 +38,12 @@ export const onMessage = (chat, text): boolean => {
     if (text.startsWith("linea ")) {
         text = text.substring(6)
     }
-    return searchLinea(chat, text);
+    // ogni mesage che arriva qui è un numero di linea
+    searchLinea_ByShortName(chat, bacino, text);
+    return true;
 }
 
-
-
 export function onLocationReceived(chat, coords) {
-
-    const bacino = 'FC'
     //    const db = sv.opendb(bacino);
 
     //    db.serialize(function() {
@@ -53,12 +54,12 @@ export function onLocationReceived(chat, coords) {
     const mp = ut.gMapMarker(coords.lat, coords.long, undefined, 'blue')
 
     sv.getNearestStops(bacino, coords, 0, 4)
-    .then((nrs: sv.NearestStopResult[]) => {
-        chat.say("Ecco le fermate più vicine (in linea d'aria)", { typing: true })
-        .then(() =>
-            sayNearestStops(nrs)
-        )
-    })
+        .then((nrs: sv.NearestStopResult[]) => {
+            chat.say("Ecco le fermate più vicine (in linea d'aria)", { typing: true })
+                .then(() =>
+                    sayNearestStops(nrs)
+                )
+        })
 
     function sayNearestStops(nrs: sv.NearestStopResult[]) {
 
@@ -110,7 +111,6 @@ function stopTemplateElement(bacino, i: number, ss: StopSchedule, dist: number, 
 /*
 export function onLocationReceived_OLD_2_(chat, coords) {
     
-        const bacino = 'FC'
         //    const db = sv.opendb(bacino);
     
         //    db.serialize(function() {
@@ -168,117 +168,84 @@ export function onLocationReceived_OLD_2_(chat, coords) {
     */
 
 // inizializza var globale 'linee'
-
+/*
 export const init = (callback?): Promise<any> => {
-    return sv.getLinee('FC')
+    return sv.getLinee(bacino)
         .then((rows: any[]) => {
-            linee = rows.map((row) => new model.Linea('FC', row));
+            linee = rows.map((row) => new model.Linea(bacino, row));
             callback && callback(linee, undefined)
         });
 
 }
-
-// TODO : no var globale linee, leggi db tutte le volte
-export const searchLinea = (chat, askedLinea): boolean => {
-    //    sv.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
-
-    let search = askedLinea.toUpperCase()
-    //    console.log(`searchLinea: searching for  route_short_name = ${search}`)
-    let results: Linea[] = linee.filter(it => it.display_name === search)
-
-    if (results.length === 0) {
-        //        console.log(`searchLinea: not found! searching for route_id = ${search}`)
-        // prova a cercare anche tra i codici linea
-        results = linee.filter(it => it.route_id === search)
-        if (results.length === 0) {
-            console.log(`searchLinea: NOT FOUND!`)
-            return false;
-        }
-    }
-
-    //console.log(`searchLinea ${search} : OK`)
-    let nresults = results.length
-
-    if (nresults > 4)
-        nresults = 4;
-
-    // ================ da qui ho results
-    let lineeTrovate = []; // items = linee
-
-    (function loop(index) {
-        lineeTrovate.push(results[index]);
-
-        if (index < nresults - 1)
-            loop(index + 1)
-        else {
-            // ho finito il loop
-            if (lineeTrovate.length === 1) {
-                let linea = lineeTrovate[0]
-                const dir01 = 0;
-                const dayOffset = 0
-                sv.getTripsAndShapes('FC', linea, dir01, dayOffset)
-                    .then((tas: model.TripsAndShapes) => {
-                        sayLineaTrovata(chat, linea, tas, dir01, dayOffset);
-                    })
-            }
-            else {
-                chat.say({
-                    text: "Quale linea ?",
-                    buttons: lineeTrovate.map(l =>
-                        ut.postbackBtn(l.display_name + ' ' + l.getCU(), 'TPL_ON_CODLINEA_' + l.route_id)
-                    )
+*/
+const searchLinea_ByRouteId = (chat, bacino, route_id) => {
+    const dir01 = 0;
+    const dayOffset = 0
+    sv.getLinea_ByRouteId(bacino, route_id)
+        .then((linea: Linea) => {
+            sv.getTripsAndShapes(bacino, linea, dir01, dayOffset)
+                .then((tas: model.TripsAndShapes) => {
+                    sayLineaTrovata(chat, linea, tas, dir01, dayOffset);
                 })
-            }
-        }
-
-    })(0)
-
-    return true;
+        })
 }
 
+const searchLinea_ByShortName = (chat, bacino, short_name) => {
 
-
-export const webgetLinea = (bacino, route_id, dir01: number, dayOffset: number, req, res, trip_id?) => {
-    const arraylinee: Linea[] = linee.filter(l => l.bacino === bacino && l.route_id === route_id)
-    if (arraylinee.length !== 1) {
-        res.send(`linea ${route_id} non trovata`)
-        return
-    }
-
-    const linea: Linea = arraylinee[0]
-    sv.getTripsAndShapes(bacino, linea.route_id, dir01, dayOffset)
-        .then((tas: TripsAndShapes) => {
-            res.render('linea', {
-                l: linea,
-                url: tas.gmapUrl("320x320", 20),
-                trips: trip_id ? tas.trips.filter(t => t.trip_id === trip_id) : tas.trips
+    sv.getLinee_ByShortName(bacino, short_name)
+        .then((lineeTrovate: Linea[]) => {
+            chat.say({
+                text: "Quale linea ?",
+                buttons: lineeTrovate.map(l =>
+                    ut.postbackBtn(l.route_long_name.substring(0, 6), 'TPL_ON_CODLINEA_' + l.route_id)
+                )
             })
         })
 }
 
 
-export const webgetStopSchedule = (bacino, stop_id, dayOffset: number, req, res) => {
-    sv.getTripIdsAndShapeIds_ByStop(bacino, stop_id, dayOffset)
-        .then((ss: model.StopSchedule) => {
-            if (ss) {
-                const routeIds = Array.from(new Set(ss.trips.map(t => t.route_id))); // array di numeri linea univoci
+export const webgetLinea = (_bacino, route_id, dir01: number, dayOffset: number, req, res, trip_id?) => {
 
-                // [  [route_id,[...trips]] ,  ]
-                let tripsByRouteId = []
-                routeIds.forEach(ri => tripsByRouteId.push([ri, ss.trips.filter(t => t.route_id === ri)]))
-                res.render('fermata', {
-                    stop: ss.stop,
-                    descOrari : "Orari di "+ut.formatDate(ut.addDays(new Date(), dayOffset)),
-                    tripsByRouteId,
-                    url: ss.stop.gmapUrl("480x480", '.')
+    sv.getLinea_ByRouteId(_bacino, route_id)
+    .then((linea: Linea) => {
+        if (linea !== undefined) {
+            sv.getTripsAndShapes(_bacino, linea.route_id, dir01, dayOffset)
+                .then((tas: TripsAndShapes) => {
+                    res.render('linea', {
+                        l: linea,
+                        url: tas.gmapUrl("320x320", 20),
+                        trips: trip_id ? tas.trips.filter(t => t.trip_id === trip_id) : tas.trips
+                    })
                 })
-            }
-            else {
-                res.render('error', {
-                    message: `Fermata ${stop_id} non esistente`
-                })
-            }
-        })
+        } else {
+            res.send("Linea non trovata: "+route_id)
+        }
+    })
+}
+
+
+export const webgetStopSchedule = (_bacino, stop_id, dayOffset: number, req, res) => {
+    sv.getTripIdsAndShapeIds_ByStop(_bacino, stop_id, dayOffset)
+    .then((ss: model.StopSchedule) => {
+        if (ss) {
+            const routeIds = Array.from(new Set(ss.trips.map(t => t.route_id))); // array di numeri linea univoci
+
+            // [  [route_id,[...trips]] ,  ]
+            let tripsByRouteId = []
+            routeIds.forEach(ri => tripsByRouteId.push([ri, ss.trips.filter(t => t.route_id === ri)]))
+            res.render('fermata', {
+                stop: ss.stop,
+                descOrari: "Orari di " + ut.formatDate(ut.addDays(new Date(), dayOffset)),
+                tripsByRouteId,
+                url: ss.stop.gmapUrl("480x480", '.')
+            })
+        }
+        else {
+            res.render('error', {
+                message: `Fermata ${stop_id} non esistente`
+            })
+        }
+    })
 
 }
 

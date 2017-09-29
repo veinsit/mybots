@@ -2,26 +2,30 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils = require("./utils");
 class Linea {
+    //    public display_name: string // es. 1,2, 96A, 127, ecc
     constructor(bacino, rec) {
-        this.getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")";
+        this.getTitle = () => "Linea " + this.route_short_name + " (" + this.route_id + ")";
         this.bacino = bacino;
-        if (rec.route_id) {
-            this.route_id = rec.route_id;
-            this.route_short_name = rec.route_short_name;
-            this.route_long_name = rec.route_short_name;
-        }
-        else {
-            this.route_id = rec;
-            this.route_short_name = rec;
-            this.route_long_name = rec;
-        }
-        this.display_name = this._displayName(this.route_id, this.route_long_name);
+        this.route_id = rec.route_id;
+        this.route_short_name = this.calcShortName(bacino, rec);
+        this.route_long_name = rec.route_long_name;
+        //        this.display_name = this._displayName(this.route_id, this.route_long_name)
     }
-    _displayName(c, ln) {
-        ln = ln.toUpperCase();
+    // nello short_name voglio il numero linea (es. 2,3,96A,..)
+    calcShortName(bacino, rec) {
+        if (bacino !== 'FC')
+            return rec.short_name;
+        else
+            return this.calcShortName_FC(rec);
+    }
+    // solo FC:
+    // nello short_name voglio il numero linea (es. 2,3,96A,..)
+    calcShortName_FC(rec) {
+        let ln = rec.route_long_name.toUpperCase();
+        // ok per tutti anche per BO
         if (!ln.startsWith('LINEA '))
             return ln;
-        ln = ln.substring(6);
+        ln = rec.route_id;
         if (ln.startsWith('FOA'))
             return parseInt(ln.substring(3)).toString() + 'A';
         if (ln.startsWith('FOS'))
@@ -56,10 +60,11 @@ class Linea {
         const cu = this.getCU();
         return { center: `${cu},Italy`, zoom: 11 };
     }
-    toString() { return this.display_name; }
+    toString() { return this.route_short_name; }
 } // end class Linea
 Linea.queryGetAll = () => "SELECT route_id, route_short_name, route_long_name, route_type FROM routes";
 Linea.queryGetById = (route_id) => Linea.queryGetAll() + ` where route_id='${route_id}'`;
+Linea.queryGetByShortName = (short_name) => Linea.queryGetAll() + ` where route_short_name='${short_name}'`;
 exports.Linea = Linea;
 class Stop {
     constructor(stop_id, stop_name, stop_lat, stop_lon) {

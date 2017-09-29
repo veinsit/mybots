@@ -10,11 +10,13 @@ const useFakeChat = false; // process.env.USE_FAKE_CHAT || false; // debug;
 // https://www.messenger.com/t/thecvbot
 // Load emojis
 const utils = require("./utils");
+// tslint:disable-next-line:ordered-imports
 const emo = require("./assets/emoji");
 const tpl = require("./skills/lineebot");
 const prove = require("./skills/prove");
+// tslint:disable-next-line:ordered-imports
 const menuAssets = require("./assets/menu");
-const express = require('express');
+const express = require("express");
 const app = express();
 app.set('views', './views');
 app.set('view engine', 'pug');
@@ -128,11 +130,16 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
     showAbout(chat);
 });
 if (debug) {
-    require("./indexDebug").goDebug(tpl);
+    // require("./indexDebug").goDebug(tpl)
     bot.start(process.env.PORT || 3000);
 }
 else {
+    bot.start(process.env.PORT || 3000);
+    /*
     tpl.init((linee, err) => { })
-        .then(() => bot.start(process.env.PORT || 3000));
+      .then(() =>
+        bot.start(process.env.PORT || 3000)
+      )
+      */
 }
 //# sourceMappingURL=index.js.map

@@ -3,14 +3,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ut = require("../utils");
 const sv = require("../servicedb");
 const sqlite3 = require('sqlite3').verbose();
-const model = require("../model");
 // var. globale inizializzata dalla init()
-let linee = [];
+// let linee: Linea[] = []
+const bacino = 'FC';
 // =======================================================  exports
 exports.PB_TPL = 'TPL_';
 exports.onPostback = (pl, chat, data) => {
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
-        return exports.searchLinea(chat, pl.substring(16));
+        searchLinea_ByRouteId(chat, bacino, pl.substring(16));
+        return true;
     }
     return false;
 };
@@ -19,10 +20,11 @@ exports.onMessage = (chat, text) => {
     if (text.startsWith("linea ")) {
         text = text.substring(6);
     }
-    return exports.searchLinea(chat, text);
+    // ogni mesage che arriva qui è un numero di linea
+    searchLinea_ByShortName(chat, bacino, text);
+    return true;
 };
 function onLocationReceived(chat, coords) {
-    const bacino = 'FC';
     //    const db = sv.opendb(bacino);
     //    db.serialize(function() {
     let dist = 9e6;
@@ -75,7 +77,6 @@ function stopTemplateElement(bacino, i, ss, dist, mp) {
 /*
 export function onLocationReceived_OLD_2_(chat, coords) {
     
-        const bacino = 'FC'
         //    const db = sv.opendb(bacino);
     
         //    db.serialize(function() {
@@ -132,77 +133,56 @@ export function onLocationReceived_OLD_2_(chat, coords) {
     }
     */
 // inizializza var globale 'linee'
-exports.init = (callback) => {
-    return sv.getLinee('FC')
-        .then((rows) => {
-        linee = rows.map((row) => new model.Linea('FC', row));
-        callback && callback(linee, undefined);
-    });
-};
-// TODO : no var globale linee, leggi db tutte le volte
-exports.searchLinea = (chat, askedLinea) => {
-    //    sv.methods.getLinee({path:{bacino:'FC'}}, function (data, response) {
-    let search = askedLinea.toUpperCase();
-    //    console.log(`searchLinea: searching for  route_short_name = ${search}`)
-    let results = linee.filter(it => it.display_name === search);
-    if (results.length === 0) {
-        //        console.log(`searchLinea: not found! searching for route_id = ${search}`)
-        // prova a cercare anche tra i codici linea
-        results = linee.filter(it => it.route_id === search);
-        if (results.length === 0) {
-            console.log(`searchLinea: NOT FOUND!`);
-            return false;
-        }
-    }
-    //console.log(`searchLinea ${search} : OK`)
-    let nresults = results.length;
-    if (nresults > 4)
-        nresults = 4;
-    // ================ da qui ho results
-    let lineeTrovate = []; // items = linee
-    (function loop(index) {
-        lineeTrovate.push(results[index]);
-        if (index < nresults - 1)
-            loop(index + 1);
-        else {
-            // ho finito il loop
-            if (lineeTrovate.length === 1) {
-                let linea = lineeTrovate[0];
-                const dir01 = 0;
-                const dayOffset = 0;
-                sv.getTripsAndShapes('FC', linea, dir01, dayOffset)
-                    .then((tas) => {
-                    sayLineaTrovata(chat, linea, tas, dir01, dayOffset);
-                });
-            }
-            else {
-                chat.say({
-                    text: "Quale linea ?",
-                    buttons: lineeTrovate.map(l => ut.postbackBtn(l.display_name + ' ' + l.getCU(), 'TPL_ON_CODLINEA_' + l.route_id))
-                });
-            }
-        }
-    })(0);
-    return true;
-};
-exports.webgetLinea = (bacino, route_id, dir01, dayOffset, req, res, trip_id) => {
-    const arraylinee = linee.filter(l => l.bacino === bacino && l.route_id === route_id);
-    if (arraylinee.length !== 1) {
-        res.send(`linea ${route_id} non trovata`);
-        return;
-    }
-    const linea = arraylinee[0];
-    sv.getTripsAndShapes(bacino, linea.route_id, dir01, dayOffset)
-        .then((tas) => {
-        res.render('linea', {
-            l: linea,
-            url: tas.gmapUrl("320x320", 20),
-            trips: trip_id ? tas.trips.filter(t => t.trip_id === trip_id) : tas.trips
+/*
+export const init = (callback?): Promise<any> => {
+    return sv.getLinee(bacino)
+        .then((rows: any[]) => {
+            linee = rows.map((row) => new model.Linea(bacino, row));
+            callback && callback(linee, undefined)
+        });
+
+}
+*/
+const searchLinea_ByRouteId = (chat, bacino, route_id) => {
+    const dir01 = 0;
+    const dayOffset = 0;
+    sv.getLinea_ByRouteId(bacino, route_id)
+        .then((linea) => {
+        sv.getTripsAndShapes(bacino, linea, dir01, dayOffset)
+            .then((tas) => {
+            sayLineaTrovata(chat, linea, tas, dir01, dayOffset);
         });
     });
 };
-exports.webgetStopSchedule = (bacino, stop_id, dayOffset, req, res) => {
-    sv.getTripIdsAndShapeIds_ByStop(bacino, stop_id, dayOffset)
+const searchLinea_ByShortName = (chat, bacino, short_name) => {
+    sv.getLinee_ByShortName(bacino, short_name)
+        .then((lineeTrovate) => {
+        chat.say({
+            text: "Quale linea ?",
+            buttons: lineeTrovate.map(l => ut.postbackBtn(l.route_long_name.substring(0, 6), 'TPL_ON_CODLINEA_' + l.route_id))
+        });
+    });
+};
+exports.webgetLinea = (_bacino, route_id, dir01, dayOffset, req, res, trip_id) => {
+    sv.getLinea_ByRouteId(_bacino, route_id)
+        .then((linea) => {
+        if (linea !== undefined) {
+            sv.getTripsAndShapes(_bacino, linea.route_id, dir01, dayOffset)
+                .then((tas) => {
+                res.render('linea', {
+                    l: linea,
+                    url: tas.gmapUrl("320x320", 20),
+                    trips: trip_id ? tas.trips.filter(t => t.trip_id === trip_id) : tas.trips
+                });
+            });
+        }
+        else {
+            res.send("Linea non trovata: " + route_id);
+        }
+    });
+};
+exports.webgetStopSchedule = (_bacino, stop_id, dayOffset, req, res) => {
+    sv.getTripIdsAndShapeIds_ByStop(_bacino, stop_id, dayOffset)
         .then((ss) => {
         if (ss) {
             const routeIds = Array.from(new Set(ss.trips.map(t => t.route_id))); // array di numeri linea univoci

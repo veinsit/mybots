@@ -14,13 +14,15 @@ const useFakeChat = false; // process.env.USE_FAKE_CHAT || false; // debug;
 
 // Load emojis
 import utils = require('./utils')
+// tslint:disable-next-line:ordered-imports
 import emo = require('./assets/emoji')
 import tpl = require("./skills/lineebot")
 import prove = require("./skills/prove")
+// tslint:disable-next-line:ordered-imports
 import menuAssets = require('./assets/menu')
 
 
-const express = require('express');
+import express = require('express');
 const app = express();
 app.set('views', './views')
 app.set('view engine', 'pug')
@@ -179,13 +181,16 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
 })
 
 if (debug) {
-  require("./indexDebug").goDebug(tpl)
+  // require("./indexDebug").goDebug(tpl)
   bot.start(process.env.PORT || 3000)
 } else {
-  tpl.init((linee, err) => { /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/ })
+  bot.start(process.env.PORT || 3000)
+  /*
+  tpl.init((linee, err) => { })
     .then(() =>
       bot.start(process.env.PORT || 3000)
     )
+    */
 }
 
 

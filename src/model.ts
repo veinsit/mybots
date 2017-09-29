@@ -3,38 +3,49 @@
 import utils = require("./utils")
 
 export class Linea {
+    //      route_id   short_name   long_name
+    // FC:    F003      F003          Linea 203   non c'emntra niente
+    // RA:    85        85            Linea 85
+    // RN:    85        85            Linea 85
+    // BO:    106       106           <nome esteso>
 
     readonly bacino: string
-    readonly route_id: string
-    readonly route_short_name: string
-    readonly route_long_name: string
+    readonly route_id: string          // codice : normalmente coincide con numero (tranne FC)
+    readonly route_short_name: string  // normalmente è il numero (tranne FC, dove è il codice)
+    readonly route_long_name: string   // è un percorso esteso (tipo PAT) oppure "Linea <numero>"
 
 
-    public display_name: string // es. 1,2, 96A, 127, ecc
+//    public display_name: string // es. 1,2, 96A, 127, ecc
 
     constructor(bacino, rec: any) {
-        this.bacino = bacino 
-        if (rec.route_id) {
-            this.route_id = rec.route_id 
-            this.route_short_name = rec.route_short_name
-            this.route_long_name = rec.route_short_name 
+        this.bacino = bacino
 
-            } else {
-            this.route_id = rec
-            this.route_short_name = rec
-            this.route_long_name = rec 
-  
-        }
-        this.display_name = this._displayName(this.route_id, this.route_long_name)
+        this.route_id = rec.route_id
+        this.route_short_name = this.calcShortName(bacino, rec)
+        this.route_long_name = rec.route_long_name
+
+//        this.display_name = this._displayName(this.route_id, this.route_long_name)
     }
 
 
-    private _displayName(c: string, ln: string): string {
+    // nello short_name voglio il numero linea (es. 2,3,96A,..)
+    private calcShortName(bacino, rec: any): string {
+        if (bacino !== 'FC')
+            return rec.short_name
+        else
+            return this.calcShortName_FC(rec)
+    }
+        // solo FC:
 
-        ln = ln.toUpperCase()
+    // nello short_name voglio il numero linea (es. 2,3,96A,..)
+    private calcShortName_FC(rec: any): string {
+        let ln = rec.route_long_name.toUpperCase()
+
+        // ok per tutti anche per BO
         if (!ln.startsWith('LINEA '))
-            return ln;
-        ln = ln.substring(6)
+            return ln; 
+
+        ln = rec.route_id
 
         if (ln.startsWith('FOA'))
             return parseInt(ln.substring(3)).toString() + 'A'
@@ -56,7 +67,7 @@ export class Linea {
 
     getAscDir() { return "Andata" }
     getDisDir() { return "Ritorno" }
-    getTitle = () => "Linea " + this.display_name + " (" + this.route_id + ")"
+    getTitle = () => "Linea " + this.route_short_name + " (" + this.route_id + ")"
     getSubtitle() {
         //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
         return this.route_long_name
@@ -81,13 +92,15 @@ export class Linea {
         return { center: `${cu},Italy`, zoom: 11 }
     }
 
-    toString() {return this.display_name}
+    toString() { return this.route_short_name }
 
     public static queryGetAll = () =>
         "SELECT route_id, route_short_name, route_long_name, route_type FROM routes"
 
     public static queryGetById = (route_id: string) => Linea.queryGetAll() + ` where route_id='${route_id}'`
 
+    public static queryGetByShortName = (short_name: string) => Linea.queryGetAll() + ` where route_short_name='${short_name}'`
+    
 }// end class Linea
 
 export class Stop {
@@ -102,10 +115,10 @@ export class Stop {
         "SELECT stop_id,stop_name,stop_lat,stop_lon FROM stops"
 
     public static queryGetById = (id) =>
-        Stop.queryGetAll() + " WHERE stop_id='"+id+"'";
+        Stop.queryGetAll() + " WHERE stop_id='" + id + "'";
 
     gmapUrl(size, n?): string {
-        return utils.gStatMapUrl(`size=${size}${ n ? this.gStopMarker(n):""}`)
+        return utils.gStatMapUrl(`size=${size}${n ? this.gStopMarker(n) : ""}`)
     }
 
     gStopMarker(n): string {
@@ -160,7 +173,7 @@ export class Trip {
 
     getLastStopName() {
         return (this.stop_times && this.stop_times.length > 1 ?
-            ( this.stop_times[this.stop_times.length - 1].stop_name)
+            (this.stop_times[this.stop_times.length - 1].stop_name)
             : "--"
         )
     }

@@ -1,7 +1,4 @@
-// module.exports = {
-  
 export const emoji = {
-    
     sos: '🆘',
     bot: '🤖',
     waving: '👋',
@@ -21,4 +18,3 @@ export const emoji = {
     new_emj: '🆕',
     film: '🎞️'
   }
-  

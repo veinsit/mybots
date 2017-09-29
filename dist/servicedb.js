@@ -24,10 +24,19 @@ function getStopScheduleUri(bacino, stop_id, dayOffset) {
     return `${baseUiUri}${bacino}/stops/${stop_id}/g/${dayOffset}`;
 }
 exports.getStopScheduleUri = getStopScheduleUri;
-function getLinee(bacino) {
+function getLinee_All(bacino) {
     return dbAllPromise(bacino, model.Linea.queryGetAll());
 }
-exports.getLinee = getLinee;
+exports.getLinee_All = getLinee_All;
+function getLinea_ByRouteId(bacino, route_id) {
+    return dbAllPromiseGeneric(bacino, model.Linea.queryGetById(route_id))
+        .then((linee) => linee[0]);
+}
+exports.getLinea_ByRouteId = getLinea_ByRouteId;
+function getLinee_ByShortName(bacino, short_name) {
+    return dbAllPromiseGeneric(bacino, model.Linea.queryGetByShortName(short_name));
+}
+exports.getLinee_ByShortName = getLinee_ByShortName;
 function getRouteIdsFermataDB(db, stop_id) {
     const q = "SELECT a.route_id FROM trips a WHERE a.trip_id IN (SELECT b.trip_id FROM stop_times b WHERE b.stop_id='" + stop_id + "') GROUP BY a.route_id";
     return dbAllPromiseDB(db, q).then((a) => a.map(x => x.route_id));
@@ -254,6 +263,18 @@ function getShapeDB(db, shape_id) {
     }); // end Promise  
 }
 // ------------------------ utilities
+function dbAllPromiseGeneric(bacino, query) {
+    return new Promise(function (resolve, reject) {
+        var db = opendb(bacino);
+        db.all(query, function (err, rows) {
+            _close(db);
+            if (err)
+                reject(err);
+            else
+                resolve(rows);
+        }); // end each
+    }); // end Promise
+}
 function dbAllPromise(bacino, query) {
     return new Promise(function (resolve, reject) {
         var db = opendb(bacino);
