@@ -19,12 +19,14 @@ type StopSchedule = model.StopSchedule
 
 // var. globale inizializzata dalla init()
 // let linee: Linea[] = []
-const bacino = 'FC'
+var bacino = 'FC'
 
 // =======================================================  exports
 export const PB_TPL = 'TPL_';
 
 export const onPostback = (pl: string, chat, data): boolean => {
+    if (bacino===undefined)
+        bacino='FC'
 
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
         const route_id = pl.substring(16);
@@ -48,6 +50,9 @@ export const onPostback = (pl: string, chat, data): boolean => {
 }
 
 export const onMessage = (chat, text): boolean => {
+    if (bacino===undefined)
+        bacino='FC'
+
     console.log("linee.ts: onMessage: " + text);
     if (text.startsWith("linea ")) {
         text = text.substring(6)

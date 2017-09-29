@@ -5,10 +5,12 @@ const sv = require("../servicedb");
 const sqlite3 = require('sqlite3').verbose();
 // var. globale inizializzata dalla init()
 // let linee: Linea[] = []
-const bacino = 'FC';
+var bacino = 'FC';
 // =======================================================  exports
 exports.PB_TPL = 'TPL_';
 exports.onPostback = (pl, chat, data) => {
+    if (bacino === undefined)
+        bacino = 'FC';
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
         const route_id = pl.substring(16);
         const dir01 = 0;
@@ -27,6 +29,8 @@ exports.onPostback = (pl, chat, data) => {
     return false;
 };
 exports.onMessage = (chat, text) => {
+    if (bacino === undefined)
+        bacino = 'FC';
     console.log("linee.ts: onMessage: " + text);
     if (text.startsWith("linea ")) {
         text = text.substring(6);
