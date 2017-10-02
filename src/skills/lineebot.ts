@@ -252,32 +252,32 @@ export function onLocationReceived_OLD_2_(chat, coords) {
 export function sayLineaTrovata(chat, tas: TripsAndShapes, dayOffset: number) {
 
     chat.say("Ecco il percorso della linea " + tas.linea.route_short_name).then(() =>
-        chat.say("Attenzione: alcune corse potrebbero seguire un percorso diverso o limitato").then(() =>
-            chat.sendAttachment('image', tas.gmapUrl(mapAttachmentSize, 20), undefined,
-                { typing: true })
-                .then(() => {
-                    const m = Math.random()
-                    /*
-                    if (m < 0.33)
-                        sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset);
-                    else if (m < 0.66)
-                        sayLineaTrovata_ListLarge(chat, linea, tas, dir01, dayOffset);
-                    else 
-                    sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
-                    */
-                    chat.say("Ora ti dirò i percorsi di 'Andata' e di 'Ritorno' di " + ut.formatDate(new Date()), { typing: true })
-                    //                    chat.say("I percorsi di'Andata di oggi/domani sono:").then(() =>
-                    chat.say("Andata:\n" + tas.getPercorsiOD(0).join('\n')).then(() =>
-                        //                            chat.say("Le corse di 'Ritorno' sono ...").then(() =>
-                        chat.say("Ritorno:\n" + tas.getPercorsiOD(1).join(', ')).then(() =>
-                            sayLineaTrovata_ListCompact(chat, tas, dayOffset)
+
+        chat.sendAttachment('image', tas.gmapUrl(mapAttachmentSize, 20), undefined,
+            { typing: true })
+            .then(() => {
+                const m = Math.random()
+                /*
+                if (m < 0.33)
+                    sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset);
+                else if (m < 0.66)
+                    sayLineaTrovata_ListLarge(chat, linea, tas, dir01, dayOffset);
+                else 
+                sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
+                */
+                chat.say("Attenzione: alcune corse potrebbero seguire un percorso diverso o limitato").then(() =>
+                    chat.say("Ora ti dirò i percorsi di 'Andata' e di 'Ritorno' di " + ut.formatDate(new Date()), { typing: true }).then(() =>
+                        chat.say("Andata:\n" + tas.getPercorsiOD(0).join('\n')).then(() =>
+                            chat.say("Ritorno:\n" + tas.getPercorsiOD(1).join('\n')).then(() =>
+                                sayLineaTrovata_ListCompact(chat, tas, dayOffset)
+                            )
                         )
-                        //                            )
                     )
-                    //                    )
-                })
-        )
+                )
+            })
     )
+
+
 }
 
 export function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dayOffset: number) {
@@ -287,45 +287,55 @@ export function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dayOffset
         //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
         const options = { topElementStyle: 'compact' }  // large o compact
         chat.sendListTemplate([
+            //            (#100) Incomplete element data: 
+            // title and at least one other field (image url, subtitle or buttons) is required with non-empty value
             {
                 title: "Andata (oggi)",
+                /*
                 default_action: {
                     type: "web_url",
                     url: sv.getOpendataUri(tas.linea, 0, 0),   // andata oggi
                     webview_height_ratio: "tall",
                     // messenger_extensions: true,
                     //fallback_url: "http://www.startromagna.it/"
-                }
+                },*/
+                buttons: [ut.weburlBtn("Vedi orari", sv.getOpendataUri(tas.linea, 0, 0))]
             },
             {
                 title: "Ritorno (oggi)",
+                /*
                 default_action: {
                     type: "web_url",
                     url: sv.getOpendataUri(tas.linea, 1, 0),   // ritorno oggi
                     webview_height_ratio: "tall",
                     // messenger_extensions: true,
                     //fallback_url: "http://www.startromagna.it/"
-                }
+                } */
+                buttons: [ut.weburlBtn("Vedi orari", sv.getOpendataUri(tas.linea, 1, 0))]
             },
             {
                 title: "Andata (domani)",
+                /*
                 default_action: {
                     type: "web_url",
                     url: sv.getOpendataUri(tas.linea, 0, 1),   // andata oggi
                     webview_height_ratio: "tall",
                     // messenger_extensions: true,
                     //fallback_url: "http://www.startromagna.it/"
-                }
+                }*/
+                buttons: [ut.weburlBtn("Vedi orari", sv.getOpendataUri(tas.linea, 0, 1))]
             },
             {
                 title: "Ritorno (domani)",
+                /*
                 default_action: {
                     type: "web_url",
                     url: sv.getOpendataUri(tas.linea, 1, 1),   // ritorno oggi
                     webview_height_ratio: "tall",
                     // messenger_extensions: true,
                     //fallback_url: "http://www.startromagna.it/"
-                }
+                } */
+                buttons: [ut.weburlBtn("Vedi orari", sv.getOpendataUri(tas.linea, 1, 1))]
             }
         ], // end elements
             [], options)
