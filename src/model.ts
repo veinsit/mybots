@@ -15,7 +15,7 @@ export class Linea {
     readonly route_long_name: string   // è un percorso esteso (tipo PAT) oppure "Linea <numero>"
 
 
-//    public display_name: string // es. 1,2, 96A, 127, ecc
+    //    public display_name: string // es. 1,2, 96A, 127, ecc
 
     constructor(bacino, rec: any) {
         this.bacino = bacino
@@ -24,7 +24,7 @@ export class Linea {
         this.route_short_name = this.calcShortName(bacino, rec)
         this.route_long_name = rec.route_long_name
 
-//        this.display_name = this._displayName(this.route_id, this.route_long_name)
+        //        this.display_name = this._displayName(this.route_id, this.route_long_name)
     }
 
 
@@ -35,7 +35,7 @@ export class Linea {
         else
             return this.calcShortName_FC(rec)
     }
-        // solo FC:
+    // solo FC:
 
     // nello short_name voglio il numero linea (es. 2,3,96A,..)
     private calcShortName_FC(rec: any): string {
@@ -43,7 +43,7 @@ export class Linea {
 
         // ok per tutti anche per BO
         if (!ln.startsWith('LINEA '))
-            return ln; 
+            return ln;
 
         ln = rec.route_id
 
@@ -100,7 +100,7 @@ export class Linea {
     public static queryGetById = (route_id: string) => Linea.queryGetAll() + ` where route_id='${route_id}'`
 
     public static queryGetByShortName = (short_name: string) => Linea.queryGetAll() + ` where route_short_name='${short_name}'`
-    
+
 }// end class Linea
 
 export class Stop {
@@ -151,32 +151,32 @@ export class Trip {
         //readonly linea: Linea,
         readonly trip_id: string,
         public shape_id: string,
-        readonly direction_id:number,
+        readonly direction_id: number,
         public stop_times: StopTime[]
     ) { }
 
     public shape?: Shape
 
-    getOD() : string {
-        return (this.stop_times.length > 1 ? 
-            `${this.stop_times[0].stop_name} >> ${this.stop_times[this.stop_times.length-1].stop_name}`
+    getOD(): string {
+        return (this.stop_times.length > 1 ?
+            `${this.stop_times[0].stop_name} >> ${this.stop_times[this.stop_times.length - 1].stop_name}`
             : '--');
     }
-/*
-    getAsDir() {
-        return (this.stop_times ?
-            (this.stop_times[0].stop_name + " >> " + this.stop_times[this.stop_times.length - 1].stop_name)
-            : "Andata"
-        )
-    }
-
-    getDiDir() {
-        return (this.stop_times ?
-            (this.stop_times[this.stop_times.length - 1].stop_name + " >> " + this.stop_times[0].stop_name)
-            : "Ritorno"
-        )
-    }
-*/
+    /*
+        getAsDir() {
+            return (this.stop_times ?
+                (this.stop_times[0].stop_name + " >> " + this.stop_times[this.stop_times.length - 1].stop_name)
+                : "Andata"
+            )
+        }
+    
+        getDiDir() {
+            return (this.stop_times ?
+                (this.stop_times[this.stop_times.length - 1].stop_name + " >> " + this.stop_times[0].stop_name)
+                : "Ritorno"
+            )
+        }
+    */
     getLastStopName() {
         return (this.stop_times && this.stop_times.length > 1 ?
             (this.stop_times[this.stop_times.length - 1].stop_name)
@@ -195,15 +195,14 @@ export class StopSchedule {
 }
 
 export class TripsAndShapes {
+    public readonly trips: (Trip[])[] // Map<string, Trip>,
     constructor(
         public readonly route_id: string, // Map<string, Trip>,
-        public readonly linea:Linea, // Map<string, Trip>,
-        public readonly trips: (Trip[])[], // Map<string, Trip>,
+        public readonly linea: Linea, // Map<string, Trip>,
         public readonly shapes: Shape[] //Map<string, Shape>
-    ) 
-    { 
-        trips = new Array(2);
-        trips[0] = []; trips[1] = [];
+    ) {
+        this.trips = new Array(2);
+        this.trips[0] = []; this.trips[1] = [];
     }
 
     // ritorna il trip 'più rappresentativo  (maggior numero di fermate)
@@ -213,22 +212,32 @@ export class TripsAndShapes {
         return this.trips[0] //  0 per scegliere 'Andata'
             .filter(t =>
                 t.stop_times.length === Math.max(...this.trips[0].map(t => t.stop_times.length))
-            )[0]  
+            )[0]
     }
 
-    getPercorsiOD(dir01:number) : string[] {
+    getPercorsiOD(dir01: number): string[] {
         const s = new Set
         this.trips[dir01]
-            .forEach(t=>s.add(`${t.stop_times[0].stop_name} >> ${t.stop_times[t.stop_times.length-1].stop_name}`))
-   
-        return Array.from(s); 
+            .forEach(t => s.add(`${t.stop_times[0].stop_name} >> ${t.stop_times[t.stop_times.length - 1].stop_name}`))
+
+        return Array.from(s);
     }
 
     gmapUrl(size, n): string {
         const mainTrip: Trip = this.getMainTrip();
         const shape = mainTrip && this.shapes.filter(s => s.shape_id === mainTrip.shape_id)[0];
         return shape ? shape.gmapUrl(size, n) : undefined
-           //  : utils.gStatMapUrl(`size=${size}&center=Forlimpopoli&zoom=10`);
+        //  : utils.gStatMapUrl(`size=${size}&center=Forlimpopoli&zoom=10`);
+    }
+
+    // factory method
+    public static get(route_id, linea: Linea, alltrips: Trip[], shapes: Shape[]) {
+        let tas = new TripsAndShapes(route_id, linea, shapes);
+        alltrips.forEach(t => {
+            t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id);
+            tas.trips[t.direction_id].push(t);
+        })
+        return tas;
     }
 
 }

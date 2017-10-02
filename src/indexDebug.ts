@@ -26,8 +26,10 @@ type StopSchedule = model.StopSchedule
 /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/
 export function goDebug(tpl) { 
 
-    tpl.onPostback("TPL_ON_CODLINEA_FO04", utils.fakechat, {})
-    //tpl.onMessage(utils.fakechat, "12")
+    // tpl.onPostback("TPL_ON_CODLINEA_FO04", utils.fakechat, {})
+    
+    tpl.onMessage(utils.fakechat, "orari 5a")
+
     /*
       service.getTripsAndShapes('FC', linea.route_id, 0, 0)
       .then((tas: TripsAndShapes) => {

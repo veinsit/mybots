@@ -228,15 +228,9 @@ export function getTripsAndShapes(bacino, route_id:string, dir01:number, dayOffs
   return Promise.all([ptrips, pshapes, plinea])
     .then((values) => {
       _close(db);
-      let tas = new model.TripsAndShapes(route_id, values[2] as Linea, [], []);
       const alltrips: Trip[] = values[0] as Trip[]
       const shapes:  Shape[] = values[1] as Shape[]
-      alltrips.forEach(t => { 
-        t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id); 
-        tas.trips[t.direction_id].push(t); 
-      })
-      shapes.forEach(s => tas.shapes.push(s))
-
+      let tas = model.TripsAndShapes.get(route_id, values[2] as Linea, alltrips, shapes);
       return tas;
     });
 

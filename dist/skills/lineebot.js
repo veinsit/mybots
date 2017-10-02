@@ -6,7 +6,7 @@ const sqlite3 = require('sqlite3').verbose();
 // var. globale inizializzata dalla init()
 // let linee: Linea[] = []
 //var bacino = 'FC'
-const bacino = 'FC';
+const bacino = process.env.BACINO || 'FC';
 const mapAttachmentSize = "300x300";
 // =======================================================  exports
 exports.PB_TPL = 'TPL_';

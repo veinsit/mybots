@@ -142,16 +142,14 @@ exports.StopSchedule = StopSchedule;
 class TripsAndShapes {
     constructor(route_id, // Map<string, Trip>,
         linea, // Map<string, Trip>,
-        trips, // Map<string, Trip>,
         shapes //Map<string, Shape>
     ) {
         this.route_id = route_id;
         this.linea = linea;
-        this.trips = trips;
         this.shapes = shapes; //Map<string, Shape>
-        trips = new Array(2);
-        trips[0] = [];
-        trips[1] = [];
+        this.trips = new Array(2);
+        this.trips[0] = [];
+        this.trips[1] = [];
     }
     // ritorna il trip 'più rappresentativo  (maggior numero di fermate)
     // può essere undefined se in questo giorno non ho trips
@@ -171,6 +169,15 @@ class TripsAndShapes {
         const shape = mainTrip && this.shapes.filter(s => s.shape_id === mainTrip.shape_id)[0];
         return shape ? shape.gmapUrl(size, n) : undefined;
         //  : utils.gStatMapUrl(`size=${size}&center=Forlimpopoli&zoom=10`);
+    }
+    // factory method
+    static get(route_id, linea, alltrips, shapes) {
+        let tas = new TripsAndShapes(route_id, linea, shapes);
+        alltrips.forEach(t => {
+            t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id);
+            tas.trips[t.direction_id].push(t);
+        });
+        return tas;
     }
 }
 exports.TripsAndShapes = TripsAndShapes;
