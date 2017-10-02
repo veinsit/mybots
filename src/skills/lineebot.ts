@@ -121,6 +121,7 @@ export function onLocationReceived(chat, coords) {
             });
     }
 }
+
 export const webgetStopSchedule = (b, stop_id, dayOffset: number, req, res) => {
     sv.getStopSchedule(b, stop_id, dayOffset)
         .then((ss: model.StopSchedule) => {
