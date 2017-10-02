@@ -3,12 +3,11 @@ html
   head
     title= l.getTitle()
   body
-    table
-      tr
-        td
-          img(src=url)
-        td= l.getTitle()
-
+    h3=l.getTitle()
+    - if (typeof(url) !== 'undefined'){
+      img(src=url)
+    -}
+    h4= descOrari
     div
       table
         tbody

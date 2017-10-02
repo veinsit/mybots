@@ -97,6 +97,30 @@ function loop(i, n, action) {
     }
 }
 exports.loop = loop;
+class MinFinder {
+    constructor(maxNum, isBetter) {
+        this.isBetter = isBetter;
+        this.dst = new Array(maxNum);
+        this.dst.fill(9e6);
+        this.tps = new Array(maxNum);
+        this.tps.fill(null);
+    }
+    addNumber(newNumber, object) {
+        for (let i = 0; i < this.dst.length; i++) {
+            if (this.isBetter(newNumber, this.dst[i])) {
+                for (let j = this.dst.length - 1; j > i; j--) {
+                    this.dst[j] = this.dst[j - 1];
+                    this.tps[j] = this.tps[j - 1];
+                }
+                this.dst[i] = newNumber;
+                this.tps[i] = object;
+                break;
+            }
+        }
+    }
+    getResults() { return { dst: this.dst, tps: this.tps }; }
+} //end class
+exports.MinFinder = MinFinder;
 // ==============================================================
 //                      BootBot
 // ==============================================================
