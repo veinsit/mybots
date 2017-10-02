@@ -142,14 +142,16 @@ export const webgetLinea = (b, route_id, dir01: number, dayOffset: number, req, 
     sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
         .then((tas: TripsAndShapes) => {
             if (tas !== undefined) {
+                const descDate = ut.formatDate(ut.addDays(new Date(), dayOffset))
                 const url = tas.gmapUrl("360x360", 20); // può essere undefined se non ho trips
-                const descOrari = url ? "Orari di " + ut.formatDate(ut.addDays(new Date(), dayOffset)) :
-                    ut.formatDate(ut.addDays(new Date(), dayOffset)) + " non ci sono corse"
+                const descOrari = url ? `Orari di ${descDate}` : descDate + " non ci sono corse"
+                const descPercorsi = url ? `Percorsi di ${descDate}` : descDate + " non ci sono corse"
                 res.render('linea', {
-                    l: tas.linea,
-                    descOrari,
+                    tas,
+                    dir01,
+                    descOrari, descPercorsi,
                     url,
-                    trips: trip_id ? tas.trips[dir01].filter(t => t.trip_id === trip_id) : tas.trips
+                    trips: trip_id ? tas.trips[dir01].filter(t => t.trip_id === trip_id) : tas.trips[dir01]
                 })
             } else {
                 res.send("Linea non trovata: " + route_id)

@@ -1,12 +1,27 @@
 
 html
   head
-    title= l.getTitle()
+    title= tas.linea.getTitle()
   body
-    h3=l.getTitle()
-    - if (typeof(url) !== 'undefined'){
-      img(src=url)
-    -}
+    h3=tas.linea.getTitle()
+    div= (dir01===0 ? "Andata: " : "Ritorno: ") + "Destinazioni: " 
+      b=tas.getEndStopNames(dir01).join(', ')
+    br
+    div
+      table
+        tr
+          td
+            - if (typeof(url) !== 'undefined'){
+              img(src=url)
+            -}
+          td(valign="top")
+            p= "L'immagine è una rappresentazione fissa della linea e non indica necessariamente tutti i percorsi in questa data"
+            br
+            br
+            h4= descPercorsi
+            each od in tas.getPercorsiOD(dir01)
+              div= od
+
     h4= descOrari
     div
       table

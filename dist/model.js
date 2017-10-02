@@ -4,7 +4,7 @@ const utils = require("./utils");
 class Linea {
     //    public display_name: string // es. 1,2, 96A, 127, ecc
     constructor(bacino, rec) {
-        this.getTitle = () => "Linea " + this.route_short_name + " (" + this.route_id + ")";
+        this.getTitle = () => "Linea " + this.route_short_name;
         this.bacino = bacino;
         this.route_id = rec.route_id;
         this.route_short_name = this.calcShortName(bacino, rec);
@@ -13,8 +13,8 @@ class Linea {
     }
     // nello short_name voglio il numero linea (es. 2,3,96A,..)
     calcShortName(bacino, rec) {
-        if (bacino !== 'FC')
-            return rec.short_name;
+        if (bacino !== 'FCZZZZZ')
+            return rec.route_short_name;
         else
             return this.calcShortName_FC(rec);
     }
@@ -106,28 +106,14 @@ class Trip {
     }
     getOD() {
         return (this.stop_times.length > 1 ?
-            `${this.stop_times[0].stop_name} >> ${this.stop_times[this.stop_times.length - 1].stop_name}`
+            `${this.getStartStop().stop_name} >> ${this.getEndStop().stop_name}`
             : '--');
     }
-    /*
-        getAsDir() {
-            return (this.stop_times ?
-                (this.stop_times[0].stop_name + " >> " + this.stop_times[this.stop_times.length - 1].stop_name)
-                : "Andata"
-            )
-        }
-    
-        getDiDir() {
-            return (this.stop_times ?
-                (this.stop_times[this.stop_times.length - 1].stop_name + " >> " + this.stop_times[0].stop_name)
-                : "Ritorno"
-            )
-        }
-    */
-    getLastStopName() {
-        return (this.stop_times && this.stop_times.length > 1 ?
-            (this.stop_times[this.stop_times.length - 1].stop_name)
-            : "--");
+    getStartStop() {
+        return this.stop_times[0];
+    }
+    getEndStop() {
+        return this.stop_times[this.stop_times.length - 1];
     }
 }
 exports.Trip = Trip;
@@ -162,6 +148,12 @@ class TripsAndShapes {
         const s = new Set;
         this.trips[dir01]
             .forEach(t => s.add(`${t.stop_times[0].stop_name} >> ${t.stop_times[t.stop_times.length - 1].stop_name}`));
+        return Array.from(s);
+    }
+    getEndStopNames(dir01) {
+        const s = new Set;
+        this.trips[dir01]
+            .forEach((t) => s.add(t.getEndStop().stop_name));
         return Array.from(s);
     }
     gmapUrl(size, n) {

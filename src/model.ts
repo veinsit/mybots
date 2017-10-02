@@ -30,8 +30,8 @@ export class Linea {
 
     // nello short_name voglio il numero linea (es. 2,3,96A,..)
     private calcShortName(bacino, rec: any): string {
-        if (bacino !== 'FC')
-            return rec.short_name
+        if (bacino !== 'FCZZZZZ')
+            return rec.route_short_name
         else
             return this.calcShortName_FC(rec)
     }
@@ -67,7 +67,7 @@ export class Linea {
 
     getAscDir() { return "Andata" }
     getDisDir() { return "Ritorno" }
-    getTitle = () => "Linea " + this.route_short_name + " (" + this.route_id + ")"
+    getTitle = () => "Linea " + this.route_short_name;
     getSubtitle() {
         //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
         return this.route_long_name
@@ -159,29 +159,14 @@ export class Trip {
 
     getOD(): string {
         return (this.stop_times.length > 1 ?
-            `${this.stop_times[0].stop_name} >> ${this.stop_times[this.stop_times.length - 1].stop_name}`
+            `${this.getStartStop().stop_name} >> ${this.getEndStop().stop_name}`
             : '--');
     }
-    /*
-        getAsDir() {
-            return (this.stop_times ?
-                (this.stop_times[0].stop_name + " >> " + this.stop_times[this.stop_times.length - 1].stop_name)
-                : "Andata"
-            )
-        }
-    
-        getDiDir() {
-            return (this.stop_times ?
-                (this.stop_times[this.stop_times.length - 1].stop_name + " >> " + this.stop_times[0].stop_name)
-                : "Ritorno"
-            )
-        }
-    */
-    getLastStopName() {
-        return (this.stop_times && this.stop_times.length > 1 ?
-            (this.stop_times[this.stop_times.length - 1].stop_name)
-            : "--"
-        )
+    getStartStop(): Stop {
+        return this.stop_times[0];
+    }
+    getEndStop(): Stop {
+        return this.stop_times[this.stop_times.length - 1];
     }
 
 }
@@ -219,6 +204,14 @@ export class TripsAndShapes {
         const s = new Set
         this.trips[dir01]
             .forEach(t => s.add(`${t.stop_times[0].stop_name} >> ${t.stop_times[t.stop_times.length - 1].stop_name}`))
+
+        return Array.from(s);
+    }
+
+    getEndStopNames(dir01: number): string[] {
+        const s = new Set
+        this.trips[dir01]
+            .forEach((t:Trip) => s.add(t.getEndStop().stop_name))
 
         return Array.from(s);
     }
