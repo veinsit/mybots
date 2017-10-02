@@ -26,10 +26,6 @@ type StopSchedule = model.StopSchedule
 /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/
 export function goDebug(tpl) { 
     
-  let linee;
-  tpl.init((_linee, err) => { linee = _linee/*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/ })
-    .then(() => {
-      const linea = linee.filter(l => l.route_id === 'F127')[0]
 /*
       service.getTripsAndShapes('FC', linea.route_id, 0, 0)
       .then((tas: TripsAndShapes) => {
@@ -38,6 +34,7 @@ export function goDebug(tpl) {
 */
     // tpl.onLocationReceived(utils.fakechat, {lat:44.225084, long:12.058301});
 
+    service.getLinea_ByRouteId('FC','FO11');
     service.getTripIdsAndShapeIds_ByStop('FC', '3322', 0).then((ss:model.StopSchedule) => {
         /*
       console.log( {
@@ -46,5 +43,4 @@ export function goDebug(tpl) {
           url : ss.stop.gmapUrl("320x320","F")
       })    */
   })
-    })
 }

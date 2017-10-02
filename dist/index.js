@@ -130,7 +130,7 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
     showAbout(chat);
 });
 if (debug) {
-    // require("./indexDebug").goDebug(tpl)
+    require("./indexDebug").goDebug(tpl);
     bot.start(process.env.PORT || 3000);
 }
 else {
