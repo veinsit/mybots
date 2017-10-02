@@ -86,11 +86,13 @@ bot.on('message', (payload, chat) => {
 ]
 */
 bot.on('attachment', (payload, chat) => {
-    console.log('Att:' + JSON.stringify(payload.message.attachments[0]));
+    const att = payload.message.attachments[0];
+    console.log('Att:' + JSON.stringify(att));
     if (useFakeChat)
         chat = utils.fakechat;
-    if (payload.message.attachments[0])
-        tpl.onLocationReceived(chat, payload.message.attachments[0].payload.coordinates);
+    let coords;
+    if (att.type === 'location' && att.payload && (coords = att.payload.coordinates))
+        tpl.onLocationReceived(chat, coords);
 });
 bot.on('postback', (payload, chat, data) => {
     const pl = payload.postback.payload;
