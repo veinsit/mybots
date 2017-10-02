@@ -77,8 +77,8 @@ export function onLocationReceived(chat, coords) {
     //    const db = sv.opendb(bacino);
 
     //    db.serialize(function() {
-    let dist: number = 9e6
-    let nearestStop;
+    //let dist: number = 9e6
+    //let nearestStop;
 
     // marker per coords
     const mp = ut.gMapMarker(coords.lat, coords.long, undefined, 'blue')
