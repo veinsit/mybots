@@ -265,22 +265,72 @@ export function sayLineaTrovata(chat, tas: TripsAndShapes, dayOffset: number) {
                     else 
                     sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
                     */
-                    chat.say("Le corse di 'Andata' sono ...").then(() =>
-                        chat.say(tas.getPercorsiOD(0).join(', ')).then(() =>
-                            chat.say("Le corse di 'Ritorno' sono ...").then(() =>
-                                chat.say(tas.getPercorsiOD(1).join(', ')).then(() =>
-                                    sayLineaTrovata_ListCompact(chat, tas,  dayOffset)
-                                )
-                            )
+                    chat.say("Ora ti dirò i percorsi di 'Andata' e di 'Ritorno' di " + ut.formatDate(new Date()), { typing: true })
+                    //                    chat.say("I percorsi di'Andata di oggi/domani sono:").then(() =>
+                    chat.say("Andata:\n" + tas.getPercorsiOD(0).join('\n')).then(() =>
+                        //                            chat.say("Le corse di 'Ritorno' sono ...").then(() =>
+                        chat.say("Ritorno:\n" + tas.getPercorsiOD(1).join(', ')).then(() =>
+                            sayLineaTrovata_ListCompact(chat, tas, dayOffset)
                         )
+                        //                            )
                     )
+                    //                    )
                 })
         )
     )
-
-
-
 }
+
+export function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dayOffset: number) {
+
+    chat.say("Qui puoi consultare gli orari completi").then(() => {
+        // prendi il trip[0] come rappresentativo TODO
+        //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
+        const options = { topElementStyle: 'compact' }  // large o compact
+        chat.sendListTemplate([
+            {
+                title: "Andata (oggi)",
+                default_action: {
+                    type: "web_url",
+                    url: sv.getOpendataUri(tas.linea, 0, 0),   // andata oggi
+                    webview_height_ratio: "tall",
+                    // messenger_extensions: true,
+                    //fallback_url: "http://www.startromagna.it/"
+                }
+            },
+            {
+                title: "Ritorno (oggi)",
+                default_action: {
+                    type: "web_url",
+                    url: sv.getOpendataUri(tas.linea, 1, 0),   // ritorno oggi
+                    webview_height_ratio: "tall",
+                    // messenger_extensions: true,
+                    //fallback_url: "http://www.startromagna.it/"
+                }
+            },
+            {
+                title: "Andata (domani)",
+                default_action: {
+                    type: "web_url",
+                    url: sv.getOpendataUri(tas.linea, 0, 1),   // andata oggi
+                    webview_height_ratio: "tall",
+                    // messenger_extensions: true,
+                    //fallback_url: "http://www.startromagna.it/"
+                }
+            },
+            {
+                title: "Ritorno (domani)",
+                default_action: {
+                    type: "web_url",
+                    url: sv.getOpendataUri(tas.linea, 1, 1),   // ritorno oggi
+                    webview_height_ratio: "tall",
+                    // messenger_extensions: true,
+                    //fallback_url: "http://www.startromagna.it/"
+                }
+            }
+        ], // end elements
+            [], options)
+    })// end chat.say.then
+};
 
 function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dayOffset) {  // items = array of {linea, shape}
 
@@ -337,57 +387,6 @@ function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dayOff
 }
 
 
-export function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dayOffset: number) {
-
-    chat.say("Qui puoi consultare gli orari completi").then(() => {
-        // prendi il trip[0] come rappresentativo TODO
-        //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
-        const options = { topElementStyle: 'compact' }  // large o compact
-        chat.sendListTemplate([
-            {
-                title: "Andata", subtitle: "orari oggi",
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 0, 0),   // andata oggi
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    fallback_url: "http://www.startromagna.it/"
-                }
-            },
-            {
-                title: "Ritorno", subtitle: "orari oggi",
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 1, 0),   // ritorno oggi
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    fallback_url: "http://www.startromagna.it/"
-                }
-            },
-            {
-                title: "Andata", subtitle: "orari domani",
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 0, 1),   // andata oggi
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    fallback_url: "http://www.startromagna.it/"
-                }
-            },
-            {
-                title: "Ritorno", subtitle: "orari domani",
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 1, 1),   // ritorno oggi
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    fallback_url: "http://www.startromagna.it/"
-                }
-            }
-        ], // end elements
-            [], options)
-    })// end chat.say.then
-};
 
 
 // =================================================================================

@@ -216,10 +216,61 @@ function sayLineaTrovata(chat, tas, dayOffset) {
         else
         sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
         */
-        chat.say("Le corse di 'Andata' sono ...").then(() => chat.say(tas.getPercorsiOD(0).join(', ')).then(() => chat.say("Le corse di 'Ritorno' sono ...").then(() => chat.say(tas.getPercorsiOD(1).join(', ')).then(() => sayLineaTrovata_ListCompact(chat, tas, dayOffset)))));
+        chat.say("Ora ti dirò i percorsi di 'Andata' e di 'Ritorno' di " + ut.formatDate(new Date()), { typing: true });
+        //                    chat.say("I percorsi di'Andata di oggi/domani sono:").then(() =>
+        chat.say("Andata:\n" + tas.getPercorsiOD(0).join('\n')).then(() => 
+        //                            chat.say("Le corse di 'Ritorno' sono ...").then(() =>
+        chat.say("Ritorno:\n" + tas.getPercorsiOD(1).join(', ')).then(() => sayLineaTrovata_ListCompact(chat, tas, dayOffset))
+        //                            )
+        );
+        //                    )
     })));
 }
 exports.sayLineaTrovata = sayLineaTrovata;
+function sayLineaTrovata_ListCompact(chat, tas, dayOffset) {
+    chat.say("Qui puoi consultare gli orari completi").then(() => {
+        // prendi il trip[0] come rappresentativo TODO
+        //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
+        const options = { topElementStyle: 'compact' }; // large o compact
+        chat.sendListTemplate([
+            {
+                title: "Andata (oggi)",
+                default_action: {
+                    type: "web_url",
+                    url: sv.getOpendataUri(tas.linea, 0, 0),
+                    webview_height_ratio: "tall",
+                }
+            },
+            {
+                title: "Ritorno (oggi)",
+                default_action: {
+                    type: "web_url",
+                    url: sv.getOpendataUri(tas.linea, 1, 0),
+                    webview_height_ratio: "tall",
+                }
+            },
+            {
+                title: "Andata (domani)",
+                default_action: {
+                    type: "web_url",
+                    url: sv.getOpendataUri(tas.linea, 0, 1),
+                    webview_height_ratio: "tall",
+                }
+            },
+            {
+                title: "Ritorno (domani)",
+                default_action: {
+                    type: "web_url",
+                    url: sv.getOpendataUri(tas.linea, 1, 1),
+                    webview_height_ratio: "tall",
+                }
+            }
+        ], // end elements
+        [], options);
+    }); // end chat.say.then
+}
+exports.sayLineaTrovata_ListCompact = sayLineaTrovata_ListCompact;
+;
 function sayLineaTrovata_Generic(chat, linea, tas, dayOffset) {
     //     options && options.imageAspectRatio && (payload.image_aspect_ratio = options.imageAspectRatio) && (delete options.imageAspectRatio);
     const _element = (t) => {
@@ -269,56 +320,4 @@ function sayLineaTrovata_Generic(chat, linea, tas, dayOffset) {
     , {image_aspect_ratio:'square'});
     */
 }
-function sayLineaTrovata_ListCompact(chat, tas, dayOffset) {
-    chat.say("Qui puoi consultare gli orari completi").then(() => {
-        // prendi il trip[0] come rappresentativo TODO
-        //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
-        const options = { topElementStyle: 'compact' }; // large o compact
-        chat.sendListTemplate([
-            {
-                title: "Andata", subtitle: "orari oggi",
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 0, 0),
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    fallback_url: "http://www.startromagna.it/"
-                }
-            },
-            {
-                title: "Ritorno", subtitle: "orari oggi",
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 1, 0),
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    fallback_url: "http://www.startromagna.it/"
-                }
-            },
-            {
-                title: "Andata", subtitle: "orari domani",
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 0, 1),
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    fallback_url: "http://www.startromagna.it/"
-                }
-            },
-            {
-                title: "Ritorno", subtitle: "orari domani",
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 1, 1),
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    fallback_url: "http://www.startromagna.it/"
-                }
-            }
-        ], // end elements
-        [], options);
-    }); // end chat.say.then
-}
-exports.sayLineaTrovata_ListCompact = sayLineaTrovata_ListCompact;
-;
 //# sourceMappingURL=lineebot.js.map

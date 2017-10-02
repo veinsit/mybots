@@ -17,12 +17,13 @@ function dateAaaaMmGg(d) {
     return d.getFullYear().toString() + pad2zero(d.getMonth() + 1) + pad2zero(d.getDate());
 }
 exports.dateAaaaMmGg = dateAaaaMmGg;
-function formatDate(date) {
-    var day = date.getDate();
-    var monthIndex = date.getMonth();
-    var year = date.getFullYear();
+function formatDate(date, dayOffset = 0) {
+    const date2 = addDays(date, dayOffset);
+    var day = date2.getDate();
+    var monthIndex = date2.getMonth();
+    var year = date2.getFullYear();
     const dw = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
-    return dw[date.getDay()] + ' ' + day + '/' + (monthIndex + 1).toString() + '/' + year;
+    return dw[date2.getDay()] + ' ' + day + '/' + (monthIndex + 1).toString() + '/' + year;
 }
 exports.formatDate = formatDate;
 function gStatMapUrl(params) {
@@ -38,10 +39,21 @@ export function omStatMapUrl(params:string) : string {
 }
 */
 exports.fakechat = {
-    say: (text) => console.log('chat say > ' + text),
-    sendAttachment: (type, url) => console.log('chat sendAttachment > ' + url),
-    sendListTemplate: (elements) => elements.forEach(e => console.log(`${e.title} - ${e.subtitle}`))
+    say: (text) => new Promise((rs, rj) => {
+        rs(console.log('chat say > ' + text));
+    }),
+    sendAttachment: (type, url) => new Promise((rs, rj) => {
+        rs(console.log('chat sendAttachment > ' + url));
+    }),
+    sendListTemplate: (elements) => new Promise((rs, rj) => {
+        rs(elements.forEach(e => console.log(`${e.title} - ${e.subtitle}`)));
+    }),
 };
+// crea una Promise per una funzione
+function MyPro(afunction) {
+    return new Promise((resolve, reject) => { resolve(afunction); });
+}
+exports.MyPro = MyPro;
 function distance(lat1, lon1, lat2, lon2) {
     var R = 6371e3; // metres
     var fi1 = toRadians(lat1);

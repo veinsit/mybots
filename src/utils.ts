@@ -17,14 +17,15 @@ export function dateAaaaMmGg(d: Date) {
     return d.getFullYear().toString() + pad2zero(d.getMonth() + 1) + pad2zero(d.getDate())
 }
 
-export function formatDate(date) {
+export function formatDate(date: Date, dayOffset: number = 0) {
 
-    var day = date.getDate();
-    var monthIndex = date.getMonth();
-    var year = date.getFullYear();
-    const dw = ['domenica', 'lunedì','martedì','mercoledì','giovedì','venerdì','sabato']
+    const date2 = addDays(date, dayOffset)
+    var day = date2.getDate();
+    var monthIndex = date2.getMonth();
+    var year = date2.getFullYear();
+    const dw = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato']
 
-    return dw[date.getDay()]+' '+day + '/' + (monthIndex + 1).toString() + '/' + year;
+    return dw[date2.getDay()] + ' ' + day + '/' + (monthIndex + 1).toString() + '/' + year;
 }
 
 export function gStatMapUrl(params: string): string {
@@ -41,9 +42,26 @@ export function omStatMapUrl(params:string) : string {
 }
 */
 export const fakechat = {
-    say: (text) => console.log('chat say > ' + text),
-    sendAttachment: (type, url) => console.log('chat sendAttachment > ' + url),
-    sendListTemplate: (elements) => elements.forEach(e => console.log(`${e.title} - ${e.subtitle}`))
+    say: (text): Promise<any> => new Promise<any>((rs, rj) => {
+        rs(
+            console.log('chat say > ' + text)
+        )
+    }),
+    sendAttachment: (type, url) : Promise<any> => new Promise<any>((rs, rj) => {
+        rs(
+            console.log('chat sendAttachment > ' + url)
+        )
+    }),
+    sendListTemplate: (elements): Promise<any> => new Promise<any>((rs, rj) => {
+        rs(
+            elements.forEach(e => console.log(`${e.title} - ${e.subtitle}`))
+        )
+    }),
+}
+
+// crea una Promise per una funzione
+export function MyPro(afunction: (any) => any): Promise<any> {
+    return new Promise<any>((resolve, reject) => { resolve(afunction) })
 }
 
 export function distance(lat1, lon1, lat2, lon2) {
@@ -110,30 +128,30 @@ export function loop(i: number, n: number, action: (ii: number) => any) {
 export class MinFinder<T> {
     private dst: number[];
     private tps: T[];
-  
+
     constructor(maxNum: number, readonly isBetter: (a, b) => boolean) {
-      this.dst = new Array(maxNum); this.dst.fill(9e6);
-      this.tps = new Array(maxNum); this.tps.fill(null);
+        this.dst = new Array(maxNum); this.dst.fill(9e6);
+        this.tps = new Array(maxNum); this.tps.fill(null);
     }
-  
+
     addNumber(newNumber: number, object: T) {
-      for (let i = 0; i < this.dst.length; i++) {
-        if (this.isBetter(newNumber, this.dst[i])) {
-  
-          for (let j = this.dst.length - 1; j > i; j--) {
-            this.dst[j] = this.dst[j - 1];
-            this.tps[j] = this.tps[j - 1];
-          }
-  
-          this.dst[i] = newNumber;
-          this.tps[i] = object;
-          break;
+        for (let i = 0; i < this.dst.length; i++) {
+            if (this.isBetter(newNumber, this.dst[i])) {
+
+                for (let j = this.dst.length - 1; j > i; j--) {
+                    this.dst[j] = this.dst[j - 1];
+                    this.tps[j] = this.tps[j - 1];
+                }
+
+                this.dst[i] = newNumber;
+                this.tps[i] = object;
+                break;
+            }
         }
-      }
     }
-  
+
     getResults() { return { dst: this.dst, tps: this.tps }; }
-  }//end class
+}//end class
 
 // ==============================================================
 //                      BootBot
