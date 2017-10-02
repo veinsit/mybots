@@ -103,11 +103,11 @@ exports.webgetStopSchedule = (b, stop_id, dayOffset, req, res) => {
 };
 exports.webgetLinea = (b, route_id, dir01, dayOffset, req, res, trip_id) => {
     //        _searchLinea_ByRouteId(bacino, route_id, dir01, dayOffset)
-    sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
+    sv.getTripsAndShapes(b, route_id, dir01, dayOffset)
         .then((tas) => {
         if (tas !== undefined) {
             const descDate = ut.formatDate(ut.addDays(new Date(), dayOffset));
-            const url = tas.gmapUrl("360x360", 20); // può essere undefined se non ho trips
+            const url = tas.gmapUrl("360x360", dir01, 20); // può essere undefined se non ho trips
             const descOrari = url ? `Orari di ${descDate}` : descDate + " non ci sono corse";
             const descPercorsi = url ? `Percorsi di ${descDate}` : descDate + " non ci sono corse";
             res.render('linea', {
@@ -127,7 +127,7 @@ const onCodlinea = (chat, route_id) => {
     const dayOffset = 0;
     sv.getTripsAndShapes(bacino, route_id, -1, dayOffset) // -1: sia A che R
         .then((tas) => {
-        sayLineaTrovata(chat, tas, dayOffset);
+        sayLineaTrovata(chat, tas, 0, dayOffset); // 0 = Andata come default
     });
 };
 // ok sia per List che per generic
@@ -206,8 +206,8 @@ export function onLocationReceived_OLD_2_(chat, coords) {
     
     }
     */
-function sayLineaTrovata(chat, tas, dayOffset) {
-    chat.say("Ecco il percorso della linea " + tas.linea.route_short_name).then(() => chat.sendAttachment('image', tas.gmapUrl(mapAttachmentSize, 20), undefined, { typing: true })
+function sayLineaTrovata(chat, tas, dir01, dayOffset) {
+    chat.say("Ecco il percorso della linea " + tas.linea.route_short_name).then(() => chat.sendAttachment('image', tas.gmapUrl(mapAttachmentSize, dir01, 20), undefined, { typing: true })
         .then(() => {
         const m = Math.random();
         /*

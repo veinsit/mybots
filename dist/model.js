@@ -139,10 +139,10 @@ class TripsAndShapes {
     }
     // ritorna il trip 'più rappresentativo  (maggior numero di fermate)
     // può essere undefined se in questo giorno non ho trips
-    getMainTrip() {
+    getMainTrip(dir01) {
         //const trips = Array.from(this.trips.values());
-        return this.trips[0] //  0 per scegliere 'Andata'
-            .filter(t => t.stop_times.length === Math.max(...this.trips[0].map(t => t.stop_times.length)))[0];
+        return this.trips[dir01] //  0 per scegliere 'Andata'
+            .filter(t => t.stop_times.length === Math.max(...this.trips[dir01].map(t => t.stop_times.length)))[0];
     }
     getPercorsiOD(dir01) {
         const s = new Set;
@@ -156,8 +156,8 @@ class TripsAndShapes {
             .forEach((t) => s.add(t.getEndStop().stop_name));
         return Array.from(s);
     }
-    gmapUrl(size, n) {
-        const mainTrip = this.getMainTrip();
+    gmapUrl(size, dir01, n) {
+        const mainTrip = this.getMainTrip(dir01);
         const shape = mainTrip && this.shapes.filter(s => s.shape_id === mainTrip.shape_id)[0];
         return shape ? shape.gmapUrl(size, n) : undefined;
         //  : utils.gStatMapUrl(`size=${size}&center=Forlimpopoli&zoom=10`);
