@@ -168,7 +168,6 @@ const onCodlinea = (chat, route_id) => {
         })
 }
 
-
 // ok sia per List che per generic
 function stopTemplateElement(bacino, i: number, ss: StopSchedule, dist: number, mp: string): any {
 
