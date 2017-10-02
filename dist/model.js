@@ -97,24 +97,33 @@ class Trip {
         //    readonly bacino: string,
         route_id, 
         //readonly linea: Linea,
-        trip_id, shape_id, 
-        //    readonly dir01:number,
-        stop_times) {
+        trip_id, shape_id, direction_id, stop_times) {
         this.route_id = route_id;
         this.trip_id = trip_id;
         this.shape_id = shape_id;
+        this.direction_id = direction_id;
         this.stop_times = stop_times;
     }
-    getAsDir() {
-        return (this.stop_times ?
-            (this.stop_times[0].stop_name + " >> " + this.stop_times[this.stop_times.length - 1].stop_name)
-            : "Andata");
+    getOD() {
+        return (this.stop_times.length > 1 ?
+            `${this.stop_times[0].stop_name} >> ${this.stop_times[this.stop_times.length - 1].stop_name}`
+            : '--');
     }
-    getDiDir() {
-        return (this.stop_times ?
-            (this.stop_times[this.stop_times.length - 1].stop_name + " >> " + this.stop_times[0].stop_name)
-            : "Ritorno");
-    }
+    /*
+        getAsDir() {
+            return (this.stop_times ?
+                (this.stop_times[0].stop_name + " >> " + this.stop_times[this.stop_times.length - 1].stop_name)
+                : "Andata"
+            )
+        }
+    
+        getDiDir() {
+            return (this.stop_times ?
+                (this.stop_times[this.stop_times.length - 1].stop_name + " >> " + this.stop_times[0].stop_name)
+                : "Ritorno"
+            )
+        }
+    */
     getLastStopName() {
         return (this.stop_times && this.stop_times.length > 1 ?
             (this.stop_times[this.stop_times.length - 1].stop_name)
@@ -140,25 +149,28 @@ class TripsAndShapes {
         this.linea = linea;
         this.trips = trips;
         this.shapes = shapes; //Map<string, Shape>
+        trips = new Array(2);
+        trips[0] = [];
+        trips[1] = [];
     }
     // ritorna il trip 'più rappresentativo  (maggior numero di fermate)
     // può essere undefined se in questo giorno non ho trips
     getMainTrip() {
         //const trips = Array.from(this.trips.values());
-        return this.trips
-            .filter(t => t.stop_times.length === Math.max(...this.trips.map(t => t.stop_times.length)))[0];
+        return this.trips[0] //  0 per scegliere 'Andata'
+            .filter(t => t.stop_times.length === Math.max(...this.trips[0].map(t => t.stop_times.length)))[0];
+    }
+    getPercorsiOD(dir01) {
+        const s = new Set;
+        this.trips[dir01]
+            .forEach(t => s.add(`${t.stop_times[0].stop_name} >> ${t.stop_times[t.stop_times.length - 1].stop_name}`));
+        return Array.from(s);
     }
     gmapUrl(size, n) {
         const mainTrip = this.getMainTrip();
         const shape = mainTrip && this.shapes.filter(s => s.shape_id === mainTrip.shape_id)[0];
         return shape ? shape.gmapUrl(size, n) : undefined;
         //  : utils.gStatMapUrl(`size=${size}&center=Forlimpopoli&zoom=10`);
-    }
-    getAsDir() {
-        return this.getMainTrip().getAsDir();
-    }
-    getDiDir() {
-        return this.getMainTrip().getDiDir();
     }
 }
 exports.TripsAndShapes = TripsAndShapes;

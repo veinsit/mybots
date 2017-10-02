@@ -10,8 +10,6 @@ const useFakeChat = false; // process.env.USE_FAKE_CHAT || false; // debug;
 // https://www.messenger.com/t/thecvbot
 // Load emojis
 const utils = require("./utils");
-// tslint:disable-next-line:ordered-imports
-const emo = require("./assets/emoji");
 const tpl = require("./skills/lineebot");
 const prove = require("./skills/prove");
 // tslint:disable-next-line:ordered-imports
@@ -44,7 +42,7 @@ const bot = new BootBot(app, {
 menuAssets.defineMenu(bot);
 // Load Persistent Menu, Greeting Text and set GetStarted Button
 bot.setGetStartedButton((payload, chat) => {
-    chat.sendTypingIndicator(500).then(() => showIntro(chat));
+    chat.sendTypingIndicator(500).then(() => showSalutation(chat));
 });
 // Load emojis
 let emoji = require('./assets/emoji');
@@ -58,7 +56,7 @@ bot.on('message', (payload, chat) => {
     console.log("sender.id = " + fid + "; text=" + text);
     if (startKeys.filter(it => it === text).length > 0) {
         chat.sendTypingIndicator(500)
-            .then(() => showIntro(chat));
+            .then(() => showSalutation(chat));
         return;
     }
     let gestitoDaModulo = false;
@@ -67,7 +65,8 @@ bot.on('message', (payload, chat) => {
             break;
     }
     if (!gestitoDaModulo) {
-        chat.say("Non ho capito ...");
+        chat.say("Non ho capito ...")
+            .then(() => showHelp(chat));
     }
 }); // end bot.on('message', ..)
 // usato per la posizione
@@ -104,24 +103,22 @@ bot.on('postback', (payload, chat, data) => {
             break;
     }
 });
-const showIntro = (chat) => {
+const showSalutation = (chat) => {
     chat.getUserProfile()
         .then((user) => {
-        chat.say("Salve, " + user.first_name + "! " + emoji.emoji.waving + "\n\nPuoi dirmi:\n")
-            .then(() => chat.say('- una linea (es. 92, 5A, 127, ..),\n- oppure inviarmi la tua posizione: provalo !!\n\n')
-            .then(() => chat.say({
-            text: 'Scegli uno degli esempi, o inizia direttamente',
-            quickReplies: ['linea 2', '5A', '92', { "content_type": "location" }]
-        })));
+        chat.say("Salve, " + user.first_name + "! " + emoji.emoji.waving)
+            .then(() => showHelp(chat));
     });
+};
+const showHelp = (chat) => {
+    chat.say('Puoi dirmi:\n- una linea (es. 92, 5A, 127, ..),\n- oppure inviami la tua posizione: provalo !!\n')
+        .then(() => chat.say({
+        text: 'Scegli uno degli esempi, o inizia direttamente',
+        quickReplies: ['linea 2', '5A', '92', { "content_type": "location" }]
+    }));
 };
 const showAbout = (chat) => {
     chat.say(emoji.heart + "Mi chiamo ... e sono ....");
-};
-const showHelp = (chat) => {
-    const help_msg = emo.emoji.heart + "help help help 1" +
-        "\n" + emo.emoji.tv + "help help help 2";
-    chat.say(help_msg);
 };
 bot.on('postback:HELP_PAYLOAD', (payload, chat) => {
     showHelp(chat);
@@ -131,15 +128,6 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
 });
 if (debug) {
     require("./indexDebug").goDebug(tpl);
-    bot.start(process.env.PORT || 3000);
 }
-else {
-    bot.start(process.env.PORT || 3000);
-    /*
-    tpl.init((linee, err) => { })
-      .then(() =>
-        bot.start(process.env.PORT || 3000)
-      )
-      */
-}
+bot.start(process.env.PORT || 3000);
 //# sourceMappingURL=index.js.map

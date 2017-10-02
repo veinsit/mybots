@@ -172,7 +172,7 @@ export function getNearestStops(bacino, coords, dayOffset: number = 0, maxNum: n
 // Elenco (trip_id, shape_id) di una linea in un dato giorno
 function getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset): Promise<any[]> {
 
-  const and_direction = (dir01 === 0 || dir01 === 1 ? ` and t.direction_id='${dir01}' ` : '')
+  const and_direction = (dir01===0 || dir01===1 ? ` and t.direction_id='${dir01}' ` : '')
   const date = utils.addDays(new Date(), dayOffset)
 
   // elenco di corse (trip_id) del servizio (service_id) di una data
@@ -196,7 +196,7 @@ function getTripIdsAndShapeIdsDB_ByStop(db, stop_id, dayOffset): Promise<any[]> 
   const date = utils.addDays(new Date(), dayOffset)
 
   // elenco di corse (trip_id) del servizio (service_id) di una data
-  const q = `SELECT t.route_id, t.trip_id, t.shape_id 
+  const q = `SELECT t.route_id, t.trip_id, t.direction_id, t.shape_id 
   FROM trips t 
   WHERE  t.trip_id IN (SELECT DISTINCT b.trip_id FROM stop_times b WHERE b.stop_id='${stop_id}') 
     AND  t.service_id IN (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}')
@@ -210,24 +210,8 @@ function getTripIdsAndShapeIdsDB_ByStop(db, stop_id, dayOffset): Promise<any[]> 
   });
 }
 
-export function getTripsAndShapes(bacino, route_id:string, dir01, dayOffset:number): Promise<TripsAndShapes> {
-  /*
-    const and_direction = (dir01 === 0 || dir01 === 1 ? ` and t.direction_id='${dir01}' ` : '')
-    const date = utils.addDays(new Date(), dayOffset)
-  
-  
-    // elenco di corse (trip_id) del servizio (service_id) di una data
-    const q = `select t.trip_id, t.shape_id from trips t 
-          where t.route_id='${route_id}' ${and_direction} 
-          and t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}' )`;
-  
-    const pkeys: Promise<any[]> = new Promise<any[]>(function (resolve, reject) {
-      db.all(q, function (err, rows) {
-        if (err) reject(err);
-        else resolve(rows);
-      }); // end each
-    });
-  */
+export function getTripsAndShapes(bacino, route_id:string, dir01:number, dayOffset:number): Promise<TripsAndShapes> {
+
   const db = opendb(bacino);
   const plinea = getLineaDB_ByRouteId(db, bacino, route_id)
   const pkeys = getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset);
@@ -245,9 +229,12 @@ export function getTripsAndShapes(bacino, route_id:string, dir01, dayOffset:numb
     .then((values) => {
       _close(db);
       let tas = new model.TripsAndShapes(route_id, values[2] as Linea, [], []);
-      const trips: Trip[] = values[0] as Trip[]
-      const shapes: Shape[] = values[1] as Shape[]
-      trips.forEach(t => { t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id); tas.trips.push(t); })
+      const alltrips: Trip[] = values[0] as Trip[]
+      const shapes:  Shape[] = values[1] as Shape[]
+      alltrips.forEach(t => { 
+        t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id); 
+        tas.trips[t.direction_id].push(t); 
+      })
       shapes.forEach(s => tas.shapes.push(s))
 
       return tas;
@@ -260,20 +247,26 @@ export function getTripsAndShapes(bacino, route_id:string, dir01, dayOffset:numb
 export function getTripDB(db, route_id, trip_id, shape_id, stop_id?): Promise<Trip> {
   utils.assert(db !== undefined && typeof db.all === 'function', "metodo getTripWithoutShape")
 
-  const andStopIt = (stop_id ? ` AND s.stop_id='${stop_id}'` : ``);
+  const andStopId = (stop_id ? ` AND s.stop_id='${stop_id}'` : ``);
+//NON HA SENSO perché dipende dal trip_id  const andDirectionId = (direction_id===0 || direction_id===1 ? ` AND t.direction_id='${direction_id}` : ``);
+
   const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
     st.stop_id, s.stop_name, 
     st.arrival_time, st.departure_time, 
-    s.stop_lat, s.stop_lon
+    s.stop_lat, s.stop_lon,
+    t.direction_id
     FROM stop_times st 
     JOIN stops s on st.stop_id=s.stop_id 
-    WHERE st.trip_id='${trip_id}' and s.stop_name NOT LIKE 'Semafor%' ${andStopIt}
+    JOIN trips t on st.trip_id=t.trip_id 
+    WHERE st.trip_id='${trip_id}' 
+     AND s.stop_name NOT LIKE 'Semafor%' 
+     ${andStopId} 
     order by 1`;
 
   return dbAllPromiseDB(db, q_stop_times)
     .then((rows) => {
 
-      return new model.Trip(route_id, trip_id, shape_id,
+      return new model.Trip(route_id, trip_id, shape_id, rows[0].direction_id,
         rows.map(r => new model.StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon))
       ) // end new Trip
 
@@ -283,12 +276,9 @@ export function getTripDB(db, route_id, trip_id, shape_id, stop_id?): Promise<Tr
 
 }
 
-
-
 // =================================================================================================
 //                ShapePoint
 // =================================================================================================
-
 
 function getShapeDB(db, shape_id): Promise<Shape> {
   utils.assert(db !== undefined && typeof db.all === 'function', "metodo getShapeDB ")

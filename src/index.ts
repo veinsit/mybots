@@ -64,7 +64,7 @@ menuAssets.defineMenu(bot)
 // Load Persistent Menu, Greeting Text and set GetStarted Button
 
 bot.setGetStartedButton((payload, chat) => {
-  chat.sendTypingIndicator(500).then(() => showIntro(chat))
+  chat.sendTypingIndicator(500).then(() => showSalutation(chat))
 })
 
 // Load emojis
@@ -85,7 +85,7 @@ bot.on('message', (payload, chat) => {
   if (startKeys.filter(it => it === text).length > 0) {
     chat.sendTypingIndicator(500)
       .then(() =>
-        showIntro(chat)
+      showSalutation(chat)
       )
 
     return;
@@ -181,15 +181,8 @@ bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
 
 if (debug) {
   require("./indexDebug").goDebug(tpl)
-  bot.start(process.env.PORT || 3000)
-} else {
-  bot.start(process.env.PORT || 3000)
-  /*
-  tpl.init((linee, err) => { })
-    .then(() =>
-      bot.start(process.env.PORT || 3000)
-    )
-    */
 }
+
+bot.start(process.env.PORT || 3000)
 
 

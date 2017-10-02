@@ -152,7 +152,7 @@ function getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset) {
 function getTripIdsAndShapeIdsDB_ByStop(db, stop_id, dayOffset) {
     const date = utils.addDays(new Date(), dayOffset);
     // elenco di corse (trip_id) del servizio (service_id) di una data
-    const q = `SELECT t.route_id, t.trip_id, t.shape_id 
+    const q = `SELECT t.route_id, t.trip_id, t.direction_id, t.shape_id 
   FROM trips t 
   WHERE  t.trip_id IN (SELECT DISTINCT b.trip_id FROM stop_times b WHERE b.stop_id='${stop_id}') 
     AND  t.service_id IN (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}')
@@ -167,23 +167,6 @@ function getTripIdsAndShapeIdsDB_ByStop(db, stop_id, dayOffset) {
     });
 }
 function getTripsAndShapes(bacino, route_id, dir01, dayOffset) {
-    /*
-      const and_direction = (dir01 === 0 || dir01 === 1 ? ` and t.direction_id='${dir01}' ` : '')
-      const date = utils.addDays(new Date(), dayOffset)
-    
-    
-      // elenco di corse (trip_id) del servizio (service_id) di una data
-      const q = `select t.trip_id, t.shape_id from trips t
-            where t.route_id='${route_id}' ${and_direction}
-            and t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}' )`;
-    
-      const pkeys: Promise<any[]> = new Promise<any[]>(function (resolve, reject) {
-        db.all(q, function (err, rows) {
-          if (err) reject(err);
-          else resolve(rows);
-        }); // end each
-      });
-    */
     const db = opendb(bacino);
     const plinea = getLineaDB_ByRouteId(db, bacino, route_id);
     const pkeys = getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset);
@@ -193,9 +176,12 @@ function getTripsAndShapes(bacino, route_id, dir01, dayOffset) {
         .then((values) => {
         _close(db);
         let tas = new model.TripsAndShapes(route_id, values[2], [], []);
-        const trips = values[0];
+        const alltrips = values[0];
         const shapes = values[1];
-        trips.forEach(t => { t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id); tas.trips.push(t); });
+        alltrips.forEach(t => {
+            t.shape = utils.find(tas.shapes, s => s.shape_id === t.shape_id);
+            tas.trips[t.direction_id].push(t);
+        });
         shapes.forEach(s => tas.shapes.push(s));
         return tas;
     });
@@ -206,18 +192,23 @@ exports.getTripsAndShapes = getTripsAndShapes;
 //
 function getTripDB(db, route_id, trip_id, shape_id, stop_id) {
     utils.assert(db !== undefined && typeof db.all === 'function', "metodo getTripWithoutShape");
-    const andStopIt = (stop_id ? ` AND s.stop_id='${stop_id}'` : ``);
+    const andStopId = (stop_id ? ` AND s.stop_id='${stop_id}'` : ``);
+    //NON HA SENSO perché dipende dal trip_id  const andDirectionId = (direction_id===0 || direction_id===1 ? ` AND t.direction_id='${direction_id}` : ``);
     const q_stop_times = `select CAST(st.stop_sequence as INTEGER) as stop_seq, 
     st.stop_id, s.stop_name, 
     st.arrival_time, st.departure_time, 
-    s.stop_lat, s.stop_lon
+    s.stop_lat, s.stop_lon,
+    t.direction_id
     FROM stop_times st 
     JOIN stops s on st.stop_id=s.stop_id 
-    WHERE st.trip_id='${trip_id}' and s.stop_name NOT LIKE 'Semafor%' ${andStopIt}
+    JOIN trips t on st.trip_id=t.trip_id 
+    WHERE st.trip_id='${trip_id}' 
+     AND s.stop_name NOT LIKE 'Semafor%' 
+     ${andStopId} 
     order by 1`;
     return dbAllPromiseDB(db, q_stop_times)
         .then((rows) => {
-        return new model.Trip(route_id, trip_id, shape_id, rows.map(r => new model.StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon))); // end new Trip
+        return new model.Trip(route_id, trip_id, shape_id, rows[0].direction_id, rows.map(r => new model.StopTime(r.stop_id, r.stop_name, r.arrival_time, r.departure_time, r.stop_lat, r.stop_lon))); // end new Trip
     });
     // end Promise
 }
@@ -244,17 +235,7 @@ function getShapeDB(db, shape_id) {
     }); // end Promise  
 }
 // ------------------------ utilities
-/*
-function dbAllPromiseGeneric(bacino: string, query: string): Promise<any[]> {
-  return new Promise(function (resolve, reject) {
-    var db = opendb(bacino);
-    db.all(query, function (err, rows) {
-      _close(db);
-      if (err) reject(err); else resolve(rows);
-    }); // end each
-  }) // end Promise
-}
-*/
+// per 'any' intendo un record di database 
 function dbAllPromise(bacino, query) {
     return new Promise(function (resolve, reject) {
         var db = opendb(bacino);
@@ -268,6 +249,7 @@ function dbAllPromise(bacino, query) {
     }); // end Promise
 }
 // con db già aperto
+// per 'any' intendo un record di database 
 function dbAllPromiseDB(db, query) {
     return new Promise(function (resolve, reject) {
         db.all(query, function (err, rows) {

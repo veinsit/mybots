@@ -21,6 +21,7 @@ type StopSchedule = model.StopSchedule
 // let linee: Linea[] = []
 //var bacino = 'FC'
 const bacino = 'FC'
+const mapAttachmentSize = "300x300"
 
 // =======================================================  exports
 export const PB_TPL = 'TPL_';
@@ -35,7 +36,7 @@ export const onPostback = (pl: string, chat, data): boolean => {
     return false;
 }
 
-export const onMessage = (chat, text: string): boolean => {
+export const onMessage = (chat, text): boolean => {
     //   const bacino='FC'
 
     console.log("linee.ts: onMessage: " + text);
@@ -99,7 +100,7 @@ export function onLocationReceived(chat, coords) {
         }
 
         // invia mappa con markers
-        chat.sendAttachment('image', ut.gStatMapUrl(`size=300x300${markers}`), undefined,
+        chat.sendAttachment('image', ut.gStatMapUrl(`size=${mapAttachmentSize}${markers}`), undefined,
             { typing: true })
             .then(() => {
                 const elements = []
@@ -141,14 +142,14 @@ export const webgetLinea = (b, route_id, dir01: number, dayOffset: number, req, 
     sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
         .then((tas: TripsAndShapes) => {
             if (tas !== undefined) {
-                const url = tas.gmapUrl("320x320", 20); // può essere undefined se non ho trips
+                const url = tas.gmapUrl("360x360", 20); // può essere undefined se non ho trips
                 const descOrari = url ? "Orari di " + ut.formatDate(ut.addDays(new Date(), dayOffset)) :
                     ut.formatDate(ut.addDays(new Date(), dayOffset)) + " non ci sono corse"
                 res.render('linea', {
                     l: tas.linea,
                     descOrari,
                     url,
-                    trips: trip_id ? tas.trips.filter(t => t.trip_id === trip_id) : tas.trips
+                    trips: trip_id ? tas.trips[dir01].filter(t => t.trip_id === trip_id) : tas.trips
                 })
             } else {
                 res.send("Linea non trovata: " + route_id)
@@ -159,12 +160,11 @@ export const webgetLinea = (b, route_id, dir01: number, dayOffset: number, req, 
 }
 
 const onCodlinea = (chat, route_id) => {
-    const dir01 = 0;
     const dayOffset = 0;
 
-    sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
+    sv.getTripsAndShapes(bacino, route_id, -1, dayOffset) // -1: sia A che R
         .then((tas: TripsAndShapes) => {
-            sayLineaTrovata(chat, tas, dir01, dayOffset);
+            sayLineaTrovata(chat, tas, dayOffset);
         })
 }
 
@@ -182,7 +182,7 @@ function stopTemplateElement(bacino, i: number, ss: StopSchedule, dist: number, 
     return {
         title: ss.stop.stop_name + (dist ? " a " + Math.floor(dist) + "m (l.d'a.)" : ''),
         subtitle: "Linee " + lineePassanti.join(', '),
-        image_url: ut.gStatMapUrl(`size=200x200${mp}${mf}`),
+        image_url: ut.gStatMapUrl(`size=${mapAttachmentSize}${mp}${mf}`),
         //        buttons: [ut.postbackBtn("Orari", "TPL_STOPSCHED_0_" + ss.stop.stop_id)] // 0 = oggi
         buttons: [
             ut.weburlBtn("Orari Oggi", sv.getStopScheduleUri(bacino, ss.stop.stop_id, 0)),
@@ -190,8 +190,6 @@ function stopTemplateElement(bacino, i: number, ss: StopSchedule, dist: number, 
         ]
     }
 }
-
-
 
 /*
 export function onLocationReceived_OLD_2_(chat, coords) {
@@ -252,39 +250,46 @@ export function onLocationReceived_OLD_2_(chat, coords) {
     }
     */
 
-// inizializza var globale 'linee'
-/*
-export const init = (callback?): Promise<any> => {
-    return sv.getLinee(bacino)
-        .then((rows: any[]) => {
-            linee = rows.map((row) => new model.Linea(bacino, row));
-            callback && callback(linee, undefined)
-        });
+export function sayLineaTrovata(chat, tas: TripsAndShapes, dayOffset: number) {
+
+    chat.say("Ecco il percorso della linea " + tas.linea.route_short_name).then(() =>
+        chat.say("Attenzione: alcune corse potrebbero seguire un percorso diverso o limitato").then(() =>
+            chat.sendAttachment('image', tas.gmapUrl(mapAttachmentSize, 20), undefined,
+                { typing: true })
+                .then(() => {
+                    const m = Math.random()
+                    /*
+                    if (m < 0.33)
+                        sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset);
+                    else if (m < 0.66)
+                        sayLineaTrovata_ListLarge(chat, linea, tas, dir01, dayOffset);
+                    else 
+                    sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
+                    */
+                    chat.say("Le corse di 'Andata' sono ...").then(() =>
+                        chat.say(tas.getPercorsiOD(0).join(', ')).then(() =>
+                            chat.say("Le corse di 'Ritorno' sono ...").then(() =>
+                                chat.say(tas.getPercorsiOD(1).join(', ')).then(() =>
+                                    sayLineaTrovata_ListCompact(chat, tas,  dayOffset)
+                                )
+                            )
+                        )
+                    )
+                })
+        )
+    )
+
+
 
 }
-*/
 
-
-export function sayLineaTrovata(chat, tas: TripsAndShapes, dir01: number, dayOffset: number) {
-    const m = Math.random()
-    /*
-    if (m < 0.33)
-        sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset);
-    else if (m < 0.66)
-        sayLineaTrovata_ListLarge(chat, linea, tas, dir01, dayOffset);
-    else 
-    sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
-    */
-    sayLineaTrovata_ListCompact(chat, tas, dir01, dayOffset);
-}
-
-function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dir01, dayOffset) {  // items = array of {linea, shape}
+function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dayOffset) {  // items = array of {linea, shape}
 
     //     options && options.imageAspectRatio && (payload.image_aspect_ratio = options.imageAspectRatio) && (delete options.imageAspectRatio);
 
     const _element = (t: Trip) => {
         return {
-            title: t.getAsDir(),
+            title: t.getOD(),
             subtitle: 'partenza ' + t.stop_times[0].departure_time + " da " + t.stop_times[0].stop_name,
             image_url: ut.find<Shape>(tas.shapes, s => s.shape_id === t.shape_id).gmapUrl("180x180", 20),
             //        image_url: tas.shapes.filter(s => s.shape_id===t.shape_id)[0].gmapUrl("180x180", 20),
@@ -298,7 +303,9 @@ function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dir01,
         }
     }
     let elements = []
-    tas.trips.slice(0, 10).forEach(t => {
+    //        +----------------- solo andata
+    //        +
+    tas.trips[0].slice(0, 10).forEach(t => {
         elements.push(_element(t))
     })
     chat.sendGenericTemplate(elements, { image_aspect_ratio: 'square' })
@@ -331,193 +338,58 @@ function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dir01,
 }
 
 
-export function sayLineaTrovata_ListLarge(chat, linea: Linea, tas: TripsAndShapes, dir01: number, dayOffset: number) {
+export function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dayOffset: number) {
 
-    // prendi il trip[0] come rappresentativo TODO
-    //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
-    const options = { topElementStyle: 'large' }  // large o compact
-    chat.sendListTemplate([
-        {
-            title: linea.getTitle(),
-            subtitle: tas.getAsDir(),
-            image_url: tas.gmapUrl("320x160", 20),
-            /* per ora no buttons sull'immagine      
-            "buttons": [
-              {
-                "title": "View",
-                "type": "web_url",
-                "url": "https://peterssendreceiveapp.ngrok.io/collection",
-                "messenger_extensions": true,
-                "webview_height_ratio": "tall",
-                "fallback_url": "https://peterssendreceiveapp.ngrok.io/"            
-              }
-            ]*/
-        },
-        {
-            title: tas.getAsDir(), subtitle: "orari oggi",
-            default_action: {
-                type: "web_url",
-                url: sv.getOpendataUri(linea, 0, dayOffset),   // andata oggi
-                webview_height_ratio: "tall",
-                // messenger_extensions: true,
-                //"fallback_url": "http://www.startromagna.it/"
+    chat.say("Qui puoi consultare gli orari completi").then(() => {
+        // prendi il trip[0] come rappresentativo TODO
+        //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
+        const options = { topElementStyle: 'compact' }  // large o compact
+        chat.sendListTemplate([
+            {
+                title: "Andata", subtitle: "orari oggi",
+                default_action: {
+                    type: "web_url",
+                    url: sv.getOpendataUri(tas.linea, 0, 0),   // andata oggi
+                    webview_height_ratio: "tall",
+                    // messenger_extensions: true,
+                    fallback_url: "http://www.startromagna.it/"
+                }
+            },
+            {
+                title: "Ritorno", subtitle: "orari oggi",
+                default_action: {
+                    type: "web_url",
+                    url: sv.getOpendataUri(tas.linea, 1, 0),   // ritorno oggi
+                    webview_height_ratio: "tall",
+                    // messenger_extensions: true,
+                    fallback_url: "http://www.startromagna.it/"
+                }
+            },
+            {
+                title: "Andata", subtitle: "orari domani",
+                default_action: {
+                    type: "web_url",
+                    url: sv.getOpendataUri(tas.linea, 0, 1),   // andata oggi
+                    webview_height_ratio: "tall",
+                    // messenger_extensions: true,
+                    fallback_url: "http://www.startromagna.it/"
+                }
+            },
+            {
+                title: "Ritorno", subtitle: "orari domani",
+                default_action: {
+                    type: "web_url",
+                    url: sv.getOpendataUri(tas.linea, 1, 1),   // ritorno oggi
+                    webview_height_ratio: "tall",
+                    // messenger_extensions: true,
+                    fallback_url: "http://www.startromagna.it/"
+                }
             }
-        },
-        {
-            title: tas.getDiDir(), subtitle: "orari oggi",
-            default_action: {
-                type: "web_url",
-                url: sv.getOpendataUri(linea, 1, dayOffset),   // ritorno oggi
-                webview_height_ratio: "tall",
-                // messenger_extensions: true,
-                //"fallback_url": "http://www.startromagna.it/"
-            }
-        }
-    ], // end elements
-        [], options)
+        ], // end elements
+            [], options)
+    })// end chat.say.then
 };
 
-export function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dir01: number, dayOffset: number) {
-
-    // prendi il trip[0] come rappresentativo TODO
-    //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
-    const options = { topElementStyle: 'compact' }  // large o compact
-    chat.sendListTemplate([
-        {
-            title: "Andata", subtitle: "orari oggi",
-            default_action: {
-                type: "web_url",
-                url: sv.getOpendataUri(tas.linea, 0, 0),   // andata oggi
-                webview_height_ratio: "tall",
-                // messenger_extensions: true,
-                //"fallback_url": "http://www.startromagna.it/"
-            }
-        },
-        {
-            title: "Ritorno", subtitle: "orari oggi",
-            default_action: {
-                type: "web_url",
-                url: sv.getOpendataUri(tas.linea, 1, 0),   // ritorno oggi
-                webview_height_ratio: "tall",
-                // messenger_extensions: true,
-                //"fallback_url": "http://www.startromagna.it/"
-            }
-        },
-        {
-            title: "Andata", subtitle: "orari domani",
-            default_action: {
-                type: "web_url",
-                url: sv.getOpendataUri(tas.linea, 0, 1),   // andata oggi
-                webview_height_ratio: "tall",
-                // messenger_extensions: true,
-                //"fallback_url": "http://www.startromagna.it/"
-            }
-        },
-        {
-            title: "Ritorno", subtitle: "orari domani",
-            default_action: {
-                type: "web_url",
-                url: sv.getOpendataUri(tas.linea, 1, 1),   // ritorno oggi
-                webview_height_ratio: "tall",
-                // messenger_extensions: true,
-                //"fallback_url": "http://www.startromagna.it/"
-            }
-        }
-    ], // end elements
-        [], options)
-};
-
-
-
-
-
-
-    /*
-const displayOrariPage = (chat, route_id, dir01: number, page: number) => {
-    sv.getCorseOggi('FC', route_id, dir01)
-        .then((data) =>
-            onResultCorse(chat, data, route_id, dir01, page)
-        )
-}
-*/
-/*
-const onResultCorse = (chat, data, route_id, dir01: number, page: number) => {
-    const quanteInsieme = 4;
-    const result = {
-        corse: data // già filtrate A o D .filter((it) => it.VERSO === AorD)
-            .slice(page * quanteInsieme, (page + 1) * quanteInsieme)
-        /*
-        .map(function (item) {
-            return {
-                CORSA: item.trip_id // item.CORSA,
-//                    DESC_PERCORSO: item.DESC_PERCORSO,
-//                    parte: item.ORA_INIZIO_STR,
-//                    arriva: item.ORA_FINE_STR,
-            }
-        }) ----/
-    }
-    // Puoi inviare da un minimo di 2 a un massimo di 4 elementi.
-    // L'aggiunta di un pulsante a ogni elemento è facoltativa. Puoi avere solo 1 pulsante per elemento.
-    // Puoi avere solo 1 pulsante globale.
-    const els = []
-    for (let i = 0; i < Math.min(quanteInsieme, result.corse.length); i++) {
-        const corsa = result.corse[i]
-        els.push({
-            title: "Corsa " + corsa.trip_id, // `${i+1}) partenza ${corsa.parte}`,
-            subtitle: "sul percorso " + corsa.route_id, // corsa.DESC_PERCORSO + "  arriva alle " + corsa.arriva,
-            // "image_url": "https://peterssendreceiveapp.ngrok.io/img/collection.png",
-            buttons: ut.singlePostbackBtn("Dettaglio", "TPL_ON_CORSA_" + route_id + "_" + corsa.CORSA),
-        })
-    } // end for
-
-    const noNextPage = () => result.corse.length < quanteInsieme
-
-    // emetti max 4 elementi
-    chat.sendListTemplate(
-        els,                                                      // PAGE_CORSE_F127_As_2
-        noNextPage() ? undefined : ut.singlePostbackBtn("Ancora", `TPL_PAGE_CORSE_${route_id}_${dir01}_${page + 1}`),
-        { typing: true }
-    )
-
-}
-
-
-const displayCorsa = (chat, route_id, corsa_id) => {
-    sv.getCorseOggi('FC', route_id, 0)
-        .then((data) =>
-            onResultPassaggi(data, chat, route_id, corsa_id)
-        )
-};
-
-const onResultPassaggi = (data, chat, route_id, corsa_id) => {
-    chat.say(`Qui dovrei mostrarti i passaggi della corsa ${corsa_id} della linea ${route_id}`)
-}
-
-*/
-
-
-
-/*
-export const webgetLinea = (bacino, route_id, dir01: number, giorno: number, req, res) => {
-    const arraylinee: Linea[] = linee.filter(l => l.bacino === bacino && l.route_id === route_id)
-    if (arraylinee.length === 1) {
-        const linea: Linea = arraylinee[0]
-        Promise.all([
-            linea.getGMapUrl(service, "400x400"), // promise 0
-            sv.getOrarLinea(bacino, route_id, dir01, giorno) // promise 1
-        ])
-            .then((values) => {
-                res.render('linea', {
-                    l: linea,
-                    url: values[0],
-                    trips: values[1]   // risultato [trip, trip, ...]  dove trip[i] = [{trip_id, stop_sequence,  departure_time, stop_name, stop_lat, stop_lon}, {...}, ...]
-                })
-            })
-    }
-    else
-        res.send(`linea ${route_id} non trovata`)
-}
-*/
 
 // =================================================================================
 //            helpers

@@ -7,7 +7,6 @@ const sqlite3 = require('sqlite3').verbose();
 // let linee: Linea[] = []
 //var bacino = 'FC'
 const bacino = 'FC';
-const mapAttachmentSize = "300x300";
 // =======================================================  exports
 exports.PB_TPL = 'TPL_';
 exports.onPostback = (pl, chat, data) => {
@@ -67,7 +66,7 @@ function onLocationReceived(chat, coords) {
             markers += ut.gMapMarker(st.stop_lat, st.stop_lon, (i + 1).toString(), 'red');
         }
         // invia mappa con markers
-        chat.sendAttachment('image', ut.gStatMapUrl(`size=${mapAttachmentSize}${markers}`), undefined, { typing: true })
+        chat.sendAttachment('image', ut.gStatMapUrl(`size=300x300${markers}`), undefined, { typing: true })
             .then(() => {
             const elements = [];
             for (var index = 0; index < nrs.length; index++) {
@@ -106,14 +105,14 @@ exports.webgetLinea = (b, route_id, dir01, dayOffset, req, res, trip_id) => {
     sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
         .then((tas) => {
         if (tas !== undefined) {
-            const url = tas.gmapUrl("360x360", 20); // può essere undefined se non ho trips
+            const url = tas.gmapUrl("320x320", 20); // può essere undefined se non ho trips
             const descOrari = url ? "Orari di " + ut.formatDate(ut.addDays(new Date(), dayOffset)) :
                 ut.formatDate(ut.addDays(new Date(), dayOffset)) + " non ci sono corse";
             res.render('linea', {
                 l: tas.linea,
                 descOrari,
                 url,
-                trips: trip_id ? tas.trips[dir01].filter(t => t.trip_id === trip_id) : tas.trips
+                trips: trip_id ? tas.trips.filter(t => t.trip_id === trip_id) : tas.trips
             });
         }
         else {
@@ -122,10 +121,11 @@ exports.webgetLinea = (b, route_id, dir01, dayOffset, req, res, trip_id) => {
     });
 };
 const onCodlinea = (chat, route_id) => {
+    const dir01 = 0;
     const dayOffset = 0;
-    sv.getTripsAndShapes(bacino, route_id, -1, dayOffset) // -1: sia A che R
+    sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
         .then((tas) => {
-        sayLineaTrovata(chat, tas, dayOffset);
+        sayLineaTrovata(chat, tas, dir01, dayOffset);
     });
 };
 // ok sia per List che per generic
@@ -139,7 +139,7 @@ function stopTemplateElement(bacino, i, ss, dist, mp) {
     return {
         title: ss.stop.stop_name + (dist ? " a " + Math.floor(dist) + "m (l.d'a.)" : ''),
         subtitle: "Linee " + lineePassanti.join(', '),
-        image_url: ut.gStatMapUrl(`size=${mapAttachmentSize}${mp}${mf}`),
+        image_url: ut.gStatMapUrl(`size=200x200${mp}${mf}`),
         //        buttons: [ut.postbackBtn("Orari", "TPL_STOPSCHED_0_" + ss.stop.stop_id)] // 0 = oggi
         buttons: [
             ut.weburlBtn("Orari Oggi", sv.getStopScheduleUri(bacino, ss.stop.stop_id, 0)),
@@ -204,27 +204,35 @@ export function onLocationReceived_OLD_2_(chat, coords) {
     
     }
     */
-function sayLineaTrovata(chat, tas, dayOffset) {
-    chat.say("Ecco il percorso della linea " + tas.linea.route_short_name).then(() => chat.say("Attenzione: alcune corse potrebbero seguire un percorso diverso o limitato").then(() => chat.sendAttachment('image', tas.gmapUrl(mapAttachmentSize, 20), undefined, { typing: true })
-        .then(() => {
-        const m = Math.random();
-        /*
-        if (m < 0.33)
-            sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset);
-        else if (m < 0.66)
-            sayLineaTrovata_ListLarge(chat, linea, tas, dir01, dayOffset);
-        else
-        sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
-        */
-        chat.say("Le corse di 'Andata' sono ...").then(() => chat.say(tas.getPercorsiOD(0).join(', ')).then(() => chat.say("Le corse di 'Ritorno' sono ...").then(() => chat.say(tas.getPercorsiOD(1).join(', ')).then(() => sayLineaTrovata_ListCompact(chat, tas, dayOffset)))));
-    })));
+// inizializza var globale 'linee'
+/*
+export const init = (callback?): Promise<any> => {
+    return sv.getLinee(bacino)
+        .then((rows: any[]) => {
+            linee = rows.map((row) => new model.Linea(bacino, row));
+            callback && callback(linee, undefined)
+        });
+
+}
+*/
+function sayLineaTrovata(chat, tas, dir01, dayOffset) {
+    const m = Math.random();
+    /*
+    if (m < 0.33)
+        sayLineaTrovata_ListCompact(chat, linea, tas, dir01, dayOffset);
+    else if (m < 0.66)
+        sayLineaTrovata_ListLarge(chat, linea, tas, dir01, dayOffset);
+    else
+    sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
+    */
+    sayLineaTrovata_ListCompact(chat, tas, dir01, dayOffset);
 }
 exports.sayLineaTrovata = sayLineaTrovata;
-function sayLineaTrovata_Generic(chat, linea, tas, dayOffset) {
+function sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset) {
     //     options && options.imageAspectRatio && (payload.image_aspect_ratio = options.imageAspectRatio) && (delete options.imageAspectRatio);
     const _element = (t) => {
         return {
-            title: t.getOD(),
+            title: t.getAsDir(),
             subtitle: 'partenza ' + t.stop_times[0].departure_time + " da " + t.stop_times[0].stop_name,
             image_url: ut.find(tas.shapes, s => s.shape_id === t.shape_id).gmapUrl("180x180", 20),
             //        image_url: tas.shapes.filter(s => s.shape_id===t.shape_id)[0].gmapUrl("180x180", 20),
@@ -236,9 +244,7 @@ function sayLineaTrovata_Generic(chat, linea, tas, dayOffset) {
         };
     };
     let elements = [];
-    //        +----------------- solo andata
-    //        +
-    tas.trips[0].slice(0, 10).forEach(t => {
+    tas.trips.slice(0, 10).forEach(t => {
         elements.push(_element(t));
     });
     chat.sendGenericTemplate(elements, { image_aspect_ratio: 'square' });
@@ -269,56 +275,77 @@ function sayLineaTrovata_Generic(chat, linea, tas, dayOffset) {
     , {image_aspect_ratio:'square'});
     */
 }
-function sayLineaTrovata_ListCompact(chat, tas, dayOffset) {
-    chat.say("Qui puoi consultare gli orari completi").then(() => {
-        // prendi il trip[0] come rappresentativo TODO
-        //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
-        const options = { topElementStyle: 'compact' }; // large o compact
-        chat.sendListTemplate([
-            {
-                title: "Andata", subtitle: "orari oggi",
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 0, 0),
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    fallback_url: "http://www.startromagna.it/"
-                }
-            },
-            {
-                title: "Ritorno", subtitle: "orari oggi",
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 1, 0),
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    fallback_url: "http://www.startromagna.it/"
-                }
-            },
-            {
-                title: "Andata", subtitle: "orari domani",
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 0, 1),
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    fallback_url: "http://www.startromagna.it/"
-                }
-            },
-            {
-                title: "Ritorno", subtitle: "orari domani",
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 1, 1),
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    fallback_url: "http://www.startromagna.it/"
-                }
+function sayLineaTrovata_ListLarge(chat, linea, tas, dir01, dayOffset) {
+    // prendi il trip[0] come rappresentativo TODO
+    //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
+    const options = { topElementStyle: 'large' }; // large o compact
+    chat.sendListTemplate([
+        {
+            title: linea.getTitle(),
+            subtitle: tas.getAsDir(),
+            image_url: tas.gmapUrl("320x160", 20),
+        },
+        {
+            title: tas.getAsDir(), subtitle: "orari oggi",
+            default_action: {
+                type: "web_url",
+                url: sv.getOpendataUri(linea, 0, dayOffset),
+                webview_height_ratio: "tall",
             }
-        ], // end elements
-        [], options);
-    }); // end chat.say.then
+        },
+        {
+            title: tas.getDiDir(), subtitle: "orari oggi",
+            default_action: {
+                type: "web_url",
+                url: sv.getOpendataUri(linea, 1, dayOffset),
+                webview_height_ratio: "tall",
+            }
+        }
+    ], // end elements
+    [], options);
+}
+exports.sayLineaTrovata_ListLarge = sayLineaTrovata_ListLarge;
+;
+function sayLineaTrovata_ListCompact(chat, tas, dir01, dayOffset) {
+    // prendi il trip[0] come rappresentativo TODO
+    //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
+    const options = { topElementStyle: 'compact' }; // large o compact
+    chat.sendListTemplate([
+        {
+            title: "Andata", subtitle: "orari oggi",
+            default_action: {
+                type: "web_url",
+                url: sv.getOpendataUri(tas.linea, 0, 0),
+                webview_height_ratio: "tall",
+            }
+        },
+        {
+            title: "Ritorno", subtitle: "orari oggi",
+            default_action: {
+                type: "web_url",
+                url: sv.getOpendataUri(tas.linea, 1, 0),
+                webview_height_ratio: "tall",
+            }
+        },
+        {
+            title: "Andata", subtitle: "orari domani",
+            default_action: {
+                type: "web_url",
+                url: sv.getOpendataUri(tas.linea, 0, 1),
+                webview_height_ratio: "tall",
+            }
+        },
+        {
+            title: "Ritorno", subtitle: "orari domani",
+            default_action: {
+                type: "web_url",
+                url: sv.getOpendataUri(tas.linea, 1, 1),
+                webview_height_ratio: "tall",
+            }
+        }
+    ], // end elements
+    [], options);
 }
 exports.sayLineaTrovata_ListCompact = sayLineaTrovata_ListCompact;
 ;
-//# sourceMappingURL=lineebot.js.map
+//# sourceMappingURL=lineebot.1.js.map

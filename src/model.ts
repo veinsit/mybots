@@ -151,12 +151,18 @@ export class Trip {
         //readonly linea: Linea,
         readonly trip_id: string,
         public shape_id: string,
-        //    readonly dir01:number,
+        readonly direction_id:number,
         public stop_times: StopTime[]
     ) { }
 
     public shape?: Shape
 
+    getOD() : string {
+        return (this.stop_times.length > 1 ? 
+            `${this.stop_times[0].stop_name} >> ${this.stop_times[this.stop_times.length-1].stop_name}`
+            : '--');
+    }
+/*
     getAsDir() {
         return (this.stop_times ?
             (this.stop_times[0].stop_name + " >> " + this.stop_times[this.stop_times.length - 1].stop_name)
@@ -170,7 +176,7 @@ export class Trip {
             : "Ritorno"
         )
     }
-
+*/
     getLastStopName() {
         return (this.stop_times && this.stop_times.length > 1 ?
             (this.stop_times[this.stop_times.length - 1].stop_name)
@@ -192,18 +198,30 @@ export class TripsAndShapes {
     constructor(
         public readonly route_id: string, // Map<string, Trip>,
         public readonly linea:Linea, // Map<string, Trip>,
-        public readonly trips: Trip[], // Map<string, Trip>,
+        public readonly trips: (Trip[])[], // Map<string, Trip>,
         public readonly shapes: Shape[] //Map<string, Shape>
-    ) { }
+    ) 
+    { 
+        trips = new Array(2);
+        trips[0] = []; trips[1] = [];
+    }
 
     // ritorna il trip 'più rappresentativo  (maggior numero di fermate)
     // può essere undefined se in questo giorno non ho trips
     getMainTrip(): Trip {
         //const trips = Array.from(this.trips.values());
-        return this.trips
+        return this.trips[0] //  0 per scegliere 'Andata'
             .filter(t =>
-                t.stop_times.length === Math.max(...this.trips.map(t => t.stop_times.length))
-            )[0]
+                t.stop_times.length === Math.max(...this.trips[0].map(t => t.stop_times.length))
+            )[0]  
+    }
+
+    getPercorsiOD(dir01:number) : string[] {
+        const s = new Set
+        this.trips[dir01]
+            .forEach(t=>s.add(`${t.stop_times[0].stop_name} >> ${t.stop_times[t.stop_times.length-1].stop_name}`))
+   
+        return Array.from(s); 
     }
 
     gmapUrl(size, n): string {
@@ -213,13 +231,6 @@ export class TripsAndShapes {
            //  : utils.gStatMapUrl(`size=${size}&center=Forlimpopoli&zoom=10`);
     }
 
-    getAsDir(): string {
-        return this.getMainTrip().getAsDir();
-    }
-
-    getDiDir(): string {
-        return this.getMainTrip().getDiDir();
-    }
 }
 
 
