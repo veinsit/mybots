@@ -17,6 +17,18 @@ function dateAaaaMmGg(d) {
     return d.getFullYear().toString() + pad2zero(d.getMonth() + 1) + pad2zero(d.getDate());
 }
 exports.dateAaaaMmGg = dateAaaaMmGg;
+function isFuture(date) {
+    return date >= new Date();
+}
+exports.isFuture = isFuture;
+function isTimeOfDayFuture(todHH_MM, dayOffset) {
+    const hh = parseInt(todHH_MM.substring(0, 2));
+    const mm = parseInt(todHH_MM.substring(3, 5));
+    const now = new Date();
+    const date2 = addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm), dayOffset);
+    return date2 >= now;
+}
+exports.isTimeOfDayFuture = isTimeOfDayFuture;
 function formatDate(date, dayOffset = 0) {
     const date2 = addDays(date, dayOffset);
     var day = date2.getDate();
