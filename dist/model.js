@@ -118,10 +118,12 @@ class Trip {
 }
 exports.Trip = Trip;
 class StopSchedule {
-    constructor(desc, stop, trips) {
+    constructor(desc, stop, trips, linee // linee passanti (quelle dei trip)
+    ) {
         this.desc = desc;
         this.stop = stop;
         this.trips = trips;
+        this.linee = linee; // linee passanti (quelle dei trip)
     }
 }
 exports.StopSchedule = StopSchedule;

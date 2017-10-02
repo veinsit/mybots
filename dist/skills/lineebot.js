@@ -8,6 +8,7 @@ const sqlite3 = require('sqlite3').verbose();
 //var bacino = 'FC'
 const bacino = process.env.BACINO || 'FC';
 const mapAttachmentSize = "300x300";
+const mapAttachmentSizeRect = "300x150";
 // =======================================================  exports
 exports.PB_TPL = 'TPL_';
 exports.onPostback = (pl, chat, data) => {
@@ -69,18 +70,22 @@ function onLocationReceived(chat, coords) {
         // invia mappa con markers
         chat.sendAttachment('image', ut.gStatMapUrl(`size=${mapAttachmentSize}${markers}`), undefined, { typing: true })
             .then(() => {
-            const elements = [];
-            for (var index = 0; index < nrs.length; index++) {
-                elements.push(stopTemplateElement(bacino, index, nrs[index].stopSchedules, nrs[index].dist, mp));
-            }
-            // chat.sendListTemplate(elements, [], { topElementStyle: 'compact' })
-            chat.sendGenericTemplate(elements, { image_aspect_ratio: 'square' });
+            chat.say("Puoi consultare gli orari:").then(() => {
+                /*
+                const elements = []
+                for (var index = 0; index < nrs.length; index++) {
+                    elements.push(stopTemplateElement(bacino, index, nrs[index].stopSchedules, nrs[index].dist, mp));
+                }*/
+                // chat.sendListTemplate(elements, [], { topElementStyle: 'compact' })
+                chat.sendGenericTemplate(nrs.map((currElement, index) => stopTemplateElement(bacino, index, currElement.stopSchedules, currElement.dist, mp)), //elements, 
+                { image_aspect_ratio: 'horizontal ' }); // horizontal o square))
+            }); // .then(() => {  })
         });
     }
 }
 exports.onLocationReceived = onLocationReceived;
 exports.webgetStopSchedule = (b, stop_id, dayOffset, req, res) => {
-    sv.getTripIdsAndShapeIds_ByStop(b, stop_id, dayOffset)
+    sv.getStopSchedule(b, stop_id, dayOffset)
         .then((ss) => {
         if (ss) {
             const routeIds = Array.from(new Set(ss.trips.map(t => t.route_id))); // array di numeri linea univoci
@@ -132,16 +137,21 @@ const onCodlinea = (chat, route_id) => {
 };
 // ok sia per List che per generic
 function stopTemplateElement(bacino, i, ss, dist, mp) {
-    let routeIds = new Set;
-    for (let trip of ss.trips) {
-        routeIds.add(trip.route_id);
-    }
-    let lineePassanti = Array.from(routeIds);
+    /*
+        let routeIds = new Set
+        for (let trip of ss.trips) {
+            routeIds.add(trip.route_id)
+        }
+        
+        let lineePassanti = Array.from(routeIds)
+        */
+    // sv.getLinea_ByRouteId(bacino, ri)
     const mf = ss.stop.gStopMarker((i + 1).toString());
     return {
         title: ss.stop.stop_name + (dist ? " a " + Math.floor(dist) + "m (l.d'a.)" : ''),
-        subtitle: "Linee " + lineePassanti.join(', '),
-        image_url: ut.gStatMapUrl(`size=${mapAttachmentSize}${mp}${mf}`),
+        //        subtitle: "Linee " + lineePassanti.join(', '),
+        subtitle: "Linee " + ss.linee.map(l => l.route_short_name).join(', '),
+        image_url: ut.gStatMapUrl(`size=${mapAttachmentSizeRect}${mp}${mf}`),
         //        buttons: [ut.postbackBtn("Orari", "TPL_STOPSCHED_0_" + ss.stop.stop_id)] // 0 = oggi
         buttons: [
             ut.weburlBtn("Orari Oggi", sv.getStopScheduleUri(bacino, ss.stop.stop_id, 0)),

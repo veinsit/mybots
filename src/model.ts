@@ -175,7 +175,8 @@ export class StopSchedule {
     constructor(
         readonly desc: string,
         readonly stop: Stop,
-        readonly trips: Trip[]
+        readonly trips: Trip[],
+        readonly linee:Linea[] // linee passanti (quelle dei trip)
     ) { }
 }
 
