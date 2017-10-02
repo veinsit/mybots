@@ -35,26 +35,39 @@ export const onPostback = (pl: string, chat, data): boolean => {
     return false;
 }
 
-const onCodlinea = (chat, route_id) => {
-    const dir01 = 0;
-    const dayOffset = 0;
-    
-    sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
-        .then((tas: TripsAndShapes) => {
-           sayLineaTrovata(chat, tas, dir01, dayOffset);
-        })
-}
-
-export const onMessage = (chat, text): boolean => {
+export const onMessage = (chat, text: string): boolean => {
     //   const bacino='FC'
 
     console.log("linee.ts: onMessage: " + text);
-    if (text.startsWith("linea ")) {
+    if (text.startsWith("linea ") || text.startsWith("orari ")) {
         text = text.substring(6)
     }
     // ogni mesage che arriva qui è un numero di linea
-    searchLinea_ByShortName(chat, bacino, text);
+    // toUpperCase perché le linee sono 5A, 96A, ecc.
+    searchLinea_ByShortName(chat, bacino, text.toUpperCase());
     return true;
+
+    function searchLinea_ByShortName(chat, bacino, short_name) {
+
+        sv.getLinee_ByShortName(bacino, short_name)
+            .then((lineeTrovate: Linea[]) => {
+                if (lineeTrovate.length > 1) {
+                    chat.say({
+                        text: "Quale linea ?",
+                        buttons: lineeTrovate.map(l =>
+                            ut.postbackBtn(l.route_id, 'TPL_ON_CODLINEA_' + l.route_id)
+                        )
+                    })
+                }
+                else if (lineeTrovate.length === 1) {
+                    onCodlinea(chat, lineeTrovate[0].route_id)
+                }
+                else {
+                    chat.say("Non ho trovato la linea " + short_name)
+                }
+
+            })
+    }
 }
 
 export function onLocationReceived(chat, coords) {
@@ -145,6 +158,16 @@ export const webgetLinea = (b, route_id, dir01: number, dayOffset: number, req, 
 
 }
 
+const onCodlinea = (chat, route_id) => {
+    const dir01 = 0;
+    const dayOffset = 0;
+
+    sv.getTripsAndShapes(bacino, route_id, dir01, dayOffset)
+        .then((tas: TripsAndShapes) => {
+            sayLineaTrovata(chat, tas, dir01, dayOffset);
+        })
+}
+
 
 // ok sia per List che per generic
 function stopTemplateElement(bacino, i: number, ss: StopSchedule, dist: number, mp: string): any {
@@ -159,7 +182,7 @@ function stopTemplateElement(bacino, i: number, ss: StopSchedule, dist: number, 
     return {
         title: ss.stop.stop_name + (dist ? " a " + Math.floor(dist) + "m (l.d'a.)" : ''),
         subtitle: "Linee " + lineePassanti.join(', '),
-        image_url: ut.gStatMapUrl(`size=120x120${mp}${mf}`),
+        image_url: ut.gStatMapUrl(`size=200x200${mp}${mf}`),
         //        buttons: [ut.postbackBtn("Orari", "TPL_STOPSCHED_0_" + ss.stop.stop_id)] // 0 = oggi
         buttons: [
             ut.weburlBtn("Orari Oggi", sv.getStopScheduleUri(bacino, ss.stop.stop_id, 0)),
@@ -240,32 +263,6 @@ export const init = (callback?): Promise<any> => {
 
 }
 */
-
-const searchLinea_ByShortName = (chat, bacino, short_name) => {
-
-    sv.getLinee_ByShortName(bacino, short_name)
-        .then((lineeTrovate: Linea[]) => {
-            if (lineeTrovate.length > 1) {
-                chat.say({
-                    text: "Quale linea ?",
-                    buttons: lineeTrovate.map(l =>
-                        ut.postbackBtn(l.route_id, 'TPL_ON_CODLINEA_' + l.route_id)
-                    )
-                })
-            }
-            else if (lineeTrovate.length === 1) {
-                onCodlinea(chat, lineeTrovate[0].route_id)
-            }
-            else {
-                chat.say("Non ho trovato la linea "+short_name)
-            }
-                
-        })
-}
-
-
-
-
 
 
 export function sayLineaTrovata(chat, tas: TripsAndShapes, dir01: number, dayOffset: number) {
