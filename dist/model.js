@@ -115,6 +115,11 @@ class Trip {
     getEndStop() {
         return this.stop_times[this.stop_times.length - 1];
     }
+    getStopTime(stop_id) {
+        const foundStops = this.stop_times.filter(st => st.stop_id === stop_id);
+        utils.assert(foundStops.length === 1);
+        return foundStops[0];
+    }
 }
 exports.Trip = Trip;
 class StopSchedule {

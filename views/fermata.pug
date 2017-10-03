@@ -3,7 +3,7 @@ html
   head
     title= stop.stop_name
   body
-    h3= "Fermata "+stop.stop_name
+    h3= "Fermata "+stop.stop_name+" ("+stop.stop_id+")"
     img(src=url)
     h4= descOrari
     div
@@ -11,9 +11,18 @@ html
         thead
           tr
             each rt in tripsByRouteId 
+              // rt = [route_id, [trip1, trip2, ...]]
               th= rt[0]
         tbody
           each irow in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50]
             tr           
-              each rt in tripsByRouteId  
-                td(style='padding:2 5 2 5;')= rt && (rt[1])[irow] && ( (rt[1])[irow].stop_times[0].departure_time.substring(0,5) + ' verso '+(rt[1])[irow].getLastStopName())
+              each rt in tripsByRouteId
+                - var trips = rt[1]
+                - var trip = trips[irow]
+                - var dt = trip && trip.getStopTime(stop.stop_id).departure_time.substring(0,5)
+                if dt && isTimeOfDayFuture(dt, dayOffset)
+                  td(style='padding:2 5 2 5;')!= ('<span style="color:green"><strong>'+dt +'</strong></span>'+ ' verso '+trip.getEndStop().stop_name)
+                else if dt
+                  td(style='padding:2 5 2 5;')!= ('<span style="color:grey">'+dt +'</span>'+ ' verso '+trip.getEndStop().stop_name)
+                else
+                  td

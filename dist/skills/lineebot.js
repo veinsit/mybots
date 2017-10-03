@@ -89,14 +89,20 @@ exports.webgetStopSchedule = (b, stop_id, dayOffset, req, res) => {
         .then((ss) => {
         if (ss) {
             const routeIds = Array.from(new Set(ss.trips.map(t => t.route_id))); // array di numeri linea univoci
+            const url = ss.stop.gmapUrl("360x360", '.');
+            const descDate = ut.formatDate(ut.addDays(new Date(), dayOffset));
             // [  [route_id,[...trips]] ,  ]
             let tripsByRouteId = [];
             routeIds.forEach(ri => tripsByRouteId.push([ri, ss.trips.filter(t => t.route_id === ri)]));
             res.render('fermata', {
                 stop: ss.stop,
-                descOrari: "Orari di " + ut.formatDate(ut.addDays(new Date(), dayOffset)),
                 tripsByRouteId,
-                url: ss.stop.gmapUrl("480x480", '.')
+                dayOffset,
+                descOrari: url
+                    ? `Orari di ${dayOffset === 0 ? "oggi" : "domani"} ${descDate}`
+                    : (dayOffset === 0 ? "oggi " : "domani ") + descDate + " non ci sono corse",
+                isTimeOfDayFuture: (hhmm, doff) => ut.isTimeOfDayFuture(hhmm, doff),
+                url
             });
         }
         else {

@@ -190,9 +190,13 @@ function getTripIdsAndShapeIdsDB_ByLinea(db, route_id, dir01, dayOffset) {
     const and_direction = (dir01 === 0 || dir01 === 1 ? ` and t.direction_id='${dir01}' ` : '');
     const date = utils.addDays(new Date(), dayOffset);
     // elenco di corse (trip_id) del servizio (service_id) di una data
-    const q = `select t.trip_id, t.shape_id from trips t 
-  where t.route_id='${route_id}' ${and_direction} 
-  and t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}' )`;
+    // ordinare per orario di partenz
+    const q = `select t.trip_id, t.shape_id, st.departure_time 
+  FROM trips t 
+  JOIN stop_times st on st.trip_id=t.trip_id AND st.stop_sequence='1'
+  WHERE t.route_id='${route_id}' ${and_direction} 
+    AND t.service_id in (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}' )
+   ORDER BY 3`; // ordinare per orario di partenz
     return new Promise(function (resolve, reject) {
         db.all(q, function (err, rows) {
             if (err)
@@ -208,7 +212,7 @@ function getTripIdsAndShapeIdsDB_ByStop(db, stop_id, dayOffset) {
     // elenco di corse (trip_id) del servizio (service_id) di una data
     const q = `SELECT t.route_id, t.trip_id, t.direction_id, t.shape_id 
   FROM trips t 
-  WHERE  t.trip_id IN (SELECT DISTINCT b.trip_id FROM stop_times b WHERE b.stop_id='${stop_id}') 
+  WHERE  t.trip_id    IN (SELECT DISTINCT b.trip_id FROM stop_times b WHERE b.stop_id='${stop_id}') 
     AND  t.service_id IN (SELECT service_id from calendar_dates where date='${utils.dateAaaaMmGg(date)}')
   ORDER BY 1,2`;
     return new Promise(function (resolve, reject) {

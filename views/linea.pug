@@ -20,10 +20,28 @@ html
             h4= descPercorsi
             each od in tas.getPercorsiOD(dir01)
               div= od
-
     h4= descOrari
     div
       table
+        thead
+          tr
+            each trip in trips
+              - var stStart = trip.stop_times[0]
+              - var dtStart = stStart && stStart.departure_time.substring(0,5)
+              - var stEnd = trip.stop_times[trip.stop_times.length-1]
+              - var dtEnd = stEnd && stEnd.departure_time.substring(0,5)
+              th(style='border-bottom:1pt solid black')
+                if dtStart && isTimeOfDayFuture(dtStart, dayOffset)
+                  span!= stStart && ('<span style="color:green"><strong>'+dtStart +'</strong></span> '+stStart.stop_name)
+                else
+                  span!= stStart && ('<span style="color:grey">'+dtStart +'</span> '+stStart.stop_name)
+                br
+                span= '------'
+                br
+                if stEnd && isTimeOfDayFuture(dtEnd, dayOffset)
+                  span!= stEnd && ('<span style="color:green"><strong>'+dtEnd +'</strong></span> '+stEnd.stop_name)
+                else
+                  span!= stEnd && ('<span style="color:grey">'+dtEnd +'</span> '+stEnd.stop_name)
         tbody
           each irow in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40]
             tr

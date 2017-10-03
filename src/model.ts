@@ -162,11 +162,16 @@ export class Trip {
             `${this.getStartStop().stop_name} >> ${this.getEndStop().stop_name}`
             : '--');
     }
-    getStartStop(): Stop {
+    getStartStop(): StopTime {
         return this.stop_times[0];
     }
-    getEndStop(): Stop {
+    getEndStop(): StopTime {
         return this.stop_times[this.stop_times.length - 1];
+    }
+    getStopTime(stop_id): StopTime {
+        const foundStops = this.stop_times.filter(st=>st.stop_id===stop_id)
+        utils.assert(foundStops.length===1)
+        return foundStops[0];
     }
 
 }
