@@ -1,8 +1,9 @@
 html
   head
-    title= tas.linea.getTitle()
+    title= tas.linea.getPrefixedTitle()
   body
-    h3=tas.linea.getTitle()
+    h3=tas.linea.getPrefixedTitle()
+    h4=tas.linea.route_long_name
     div= (dir01===0 ? "Andata: " : "Ritorno: ") + "Destinazioni: " 
       b=tas.getEndStopNames(dir01).join(', ')
     br

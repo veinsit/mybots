@@ -4,7 +4,8 @@ const utils = require("./utils");
 class Linea {
     //    public display_name: string // es. 1,2, 96A, 127, ecc
     constructor(bacino, rec) {
-        this.getTitle = () => "Linea " + this.route_short_name;
+        this.getTitle = () => this.route_short_name + (this.getCU() ? " " + this.getCU() : "");
+        this.getPrefixedTitle = () => "Linea " + this.getTitle();
         this.bacino = bacino;
         this.route_id = rec.route_id;
         this.route_short_name = this.calcShortName(bacino, rec);
@@ -52,7 +53,6 @@ class Linea {
                 return 'Forlì';
             if (this.route_id.indexOf("CO") >= 0)
                 return 'Cesenatico';
-            return 'Forlimpopoli';
         }
         return undefined;
     }

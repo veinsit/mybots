@@ -67,7 +67,8 @@ export class Linea {
 
     getAscDir() { return "Andata" }
     getDisDir() { return "Ritorno" }
-    getTitle = () => "Linea " + this.route_short_name;
+    getTitle = () => this.route_short_name + (this.getCU() ? " "+this.getCU(): "");
+    getPrefixedTitle = () => "Linea " + this.getTitle()
     getSubtitle() {
         //return (linea.asc_direction != null && linea.asc_direction.length > 0) ? linea.asc_direction + (linea.asc_note && "\n(*) " + linea.asc_note) : linea.name;
         return this.route_long_name
@@ -81,8 +82,6 @@ export class Linea {
                 return 'Forlì'
             if (this.route_id.indexOf("CO") >= 0)
                 return 'Cesenatico'
-
-            return 'Forlimpopoli'
         }
         return undefined
     }

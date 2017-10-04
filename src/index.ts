@@ -64,25 +64,25 @@ menuAssets.defineMenu(bot)
 
 // Load Persistent Menu, Greeting Text and set GetStarted Button
 
-bot.setGetStartedButton((payload, chat) => {
-  chat.sendTypingIndicator(500).then(() => showSalutation(chat))
-})
+
 
 // Load emojis
 let emoji = require('./assets/emoji')
 
-const poster_url = "https://image.tmdb.org/t/p/w640"
 
-const startKeys = ['hello', 'hi', 'hey', 'ehi', 'start', 'inizia', 'ciao', 'salve', 'chat', 'parla']
-bot.on('message', (payload, chat) => {
+bot.on('message', (payload, chat, data) => {
+
+  if (data.captured) { return; }
+
   const fid = payload.sender.id
   const text = payload.message.text.toLowerCase()
 
   if (useFakeChat)
     chat = utils.fakechat
 
-  console.log("sender.id = " + fid + "; text=" + text)
+  console.log("page id="+payload.recipient.id+"; sender.id = " + fid + "; text=" + text)
 
+  /*
   if (startKeys.filter(it => it === text).length > 0) {
     chat.sendTypingIndicator(500)
       .then(() =>
@@ -91,6 +91,7 @@ bot.on('message', (payload, chat) => {
 
     return;
   }
+  */
 
   let gestitoDaModulo = false
   for (let s of skills) {
@@ -101,7 +102,7 @@ bot.on('message', (payload, chat) => {
   if (!gestitoDaModulo) {
     chat.say("Non ho capito ...")
       .then(() =>
-        showHelp(chat)
+        menuAssets.showHelp(chat)
       )
   }
 }) // end bot.on('message', ..)
@@ -141,6 +142,8 @@ bot.on('postback', (payload, chat, data) => {
   const pl: string = payload.postback.payload
   console.log("on postback : " + pl)
 
+  if (data.captured) { return; }
+  
   if (useFakeChat)
     chat = utils.fakechat
 
@@ -153,37 +156,7 @@ bot.on('postback', (payload, chat, data) => {
 
 });
 
-const showSalutation = (chat) => {
 
-  chat.getUserProfile()
-    .then((user) => {
-      chat.say("Salve, " + user.first_name + "! " + emoji.emoji.waving)
-        .then(() => showHelp(chat))
-    })
-}
-
-const showHelp = (chat) => {
-  chat.say('Puoi dirmi:\n- una linea (es. 92, 5A, 127, ..),\n- oppure inviami la tua posizione: provalo !!\n')
-    .then(() =>
-      chat.say({
-        text: 'Scegli uno degli esempi, o inizia direttamente',
-        quickReplies: ['linea 2', '5A', '92', { "content_type": "location" }]
-      })
-    )
-}
-
-const showAbout = (chat) => {
-  chat.say(emoji.heart + "Mi chiamo ... e sono ....")
-}
-
-
-bot.on('postback:HELP_PAYLOAD', (payload, chat) => {
-  showHelp(chat)
-})
-
-bot.on('postback:ABOUT_PAYLOAD', (payload, chat) => {
-  showAbout(chat)
-})
 
 if (debug) {
   require("./indexDebug").goDebug(tpl)
