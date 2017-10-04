@@ -4,8 +4,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const emo = require("./emoji");
 const utils = require("../utils");
 //import * as emoji from "./emoji"
+var getPidData;
 //module.exports = (bot) => {
-exports.defineMenu = (bot) => {
+exports.defineMenu = (bot, _getPidData) => {
+    getPidData = _getPidData;
     bot.setGreetingText("Sono un automa (un 'bot') e posso darti informazioni sulle linee e sugli orari degli autobus in Romagna" +
         "\n\nClicca per iniziare" + emo.emoji.down);
     bot.setGetStartedButton((payload, chat) => {
@@ -23,19 +25,27 @@ exports.defineMenu = (bot) => {
         }
     ], false);
     bot.on('postback:MENU_HELP', (payload, chat) => {
+        const pid = getPidData(payload.recipient.id);
+        bot.accessToken = pid.atok;
         exports.showHelp(chat);
     });
     bot.on('postback:MENU_CREDITS', (payload, chat) => {
+        const pid = getPidData(payload.recipient.id);
+        bot.accessToken = pid.atok;
         exports.showAbout(chat);
     });
     // saluti e inviti
     bot.hear(//     ['hello', 'hi', /hey( there)?/i], 
     ['hello', 'hi', 'hey', 'ehi', 'start', 'inizia', 'ciao', 'salve', 'chat', 'parla'], (payload, chat) => {
+        const pid = getPidData(payload.recipient.id);
+        bot.accessToken = pid.atok;
         exports.showSalutation(chat);
     });
     // help
     bot.hear(//     ['hello', 'hi', /hey( there)?/i], 
     ['help', 'aiuto', 'aiutami', 'istruzioni', 'info', '/'], (payload, chat) => {
+        const pid = getPidData(payload.recipient.id);
+        bot.accessToken = pid.atok;
         exports.showHelp(chat);
     });
 };

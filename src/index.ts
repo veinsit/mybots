@@ -53,20 +53,34 @@ app.get(baseUriBacino + "/stops/:stopid/g/:giorno", (req, res) =>
 const skills = [tpl, tt, prove]
 
 const BootBot = require('../lib/MyBootBot')
+
+const pageIds = [
+  { pid: "185193552025498", bacino: "FC", atok : process.env.ATOK },  // default
+  { pid: "303990613406509", bacino: "RA", atok : process.env.ATOK_RA },
+  { pid: "999999999999999", bacino: "RN", atok : process.env.ATOK_FC },
+]
+
+
 const bot = new BootBot(app, {
-  accessToken: process.env.ATOK,
+  accessToken: pageIds[0].atok, // default
   verifyToken: process.env.VTOK,
   appSecret: process.env.APPSEC
 })
 
+
+function getPidData(page_id)  {
+  const pags: any[] = pageIds.filter(item => item.pid === page_id)
+  if (pags.length === 1)
+      return pags[0]
+  else
+      return pageIds[0]
+}
+
+
+
 //bot.module(menuAssets)
-menuAssets.defineMenu(bot)
+menuAssets.defineMenu(bot, getPidData)
 
-// Load Persistent Menu, Greeting Text and set GetStarted Button
-
-
-
-// Load emojis
 let emoji = require('./assets/emoji')
 
 
@@ -75,9 +89,12 @@ bot.on('message', (payload, chat, data) => {
   const fid = payload.sender.id
   const text = payload.message.text.toLowerCase()
   console.log("page id="+payload.recipient.id+"; sender.id = " + fid + "; text=" + text)
-  // page id=185193552025498; sender.id = 1362132697230478; text=orari 92
-
+  // page id=185193552025498; sender.id = 1362132697230478; text=orari 92   trasp.pubb. FC
+  // page id=303990613406509; sender.id = 1773056349400989; text=ciao       I miei esperim.
   if (data.captured) { return; }
+
+  const pid = getPidData(payload.recipient.id)
+  bot.accessToken = pid.atok
 
   if (useFakeChat)
     chat = utils.fakechat
@@ -96,7 +113,7 @@ bot.on('message', (payload, chat, data) => {
 
   let gestitoDaModulo = false
   for (let s of skills) {
-    if (gestitoDaModulo = s.onMessage(chat, text, payload.recipient.id))
+    if (gestitoDaModulo = s.onMessage(chat, text, pid))
       break;
   }
 
@@ -128,13 +145,16 @@ bot.on('attachment', (payload, chat) => {
   const att = payload.message.attachments[0];
   console.log('Att:' + JSON.stringify(att));
 
+  const pid = getPidData(payload.recipient.id)
+  bot.accessToken = pid.atok
+
   if (useFakeChat)
     chat = utils.fakechat
 
   let coords;
   if (att.type === 'location' && att.payload && (coords = att.payload.coordinates)) {
     for (let s of skills) 
-      s.onLocationReceived(chat, coords, payload.recipient.id)
+      s.onLocationReceived(chat, coords, pid)
     
   }
 });
@@ -144,14 +164,16 @@ bot.on('postback', (payload, chat, data) => {
   console.log("on postback : " + pl)
 
   // NO: if (data.captured) { return; }
-  
+  const pid = getPidData(payload.recipient.id)
+  bot.accessToken = pid.atok
+
   if (useFakeChat)
     chat = utils.fakechat
 
 
   let gestitoDaModulo = false
   for (let s of skills) {
-    if (gestitoDaModulo = s.onPostback(pl, chat, data, payload.recipient.id))
+    if (gestitoDaModulo = s.onPostback(pl, chat, data, pid))
       break;
   }
 

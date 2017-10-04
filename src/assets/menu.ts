@@ -5,9 +5,11 @@ import emo = require('./emoji')
 import utils = require('../utils')
 //import * as emoji from "./emoji"
 
+var getPidData: (page_id) => any
 //module.exports = (bot) => {
-export const defineMenu = (bot) => {
+export const defineMenu = (bot, _getPidData: (page_id) => any) => {
 
+  getPidData = _getPidData
 
   bot.setGreetingText(
     "Sono un automa (un 'bot') e posso darti informazioni sulle linee e sugli orari degli autobus in Romagna" +
@@ -33,10 +35,14 @@ export const defineMenu = (bot) => {
 
 
   bot.on('postback:MENU_HELP', (payload, chat) => {
+    const pid = getPidData(payload.recipient.id)
+    bot.accessToken = pid.atok
     showHelp(chat)
   })
 
   bot.on('postback:MENU_CREDITS', (payload, chat) => {
+    const pid = getPidData(payload.recipient.id)
+    bot.accessToken = pid.atok
     showAbout(chat)
   })
 
@@ -47,6 +53,9 @@ export const defineMenu = (bot) => {
     ['hello', 'hi', 'hey', 'ehi', 'start', 'inizia', 'ciao', 'salve', 'chat', 'parla'],
 
     (payload, chat) => {
+      const pid = getPidData(payload.recipient.id)
+      bot.accessToken = pid.atok
+    
       showSalutation(chat)
     });
 
@@ -55,11 +64,14 @@ export const defineMenu = (bot) => {
     ['help', 'aiuto', 'aiutami', 'istruzioni', 'info', '/'],
 
     (payload, chat) => {
+      const pid = getPidData(payload.recipient.id)
+      bot.accessToken = pid.atok
+    
       showHelp(chat)
     });
 
 
-  
+
 
 }
 
@@ -74,7 +86,7 @@ export const showSalutation = (chat) => {
 
 export const showHelp = (chat) => {
   chat.say(
-`Riconosco queste parole:\n
+    `Riconosco queste parole:\n
 - "linea" o "orari", seguito dal numero di una linea\n
 - "fermata", seguito dal codice della fermata che leggi sulla tabella oraria\n 
 - "aiuto" o "help", per rivedere questo messaggio\n

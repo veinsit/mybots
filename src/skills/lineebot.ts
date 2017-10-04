@@ -28,25 +28,9 @@ const mapAttachmentSizeRect = "300x150"
 // =======================================================  exports
 export const PB_TPL = 'TPL_';
 
-const paginaBacino = [
-    { pid: "185193552025498", bacino: "FC", atok : process.env.ATOK },
-    { pid: "111111111111111", bacino: "RA", atok : process.env.ATOK_RA },
-    { pid: "999999999999999", bacino: "RN", atok : process.env.ATOK_FC },
-]
+export const onPostback = (pl: string, chat, data, pidData): boolean => {
 
-const getPidData = (page_id) => {
-    const pags: any[] = paginaBacino.filter(item => item.pid === page_id)
-    if (pags.length === 1)
-        return pags[0]
-    else
-        return paginaBacino[0]
-}
-
-export const onPostback = (pl: string, chat, data, page_id): boolean => {
-
-    const pidData = getPidData(page_id);
     bacino = pidData.bacino;
-    chat.accessToken = pidData.atok;
     
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
         const route_id = pl.substring(16);
@@ -56,12 +40,10 @@ export const onPostback = (pl: string, chat, data, page_id): boolean => {
     return false;
 }
 
-export const onMessage = (chat, text, page_id): boolean => {
+export const onMessage = (chat, text, pidData): boolean => {
     //   const bacino='FC'
-    const pidData = getPidData(page_id);
     bacino = pidData.bacino;
-    chat.accessToken = pidData.atok;
-
+    
     console.log("linee.ts: onMessage: " + text);
     if (text.startsWith("linea ") || text.startsWith("orari ")) {
         text = text.substring(6)
@@ -97,11 +79,9 @@ export const onMessage = (chat, text, page_id): boolean => {
     }
 }
 
-export function onLocationReceived(chat, coords, page_id) {
+export function onLocationReceived(chat, coords, pidData) {
 
-    const pidData = getPidData(page_id);
     bacino = pidData.bacino;
-    chat.accessToken = pidData.atok;
 
     // const bacino='FC'
     //    const db = sv.opendb(bacino);
