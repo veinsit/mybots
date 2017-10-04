@@ -6,7 +6,7 @@ import ut = require("../utils");
 import emo = require("../assets/emoji");
 
 
-export const onPostback = (pl: string, chat, data): boolean => {
+export const onPostback = (pl: string, chat, data, page_id): boolean => {
 
     if (pl.startsWith("...")) {
         return true;
@@ -15,7 +15,7 @@ export const onPostback = (pl: string, chat, data): boolean => {
 }
 const squadre = [{cod:7401, name:"Castrocaro PUB"}]
 
-export const onMessage = (chat, text): boolean => {
+export const onMessage = (chat, text, page_id) : boolean => {
     if (!text.startsWith("tt "))
         return false;
 
@@ -26,7 +26,7 @@ export const onMessage = (chat, text): boolean => {
     const startTag="></a>"
     const namePrefix = `SQUADRA=${codSquadra}'>`
     const dataPrefix = "<p class=dettagli>"
-    
+
     // portale.fitet.org/risultati/campionati/percentuali.php?SQUADRA=7401&CAM=916
     /*
         ></a>
@@ -45,5 +45,5 @@ export const onMessage = (chat, text): boolean => {
 
 }
 
-export function onLocationReceived(chat, coords) {
+export function onLocationReceived(chat, coords, page_id) {
 }

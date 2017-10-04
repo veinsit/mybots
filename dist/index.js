@@ -45,14 +45,15 @@ menuAssets.defineMenu(bot);
 // Load emojis
 let emoji = require('./assets/emoji');
 bot.on('message', (payload, chat, data) => {
+    const fid = payload.sender.id;
+    const text = payload.message.text.toLowerCase();
+    console.log("page id=" + payload.recipient.id + "; sender.id = " + fid + "; text=" + text);
+    // page id=185193552025498; sender.id = 1362132697230478; text=orari 92
     if (data.captured) {
         return;
     }
-    const fid = payload.sender.id;
-    const text = payload.message.text.toLowerCase();
     if (useFakeChat)
         chat = utils.fakechat;
-    console.log("page id=" + payload.recipient.id + "; sender.id = " + fid + "; text=" + text);
     /*
     if (startKeys.filter(it => it === text).length > 0) {
       chat.sendTypingIndicator(500)
@@ -65,7 +66,7 @@ bot.on('message', (payload, chat, data) => {
     */
     let gestitoDaModulo = false;
     for (let s of skills) {
-        if (gestitoDaModulo = s.onMessage(chat, text))
+        if (gestitoDaModulo = s.onMessage(chat, text, payload.recipient.id))
             break;
     }
     if (!gestitoDaModulo) {
@@ -97,20 +98,18 @@ bot.on('attachment', (payload, chat) => {
     let coords;
     if (att.type === 'location' && att.payload && (coords = att.payload.coordinates)) {
         for (let s of skills)
-            s.onLocationReceived(chat, coords);
+            s.onLocationReceived(chat, coords, payload.recipient.id);
     }
 });
 bot.on('postback', (payload, chat, data) => {
     const pl = payload.postback.payload;
     console.log("on postback : " + pl);
-    if (data.captured) {
-        return;
-    }
+    // NO: if (data.captured) { return; }
     if (useFakeChat)
         chat = utils.fakechat;
     let gestitoDaModulo = false;
     for (let s of skills) {
-        if (gestitoDaModulo = s.onPostback(pl, chat, data))
+        if (gestitoDaModulo = s.onPostback(pl, chat, data, payload.recipient.id))
             break;
     }
 });

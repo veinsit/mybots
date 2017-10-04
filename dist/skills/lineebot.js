@@ -6,12 +6,21 @@ const sqlite3 = require('sqlite3').verbose();
 // var. globale inizializzata dalla init()
 // let linee: Linea[] = []
 //var bacino = 'FC'
-const bacino = process.env.BACINO || 'FC';
+var bacino = process.env.BACINO || 'RA';
 const mapAttachmentSize = "300x300";
 const mapAttachmentSizeRect = "300x150";
 // =======================================================  exports
 exports.PB_TPL = 'TPL_';
-exports.onPostback = (pl, chat, data) => {
+const paginaBacino = [{ pid: "185193552025498", bac: "FC" }];
+const getBacino = (page_id) => {
+    const pags = paginaBacino.filter(a => a[0] === page_id);
+    if (pags.length === 1)
+        return pags[0].bac;
+    else
+        return 'RA';
+};
+exports.onPostback = (pl, chat, data, page_id) => {
+    bacino = getBacino(page_id);
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
         const route_id = pl.substring(16);
         onCodlinea(chat, route_id);
@@ -19,16 +28,18 @@ exports.onPostback = (pl, chat, data) => {
     }
     return false;
 };
-exports.onMessage = (chat, text) => {
+exports.onMessage = (chat, text, page_id) => {
     //   const bacino='FC'
+    bacino = getBacino(page_id);
     console.log("linee.ts: onMessage: " + text);
     if (text.startsWith("linea ") || text.startsWith("orari ")) {
         text = text.substring(6);
+        // ogni mesage che arriva qui è un numero di linea
+        // toUpperCase perché le linee sono 5A, 96A, ecc.
+        searchLinea_ByShortName(chat, bacino, text.toUpperCase());
+        return true;
     }
-    // ogni mesage che arriva qui è un numero di linea
-    // toUpperCase perché le linee sono 5A, 96A, ecc.
-    searchLinea_ByShortName(chat, bacino, text.toUpperCase());
-    return true;
+    return false;
     function searchLinea_ByShortName(chat, bacino, short_name) {
         sv.getLinee_ByShortName(bacino, short_name)
             .then((lineeTrovate) => {
@@ -47,7 +58,8 @@ exports.onMessage = (chat, text) => {
         });
     }
 };
-function onLocationReceived(chat, coords) {
+function onLocationReceived(chat, coords, page_id) {
+    bacino = getBacino(page_id);
     // const bacino='FC'
     //    const db = sv.opendb(bacino);
     //    db.serialize(function() {

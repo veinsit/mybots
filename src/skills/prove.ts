@@ -5,7 +5,7 @@ let emo = require('../assets/emoji')
 
 //=======================================================  exports
 export const PB_PROVE = 'PRV_';
-export const onPostback = (pl: string, chat, data): boolean => {
+export const onPostback = (pl: string, chat, data, page_id): boolean => {
     if (pl.startsWith("PRV_SHOWPAGE_")) { // 15 PAGE_CORSE_F127_As_2
         const match = /([0-9]+)/.exec(pl.substring(13))
 
@@ -13,7 +13,7 @@ export const onPostback = (pl: string, chat, data): boolean => {
         return true;
     }
 }
-export const onMessage = (chat, text): boolean => {
+export const onMessage = (chat, text, page_id) : boolean => {
     if (text.startsWith("pagg")) {
         displayPage(chat, parseInt(text.substring(4)))
         return true;
@@ -24,7 +24,7 @@ export const onMessage = (chat, text): boolean => {
     }
     return false;
 }
-export function onLocationReceived(chat, coords) {
+export function onLocationReceived(chat, coords, page_id) {
 }
 
 const displayPage2 = (chat, page: number) => {

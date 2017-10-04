@@ -20,14 +20,26 @@ type StopSchedule = model.StopSchedule
 // var. globale inizializzata dalla init()
 // let linee: Linea[] = []
 //var bacino = 'FC'
-const bacino = process.env.BACINO || 'FC'
+var bacino: string = process.env.BACINO || 'RA'
 const mapAttachmentSize = "300x300"
 const mapAttachmentSizeRect = "300x150"
 
 // =======================================================  exports
 export const PB_TPL = 'TPL_';
 
-export const onPostback = (pl: string, chat, data): boolean => {
+const paginaBacino = [{ pid: "185193552025498", bac: "FC" }]
+
+const getBacino = (page_id) => {
+    const pags: any[] = paginaBacino.filter(a => a[0] === page_id)
+    if (pags.length === 1)
+        return pags[0].bac
+    else
+        return 'RA'
+}
+
+export const onPostback = (pl: string, chat, data, page_id): boolean => {
+
+    bacino = getBacino(page_id)
 
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
         const route_id = pl.substring(16);
@@ -37,17 +49,21 @@ export const onPostback = (pl: string, chat, data): boolean => {
     return false;
 }
 
-export const onMessage = (chat, text): boolean => {
+export const onMessage = (chat, text, page_id): boolean => {
     //   const bacino='FC'
+    bacino = getBacino(page_id)
 
     console.log("linee.ts: onMessage: " + text);
     if (text.startsWith("linea ") || text.startsWith("orari ")) {
         text = text.substring(6)
+
+        // ogni mesage che arriva qui è un numero di linea
+        // toUpperCase perché le linee sono 5A, 96A, ecc.
+        searchLinea_ByShortName(chat, bacino, text.toUpperCase());
+        return true;
     }
-    // ogni mesage che arriva qui è un numero di linea
-    // toUpperCase perché le linee sono 5A, 96A, ecc.
-    searchLinea_ByShortName(chat, bacino, text.toUpperCase());
-    return true;
+
+    return false;
 
     function searchLinea_ByShortName(chat, bacino, short_name) {
 
@@ -72,7 +88,10 @@ export const onMessage = (chat, text): boolean => {
     }
 }
 
-export function onLocationReceived(chat, coords) {
+export function onLocationReceived(chat, coords, page_id) {
+
+    bacino = getBacino(page_id)
+
     // const bacino='FC'
     //    const db = sv.opendb(bacino);
 
@@ -112,7 +131,7 @@ export function onLocationReceived(chat, coords) {
                     }*/
                     // chat.sendListTemplate(elements, [], { topElementStyle: 'compact' })
                     chat.sendGenericTemplate(
-                        nrs.map((currElement, index)=>
+                        nrs.map((currElement, index) =>
                             stopTemplateElement(bacino, index, currElement.stopSchedules, currElement.dist, mp)
                         ), //elements, 
                         { image_aspect_ratio: 'horizontal ' }
@@ -129,7 +148,7 @@ export const webgetStopSchedule = (b, stop_id, dayOffset: number, req, res) => {
                 const routeIds = Array.from(new Set(ss.trips.map(t => t.route_id))); // array di numeri linea univoci
                 const url = ss.stop.gmapUrl("360x360", '.')
                 const descDate = ut.formatDate(ut.addDays(new Date(), dayOffset))
-                
+
                 // [  [route_id,[...trips]] ,  ]
                 let tripsByRouteId = []
                 routeIds.forEach(ri => tripsByRouteId.push([ri, ss.trips.filter(t => t.route_id === ri)]))
@@ -137,11 +156,11 @@ export const webgetStopSchedule = (b, stop_id, dayOffset: number, req, res) => {
                     stop: ss.stop,
                     tripsByRouteId,
                     dayOffset,
-                    descOrari: 
-                        url 
-                            ? `Orari di ${dayOffset===0?"oggi":"domani"} ${descDate}` 
-                            : (dayOffset===0?"oggi ":"domani " ) + descDate + " non ci sono corse",
-                    isTimeOfDayFuture : (hhmm:string, doff:number) => ut.isTimeOfDayFuture(hhmm, doff),
+                    descOrari:
+                    url
+                        ? `Orari di ${dayOffset === 0 ? "oggi" : "domani"} ${descDate}`
+                        : (dayOffset === 0 ? "oggi " : "domani ") + descDate + " non ci sono corse",
+                    isTimeOfDayFuture: (hhmm: string, doff: number) => ut.isTimeOfDayFuture(hhmm, doff),
                     url
                 })
             }
@@ -161,13 +180,13 @@ export const webgetLinea = (b, route_id, dir01: number, dayOffset: number, req, 
             if (tas !== undefined) {
                 const descDate = ut.formatDate(ut.addDays(new Date(), dayOffset))
                 const url = tas.gmapUrl("360x360", dir01, 20); // può essere undefined se non ho trips
-                const descOrari = url 
-                    ? `Orari di ${dayOffset===0?"oggi":"domani"} ${descDate}` 
-                    : (dayOffset===0?"oggi ":"domani " ) + descDate + " non ci sono corse"
+                const descOrari = url
+                    ? `Orari di ${dayOffset === 0 ? "oggi" : "domani"} ${descDate}`
+                    : (dayOffset === 0 ? "oggi " : "domani ") + descDate + " non ci sono corse"
                 const descPercorsi = url ? `Percorsi di ${descDate}` : descDate + " non ci sono corse"
                 res.render('linea', {
                     tas,
-                    isTimeOfDayFuture : (hhmm:string, doff:number) => ut.isTimeOfDayFuture(hhmm, doff),
+                    isTimeOfDayFuture: (hhmm: string, doff: number) => ut.isTimeOfDayFuture(hhmm, doff),
                     dir01,
                     dayOffset,
                     descOrari, descPercorsi,

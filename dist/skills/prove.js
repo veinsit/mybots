@@ -6,14 +6,14 @@ const service = require("../service");
 let emo = require('../assets/emoji');
 //=======================================================  exports
 exports.PB_PROVE = 'PRV_';
-exports.onPostback = (pl, chat, data) => {
+exports.onPostback = (pl, chat, data, page_id) => {
     if (pl.startsWith("PRV_SHOWPAGE_")) {
         const match = /([0-9]+)/.exec(pl.substring(13));
         displayPage2(chat, parseInt(match[1]));
         return true;
     }
 };
-exports.onMessage = (chat, text) => {
+exports.onMessage = (chat, text, page_id) => {
     if (text.startsWith("pagg")) {
         displayPage(chat, parseInt(text.substring(4)));
         return true;
@@ -24,7 +24,7 @@ exports.onMessage = (chat, text) => {
     }
     return false;
 };
-function onLocationReceived(chat, coords) {
+function onLocationReceived(chat, coords, page_id) {
 }
 exports.onLocationReceived = onLocationReceived;
 const displayPage2 = (chat, page) => {

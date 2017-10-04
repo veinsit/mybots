@@ -1,13 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onPostback = (pl, chat, data) => {
+exports.onPostback = (pl, chat, data, page_id) => {
     if (pl.startsWith("...")) {
         return true;
     }
     return false;
 };
 const squadre = [{ cod: 7401, name: "Castrocaro PUB" }];
-exports.onMessage = (chat, text) => {
+exports.onMessage = (chat, text, page_id) => {
     if (!text.startsWith("tt "))
         return false;
     const data = text.substring(3);
@@ -31,7 +31,7 @@ exports.onMessage = (chat, text) => {
         <p class=dettagli>66.7</p></center></b></td></tr><tr><td><a href='../new_rank/DettaglioAtleta.php?ATLETA=717524&ZU=0&AVVERSARIO=0&ID_CLASS=150'><img src='../../images/images.jpg' width=14 height=15 border=0
     */
 };
-function onLocationReceived(chat, coords) {
+function onLocationReceived(chat, coords, page_id) {
 }
 exports.onLocationReceived = onLocationReceived;
 //# sourceMappingURL=tt.js.map

@@ -48,11 +48,11 @@ exports.showSalutation = (chat) => {
 };
 exports.showHelp = (chat) => {
     chat.say(`Riconosco queste parole:\n
-        - "linea" o "orari", seguito dal numero di una linea\n
-        - "fermata", seguito dal codice della fermata che leggi sulla tabella oraria 
-        - "aiuto" o "help", per rivedere questo messaggio
-        - un saluto, come "ciao", "hello", "salve"
-        - oppure inviami la tua posizione: provalo !!\n`, { typing: true })
+- "linea" o "orari", seguito dal numero di una linea\n
+- "fermata", seguito dal codice della fermata che leggi sulla tabella oraria\n 
+- "aiuto" o "help", per rivedere questo messaggio\n
+- un saluto, come "ciao", "hello", "salve"\n
+- oppure inviami la tua posizione: provalo !!`, { typing: true })
         .then(() => chat.say({
         text: 'Ecco alcuni esempi',
         quickReplies: ['linea 127', 'orari 92', 'linea 2', 'aiuto', { content_type: "location" }]
