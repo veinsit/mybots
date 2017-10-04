@@ -26,6 +26,7 @@ export const onMessage = (chat, text): boolean => {
     const startTag="></a>"
     const namePrefix = `SQUADRA=${codSquadra}'>`
     const dataPrefix = "<p class=dettagli>"
+    
     // portale.fitet.org/risultati/campionati/percentuali.php?SQUADRA=7401&CAM=916
     /*
         ></a>
