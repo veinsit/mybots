@@ -7,20 +7,27 @@ const sqlite3 = require('sqlite3').verbose();
 // let linee: Linea[] = []
 //var bacino = 'FC'
 var bacino = process.env.BACINO || 'RA';
+var atok;
 const mapAttachmentSize = "300x300";
 const mapAttachmentSizeRect = "300x150";
 // =======================================================  exports
 exports.PB_TPL = 'TPL_';
-const paginaBacino = [{ pid: "185193552025498", bac: "FC" }];
-const getBacino = (page_id) => {
-    const pags = paginaBacino.filter(a => a[0] === page_id);
+const paginaBacino = [
+    { pid: "185193552025498", bacino: "FC", atok: process.env.ATOK },
+    { pid: "111111111111111", bacino: "RA", atok: process.env.ATOK_RA },
+    { pid: "999999999999999", bacino: "RN", atok: process.env.ATOK_FC },
+];
+const getPidData = (page_id) => {
+    const pags = paginaBacino.filter(item => item.pid === page_id);
     if (pags.length === 1)
-        return pags[0].bac;
+        return pags[0];
     else
-        return 'RA';
+        return paginaBacino[0];
 };
 exports.onPostback = (pl, chat, data, page_id) => {
-    bacino = getBacino(page_id);
+    const pidData = getPidData(page_id);
+    bacino = pidData.bacino;
+    chat.accessToken = pidData.atok;
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
         const route_id = pl.substring(16);
         onCodlinea(chat, route_id);
@@ -30,7 +37,9 @@ exports.onPostback = (pl, chat, data, page_id) => {
 };
 exports.onMessage = (chat, text, page_id) => {
     //   const bacino='FC'
-    bacino = getBacino(page_id);
+    const pidData = getPidData(page_id);
+    bacino = pidData.bacino;
+    chat.accessToken = pidData.atok;
     console.log("linee.ts: onMessage: " + text);
     if (text.startsWith("linea ") || text.startsWith("orari ")) {
         text = text.substring(6);
@@ -59,7 +68,9 @@ exports.onMessage = (chat, text, page_id) => {
     }
 };
 function onLocationReceived(chat, coords, page_id) {
-    bacino = getBacino(page_id);
+    const pidData = getPidData(page_id);
+    bacino = pidData.bacino;
+    chat.accessToken = pidData.atok;
     // const bacino='FC'
     //    const db = sv.opendb(bacino);
     //    db.serialize(function() {
