@@ -37,7 +37,7 @@ const BootBot = require('../lib/MyBootBot');
 const pageIds = [
     { pid: "185193552025498", bacino: "FC", atok: process.env.ATOK },
     { pid: "303990613406509", bacino: "RA", atok: process.env.ATOK_RA },
-    { pid: "999999999999999", bacino: "RN", atok: process.env.ATOK_FC },
+    { pid: "999999999999999", bacino: "RN", atok: process.env.ATOK },
 ];
 const bot = new BootBot(app, {
     accessToken: pageIds[0].atok,

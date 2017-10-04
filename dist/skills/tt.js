@@ -1,5 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const Client = require('node-rest-client').Client;
+const client = new Client();
+client.registerMethod("getSquadra", "http://portale.fitet.org/risultati/campionati/percentuali.php?SQUADRA=${squadra}&CAM=916", "GET");
 exports.onPostback = (pl, chat, data, page_id) => {
     if (pl.startsWith("...")) {
         return true;
@@ -30,6 +33,9 @@ exports.onMessage = (chat, text, page_id) => {
         <p class=dettagli>126</p></center></td><td height=24><b><center>
         <p class=dettagli>66.7</p></center></b></td></tr><tr><td><a href='../new_rank/DettaglioAtleta.php?ATLETA=717524&ZU=0&AVVERSARIO=0&ID_CLASS=150'><img src='../../images/images.jpg' width=14 height=15 border=0
     */
+    client.methods.getSquadra({ path: { squadra: 7401 } }, (data, response) => {
+        console.log(response);
+    });
 };
 function onLocationReceived(chat, coords, page_id) {
 }

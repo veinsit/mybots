@@ -8,7 +8,7 @@ var getPidData;
 //module.exports = (bot) => {
 exports.defineMenu = (bot, _getPidData) => {
     getPidData = _getPidData;
-    bot.setGreetingText("Sono un automa (un 'bot') e posso darti informazioni sulle linee e sugli orari degli autobus in Romagna" +
+    bot.setGreetingText("Sono un automa (un 'bot') e posso darti informazioni sulle linee e sugli orari degli autobus" +
         "\n\nClicca per iniziare" + emo.emoji.down);
     bot.setGetStartedButton((payload, chat) => {
         chat.sendTypingIndicator(500).then(() => exports.showSalutation(chat));

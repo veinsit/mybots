@@ -57,7 +57,7 @@ const BootBot = require('../lib/MyBootBot')
 const pageIds = [
   { pid: "185193552025498", bacino: "FC", atok : process.env.ATOK },  // default
   { pid: "303990613406509", bacino: "RA", atok : process.env.ATOK_RA },
-  { pid: "999999999999999", bacino: "RN", atok : process.env.ATOK_FC },
+  { pid: "999999999999999", bacino: "RN", atok : process.env.ATOK },
 ]
 
 
@@ -162,6 +162,7 @@ bot.on('attachment', (payload, chat) => {
 bot.on('postback', (payload, chat, data) => {
   const pl: string = payload.postback.payload
   console.log("on postback : " + pl)
+  
 
   // NO: if (data.captured) { return; }
   const pid = getPidData(payload.recipient.id)

@@ -12,7 +12,7 @@ export const defineMenu = (bot, _getPidData: (page_id) => any) => {
   getPidData = _getPidData
 
   bot.setGreetingText(
-    "Sono un automa (un 'bot') e posso darti informazioni sulle linee e sugli orari degli autobus in Romagna" +
+    "Sono un automa (un 'bot') e posso darti informazioni sulle linee e sugli orari degli autobus" +
     "\n\nClicca per iniziare" + emo.emoji.down)
 
   bot.setGetStartedButton((payload, chat) => {

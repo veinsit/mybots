@@ -64,7 +64,7 @@ export const onMessage = (chat, text, pidData): boolean => {
                     chat.say({
                         text: "Quale linea ?",
                         buttons: lineeTrovate.map(l =>
-                            ut.postbackBtn(l.route_id, 'TPL_ON_CODLINEA_' + l.route_id)
+                            ut.postbackBtn(l.getPrefixedTitle(), 'TPL_ON_CODLINEA_' + l.route_id)
                         )
                     })
                 }

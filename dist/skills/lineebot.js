@@ -39,7 +39,7 @@ exports.onMessage = (chat, text, pidData) => {
             if (lineeTrovate.length > 1) {
                 chat.say({
                     text: "Quale linea ?",
-                    buttons: lineeTrovate.map(l => ut.postbackBtn(l.route_id, 'TPL_ON_CODLINEA_' + l.route_id))
+                    buttons: lineeTrovate.map(l => ut.postbackBtn(l.getPrefixedTitle(), 'TPL_ON_CODLINEA_' + l.route_id))
                 });
             }
             else if (lineeTrovate.length === 1) {
