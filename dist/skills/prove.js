@@ -24,6 +24,9 @@ exports.onMessage = (chat, text) => {
     }
     return false;
 };
+function onLocationReceived(chat, coords) {
+}
+exports.onLocationReceived = onLocationReceived;
 const displayPage2 = (chat, page) => {
     getCorseOggiPromise()
         .then((data, response) => showFrom(chat, data.filter(it => it.VERSO === 'As'), page));

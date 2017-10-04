@@ -11,6 +11,7 @@ const useFakeChat = false; // process.env.USE_FAKE_CHAT || false; // debug;
 // Load emojis
 const utils = require("./utils");
 const tpl = require("./skills/lineebot");
+const tt = require("./skills/tt");
 const prove = require("./skills/prove");
 // tslint:disable-next-line:ordered-imports
 const menuAssets = require("./assets/menu");
@@ -31,7 +32,7 @@ tpl.webgetLinea(req.params.bacino, req.params.routeid, parseInt(req.params.dir01
 app.get(baseUriBacino + "/stops/:stopid/g/:giorno", (req, res) => tpl.webgetStopSchedule(req.params.bacino, req.params.stopid, parseInt(req.params.giorno), req, res));
 // tutto quello qui sopre deve essere PRIMA di new BootBot
 // ============================================================= end web
-const skills = [tpl, prove];
+const skills = [tpl, tt, prove];
 const BootBot = require('../lib/MyBootBot');
 const bot = new BootBot(app, {
     accessToken: process.env.ATOK,
@@ -91,8 +92,10 @@ bot.on('attachment', (payload, chat) => {
     if (useFakeChat)
         chat = utils.fakechat;
     let coords;
-    if (att.type === 'location' && att.payload && (coords = att.payload.coordinates))
-        tpl.onLocationReceived(chat, coords);
+    if (att.type === 'location' && att.payload && (coords = att.payload.coordinates)) {
+        for (let s of skills)
+            s.onLocationReceived(chat, coords);
+    }
 });
 bot.on('postback', (payload, chat, data) => {
     const pl = payload.postback.payload;

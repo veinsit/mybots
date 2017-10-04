@@ -24,6 +24,8 @@ export const onMessage = (chat, text): boolean => {
     }
     return false;
 }
+export function onLocationReceived(chat, coords) {
+}
 
 const displayPage2 = (chat, page: number) => {
     getCorseOggiPromise()

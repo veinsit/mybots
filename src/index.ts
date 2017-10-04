@@ -17,6 +17,7 @@ import utils = require('./utils')
 // tslint:disable-next-line:ordered-imports
 import emo = require('./assets/emoji')
 import tpl = require("./skills/lineebot")
+import tt = require("./skills/tt")
 import prove = require("./skills/prove")
 // tslint:disable-next-line:ordered-imports
 import menuAssets = require('./assets/menu')
@@ -49,7 +50,7 @@ app.get(baseUriBacino + "/stops/:stopid/g/:giorno", (req, res) =>
 // tutto quello qui sopre deve essere PRIMA di new BootBot
 // ============================================================= end web
 
-const skills = [tpl, prove]
+const skills = [tpl, tt, prove]
 
 const BootBot = require('../lib/MyBootBot')
 const bot = new BootBot(app, {
@@ -129,8 +130,11 @@ bot.on('attachment', (payload, chat) => {
     chat = utils.fakechat
 
   let coords;
-  if (att.type==='location' && att.payload && (coords = att.payload.coordinates))
-    tpl.onLocationReceived(chat, coords)
+  if (att.type === 'location' && att.payload && (coords = att.payload.coordinates)) {
+    for (let s of skills) 
+      s.onLocationReceived(chat, coords)
+    
+  }
 });
 
 bot.on('postback', (payload, chat, data) => {
