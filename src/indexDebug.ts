@@ -30,7 +30,7 @@ var http = require('http');
 /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/
 export function goDebug(tpl, tt) { 
 
-    tt.onMessage(utils.fakechat, "tt 7402", "999")
+    tt.onMessage(utils.fakechat, "ping pong squadra 7401", "999")
 
     // tpl.onPostback("TPL_ON_CODLINEA_FO04", utils.fakechat, {})
     
