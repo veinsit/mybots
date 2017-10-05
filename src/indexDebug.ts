@@ -9,8 +9,8 @@ require('dotenv').config()
 import utils = require('./utils')
 
 import emo = require('./assets/emoji')
-import prove = require("./skills/prove")
-import menuAssets = require('./assets/menu')
+//import prove = require("./skills/prove")
+//import menuAssets = require('./assets/menu')
 
 import service = require("./servicedb");
 import model = require("./model")

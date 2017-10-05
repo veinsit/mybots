@@ -137,3 +137,5 @@ export const onPostback = (pl: string, chat, data, page_id): boolean => {
 
 export function onLocationReceived(chat, coords, page_id) {
 }
+
+export const initModule = (bot, _getPidData) => {}

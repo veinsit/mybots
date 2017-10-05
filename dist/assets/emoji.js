@@ -6,18 +6,21 @@ exports.emoji = {
     waving: '👋',
     down: '👇',
     not_found: '🙄',
-    hug: '🤗',
-    sick: '🤢',
+    twelve_oclock: '🕛',
+    pingpong: '🏓',
     heart: '❤️',
     sun: '😎',
     tv: '📺',
     camera: '🎥',
     view_emj: '👉',
     aired_emj: '✈️ ',
-    popcorn: '🍿',
+    warning: '⚠️',
     link: '🔗',
     top: '🔝',
     new_emj: '🆕',
-    film: '🎞️'
+    film: '🎞️',
+    bus: '🚌',
+    bus_stop: '🚏',
+    oncoming_bus: '🚍'
 };
 //# sourceMappingURL=emoji.js.map

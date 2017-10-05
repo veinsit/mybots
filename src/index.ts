@@ -1,7 +1,7 @@
 'use strict'
 
 
-if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC
+if ( !process.env.VTOK || !process.env.APPSEC
   || !process.env.GOOGLE_STATICMAP_APIKEY || !process.env.OPENDATAURIBASE) {
   require('dotenv').config()
 }
@@ -15,12 +15,14 @@ const useFakeChat = false; // process.env.USE_FAKE_CHAT || false; // debug;
 // Load emojis
 import utils = require('./utils')
 // tslint:disable-next-line:ordered-imports
-import emo = require('./assets/emoji')
-import tpl = require("./skills/lineebot")
-import tt = require("./skills/tt")
-import prove = require("./skills/prove")
+import emo  = require('./assets/emoji')
+
+import tpl  = require("./skills/lineebot")
+import tt   = require("./skills/tt")
+import menu = require("./skills/menu")
+//import prove = require("./skills/prove")
 // tslint:disable-next-line:ordered-imports
-import menuAssets = require('./assets/menu')
+//import menuAssets = require('./assets/menu')
 
 
 import express = require('express');
@@ -50,7 +52,7 @@ app.get(baseUriBacino + "/stops/:stopid/g/:giorno", (req, res) =>
 // tutto quello qui sopre deve essere PRIMA di new BootBot
 // ============================================================= end web
 
-const skills = [tpl, tt, prove]
+const skills = [tpl, tt, menu]
 
 const BootBot = require('../lib/MyBootBot')
 
@@ -66,7 +68,24 @@ const pageIds = [
   { pid: "999999999999999", bacino: "RN", atok : process.env.ATOK },
 */
 
-]
+];
+
+/* più funzionale 
+const pageIds2 = [0,1,2,3,4]
+  .map(n=>process.env["PID_"+n])
+  .map(e=>{
+    // PID_0 = 185193552025498:FC,<access token>
+    const i2punti = e && e.indexOf(":")
+    const iComma = e && e.indexOf(",")
+
+    return e ? {
+      pid: e.substring(0, i2punti),
+      bacino: e.substring(i2punti + 1, iComma),
+      atok: e.substring(iComma + 1),
+    } 
+    : undefined;
+  })
+*/
 
 // legge i pageIds dalle env PID_<i>
 for (let i = 0; i < 9; i++) {
@@ -75,7 +94,7 @@ for (let i = 0; i < 9; i++) {
 
     // PID_0 = 185193552025498:FC,<access token>
     const i2punti = pidd.indexOf(":")
-    const iComma = pidd.indexOf(",")
+    const iComma  = pidd.indexOf(",")
 
     pageIds.push({
       pid: pidd.substring(0, i2punti),
@@ -84,7 +103,6 @@ for (let i = 0; i < 9; i++) {
     })
   }
 }
-// TODO:
 
 const bot = new BootBot(app, {
   accessToken: pageIds[0].atok, // default
@@ -104,7 +122,7 @@ function getPidData(page_id) {
 
 
 //bot.module(menuAssets)
-menuAssets.defineMenu(bot, getPidData)
+// menuAssets.defineMenu(bot, getPidData)
 
 let emoji = require('./assets/emoji')
 
@@ -145,7 +163,7 @@ bot.on('message', (payload, chat, data) => {
   if (!gestitoDaModulo) {
     chat.say("Non ho capito ...")
       .then(() =>
-        menuAssets.showHelp(chat)
+        menu.showHelp(chat)
       )
   }
 }) // end bot.on('message', ..)
@@ -188,14 +206,12 @@ bot.on('postback', (payload, chat, data) => {
   const pl: string = payload.postback.payload
   console.log("on postback : " + pl)
 
-
   // NO: if (data.captured) { return; }
   const pid = getPidData(payload.recipient.id)
   bot.accessToken = pid.atok
 
   if (useFakeChat)
     chat = utils.fakechat
-
 
   let gestitoDaModulo = false
   for (let s of skills) {
@@ -205,6 +221,9 @@ bot.on('postback', (payload, chat, data) => {
 
 });
 
+for (let s of skills) {
+  s.initModule(bot, getPidData)
+}
 
 
 if (debug) {

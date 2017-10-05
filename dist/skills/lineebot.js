@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ut = require("../utils");
+// Load emojis
+const emo = require("../assets/emoji");
 const sv = require("../servicedb");
 const sqlite3 = require('sqlite3').verbose();
 // var. globale inizializzata dalla init()
@@ -89,6 +91,7 @@ function onLocationReceived(chat, coords, pidData) {
     }
 }
 exports.onLocationReceived = onLocationReceived;
+exports.initModule = (bot, _getPidData) => { };
 exports.webgetStopSchedule = (b, stop_id, dayOffset, req, res) => {
     sv.getStopSchedule(b, stop_id, dayOffset)
         .then((ss) => {
@@ -233,7 +236,7 @@ export function onLocationReceived_OLD_2_(chat, coords) {
     */
 function sayLineaTrovata(chat, tas, dir01, dayOffset) {
     chat.say("Ecco il percorso della linea " + tas.linea.getTitle() +
-        "\n(Attenzione: alcune corse potrebbero seguire percorsi diversi da quello rappresentato)").then(() => chat.sendAttachment('image', tas.gmapUrl(mapAttachmentSize, dir01, 25), undefined, { typing: true })
+        `\n(${emo.emoji.warning} alcune corse potrebbero seguire percorsi diversi da quello rappresentato)`).then(() => chat.sendAttachment('image', tas.gmapUrl(mapAttachmentSize, dir01, 25), undefined, { typing: true })
         .then(() => {
         const m = Math.random();
         /*

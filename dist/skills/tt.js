@@ -99,4 +99,5 @@ exports.onPostback = (pl, chat, data, page_id) => {
 function onLocationReceived(chat, coords, page_id) {
 }
 exports.onLocationReceived = onLocationReceived;
+exports.initModule = (bot, _getPidData) => { };
 //# sourceMappingURL=tt.js.map

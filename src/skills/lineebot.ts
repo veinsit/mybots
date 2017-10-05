@@ -132,6 +132,8 @@ export function onLocationReceived(chat, coords, pidData) {
     }
 }
 
+export const initModule = (bot, _getPidData) => {}
+
 export const webgetStopSchedule = (b, stop_id, dayOffset: number, req, res) => {
     sv.getStopSchedule(b, stop_id, dayOffset)
         .then((ss: model.StopSchedule) => {
@@ -289,7 +291,7 @@ export function onLocationReceived_OLD_2_(chat, coords) {
 export function sayLineaTrovata(chat, tas: TripsAndShapes, dir01: number, dayOffset: number) {
 
     chat.say("Ecco il percorso della linea " + tas.linea.getTitle() +
-        "\n(Attenzione: alcune corse potrebbero seguire percorsi diversi da quello rappresentato)"
+        `\n(${emo.emoji.warning} alcune corse potrebbero seguire percorsi diversi da quello rappresentato)`
 
     ).then(() =>
 

@@ -1,6 +1,6 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
-if (!process.env.ATOK || !process.env.VTOK || !process.env.APPSEC
+if (!process.env.VTOK || !process.env.APPSEC
     || !process.env.GOOGLE_STATICMAP_APIKEY || !process.env.OPENDATAURIBASE) {
     require('dotenv').config();
 }
@@ -12,9 +12,10 @@ const useFakeChat = false; // process.env.USE_FAKE_CHAT || false; // debug;
 const utils = require("./utils");
 const tpl = require("./skills/lineebot");
 const tt = require("./skills/tt");
-const prove = require("./skills/prove");
+const menu = require("./skills/menu");
+//import prove = require("./skills/prove")
 // tslint:disable-next-line:ordered-imports
-const menuAssets = require("./assets/menu");
+//import menuAssets = require('./assets/menu')
 const express = require("express");
 const app = express();
 app.set('views', './views');
@@ -32,7 +33,7 @@ tpl.webgetLinea(req.params.bacino, req.params.routeid, parseInt(req.params.dir01
 app.get(baseUriBacino + "/stops/:stopid/g/:giorno", (req, res) => tpl.webgetStopSchedule(req.params.bacino, req.params.stopid, parseInt(req.params.giorno), req, res));
 // tutto quello qui sopre deve essere PRIMA di new BootBot
 // ============================================================= end web
-const skills = [tpl, tt, prove];
+const skills = [tpl, tt, menu];
 const BootBot = require('../lib/MyBootBot');
 /**
  * associa a ogni identificativo di pagina un access-token
@@ -40,6 +41,22 @@ const BootBot = require('../lib/MyBootBot');
  * in modo che risponda alla pagina che ha mandato la richiesta
  */
 const pageIds = [];
+/* più funzionale
+const pageIds2 = [0,1,2,3,4]
+  .map(n=>process.env["PID_"+n])
+  .map(e=>{
+    // PID_0 = 185193552025498:FC,<access token>
+    const i2punti = e && e.indexOf(":")
+    const iComma = e && e.indexOf(",")
+
+    return e ? {
+      pid: e.substring(0, i2punti),
+      bacino: e.substring(i2punti + 1, iComma),
+      atok: e.substring(iComma + 1),
+    }
+    : undefined;
+  })
+*/
 // legge i pageIds dalle env PID_<i>
 for (let i = 0; i < 9; i++) {
     if (process.env["PID_" + i]) {
@@ -54,7 +71,6 @@ for (let i = 0; i < 9; i++) {
         });
     }
 }
-// TODO:
 const bot = new BootBot(app, {
     accessToken: pageIds[0].atok,
     verifyToken: process.env.VTOK,
@@ -68,7 +84,7 @@ function getPidData(page_id) {
         return pageIds[0];
 }
 //bot.module(menuAssets)
-menuAssets.defineMenu(bot, getPidData);
+// menuAssets.defineMenu(bot, getPidData)
 let emoji = require('./assets/emoji');
 bot.on('message', (payload, chat, data) => {
     const fid = payload.sender.id;
@@ -100,7 +116,7 @@ bot.on('message', (payload, chat, data) => {
     }
     if (!gestitoDaModulo) {
         chat.say("Non ho capito ...")
-            .then(() => menuAssets.showHelp(chat));
+            .then(() => menu.showHelp(chat));
     }
 }); // end bot.on('message', ..)
 // usato per la posizione
@@ -146,6 +162,9 @@ bot.on('postback', (payload, chat, data) => {
             break;
     }
 });
+for (let s of skills) {
+    s.initModule(bot, getPidData);
+}
 if (debug) {
     require("./indexDebug").goDebug(tpl, tt);
 }
