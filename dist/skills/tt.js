@@ -1,23 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ut = require("../utils");
-const http = require("http");
+exports.onMessage = (chat, text, page_id) => {
+    if (!text.startsWith("tt "))
+        return false;
+    const data = text.substring(3);
+    let match;
+    if ((match = /squadra\s+(\d+)/i.exec(data)).length >= 2) {
+        onMessageSquadra(chat, match[1]);
+        return true;
+    }
+    return false;
+};
+exports.onPostback = (pl, chat, data, page_id) => {
+    if (pl.startsWith("...")) {
+        return true;
+    }
+    return false;
+};
 function getSquadra(squadra, callback) {
-    return http.get({
-        host: 'portale.fitet.org',
-        path: `/risultati/campionati/percentuali.php?SQUADRA=${squadra}&CAM=916`
-    }, function (response) {
-        // Continuously update stream with data
-        var body = '';
-        response.on('data', function (d) {
-            body += d;
-        });
-        response.on('end', function () {
-            // Data reception is done, do whatever with it!
-            //var parsed = JSON.parse(body);
-            callback(body);
-        });
-    });
+    return ut.httpGet('portale.fitet.org', `/risultati/campionati/percentuali.php?SQUADRA=${squadra}&CAM=916`, callback);
 }
 const squadre = [{ cod: 7401, name: "Castrocaro PUB" }];
 function onMessageSquadra(chat, codSquadra) {
@@ -79,23 +81,6 @@ function onMessageSquadra(chat, codSquadra) {
         <p class=dettagli>66.7</p></center></b></td></tr><tr><td><a href='../new_rank/DettaglioAtleta.php?ATLETA=717524&ZU=0&AVVERSARIO=0&ID_CLASS=150'><img src='../../images/images.jpg' width=14 height=15 border=0
     */
 }
-exports.onMessage = (chat, text, page_id) => {
-    if (!text.startsWith("tt "))
-        return false;
-    const data = text.substring(3);
-    let match;
-    if ((match = /squadra\s+(\d+)/i.exec(data)).length >= 2) {
-        onMessageSquadra(chat, match[1]);
-        return true;
-    }
-    return false;
-};
-exports.onPostback = (pl, chat, data, page_id) => {
-    if (pl.startsWith("...")) {
-        return true;
-    }
-    return false;
-};
 function onLocationReceived(chat, coords, page_id) {
 }
 exports.onLocationReceived = onLocationReceived;

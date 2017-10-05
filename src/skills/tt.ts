@@ -3,30 +3,32 @@
 import ut = require("../utils");
 import emo = require("../assets/emoji");
 
-import http = require('http');
+export const onMessage = (chat, text, page_id): boolean => {
+    if (!text.startsWith("tt "))
+        return false;
 
-function getSquadra(squadra, callback) {
+    const data: string = (text as string).substring(3);
 
-    return http.get({
-        host: 'portale.fitet.org',
-        path: `/risultati/campionati/percentuali.php?SQUADRA=${squadra}&CAM=916`
-    }, function (response) {
-        // Continuously update stream with data
-        var body = '';
-        response.on('data', function (d) {
-            body += d;
-        });
-        response.on('end', function () {
+    let match
+    if ((match = /squadra\s+(\d+)/i.exec(data)).length >= 2) {
+        onMessageSquadra(chat, match[1])
+        return true;
+    }
 
-            // Data reception is done, do whatever with it!
-            //var parsed = JSON.parse(body);
-            callback(body);
-        });
-    });
-
+    return false;
 }
 
+export const onPostback = (pl: string, chat, data, page_id): boolean => {
 
+    if (pl.startsWith("...")) {
+        return true;
+    }
+    return false;
+}
+
+function getSquadra(squadra, callback) {
+    return ut.httpGet('portale.fitet.org',`/risultati/campionati/percentuali.php?SQUADRA=${squadra}&CAM=916`, callback);
+}
 
 const squadre = [{ cod: 7401, name: "Castrocaro PUB" }]
 
@@ -110,29 +112,7 @@ function onMessageSquadra(chat, codSquadra) {
 
 }
 
-export const onMessage = (chat, text, page_id): boolean => {
-    if (!text.startsWith("tt "))
-        return false;
 
-    const data: string = (text as string).substring(3);
-
-    let match
-    if ((match = /squadra\s+(\d+)/i.exec(data)).length >= 2) {
-        onMessageSquadra(chat, match[1])
-        return true;
-    }
-    return false;
-
-
-}
-
-export const onPostback = (pl: string, chat, data, page_id): boolean => {
-
-    if (pl.startsWith("...")) {
-        return true;
-    }
-    return false;
-}
 
 
 export function onLocationReceived(chat, coords, page_id) {

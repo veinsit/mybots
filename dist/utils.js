@@ -145,6 +145,27 @@ class MinFinder {
     getResults() { return { dst: this.dst, tps: this.tps }; }
 } //end class
 exports.MinFinder = MinFinder;
+/**
+ *
+ * @param host : solo il nome host. es portale.fitet.org
+ * @param path : il resto del path : /.....
+ * @param callback
+ */
+function httpGet(host, path, callback) {
+    return require('http').get({ host, path }, function (response) {
+        // Continuously update stream with data
+        var body = '';
+        response.on('data', function (d) {
+            body += d;
+        });
+        response.on('end', function () {
+            // Data reception is done, do whatever with it!
+            //var parsed = JSON.parse(body);
+            callback(body);
+        });
+    });
+}
+exports.httpGet = httpGet;
 // ==============================================================
 //                      BootBot
 // ==============================================================
