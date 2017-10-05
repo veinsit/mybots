@@ -134,7 +134,7 @@ function displayAtleti(chat, atleti: any[]) {
             subtitle: `${a.ranking}, vinte ${a.partiteVinte} su ${a.partiteDisputate}`,
             // image_url: ut.gStatMapUrl(`size=${mapAttachmentSizeRect}${mp}${mf}`),
             buttons: [
-                ut.weburlBtn("Incontri", `http://portale.fitet.org/dettaglio_percentuali.php?IDA=${a.codAtleta}&CAM=916&SQUADRA=${a.codSquadra}` ),
+                ut.weburlBtn("Incontri", `http://portale.fitet.org/risultati/campionati/dettaglio_percentuali.php?IDA=${a.codAtleta}&CAM=916&SQUADRA=${a.codSquadra}` ),
                 //ut.weburlBtn("Orari Domani", sv.getStopScheduleUri(bacino, ss.stop.stop_id, 1)),
             ]
         }
