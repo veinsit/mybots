@@ -54,12 +54,37 @@ const skills = [tpl, tt, prove]
 
 const BootBot = require('../lib/MyBootBot')
 
+/**
+ * associa a ogni identificativo di pagina un access-token
+ * ogni volta che ricevo un messaggio da una pagina devo modificare l'access-token del bot
+ * in modo che risponda alla pagina che ha mandato la richiesta
+ */
 const pageIds = [
-  { pid: "185193552025498", bacino: "FC", atok : process.env.ATOK },  // default
-  { pid: "303990613406509", bacino: "RA", atok : process.env.ATOK_RA },
+  /*
+  { pid: "185193552025498", bacino: "FC", atok : process.env.ATOK },    // "In autobus a Forlì-Cesena" default
+  { pid: "303990613406509", bacino: "RA", atok : process.env.ATOK_RA }, // "I miei esperimenti informatici"
   { pid: "999999999999999", bacino: "RN", atok : process.env.ATOK },
+*/
+
 ]
 
+// legge i pageIds dalle env PID_<i>
+for (let i = 0; i < 9; i++) {
+  if (process.env["PID_" + i]) {
+    const pidd = process.env["PID_" + i]
+
+    // PID_0 = 185193552025498:FC,<access token>
+    const i2punti = pidd.indexOf(":")
+    const iComma = pidd.indexOf(",")
+
+    pageIds.push({
+      pid: pidd.substring(0, i2punti),
+      bacino: pidd.substring(i2punti + 1, iComma),
+      atok: pidd.substring(iComma + 1),
+    })
+  }
+}
+// TODO:
 
 const bot = new BootBot(app, {
   accessToken: pageIds[0].atok, // default
@@ -68,12 +93,12 @@ const bot = new BootBot(app, {
 })
 
 
-function getPidData(page_id)  {
+function getPidData(page_id) {
   const pags: any[] = pageIds.filter(item => item.pid === page_id)
   if (pags.length === 1)
-      return pags[0]
+    return pags[0]
   else
-      return pageIds[0]
+    return pageIds[0]
 }
 
 
@@ -88,7 +113,7 @@ bot.on('message', (payload, chat, data) => {
 
   const fid = payload.sender.id
   const text = payload.message.text.toLowerCase()
-  console.log("page id="+payload.recipient.id+"; sender.id = " + fid + "; text=" + text)
+  console.log("page id=" + payload.recipient.id + "; sender.id = " + fid + "; text=" + text)
   // page id=185193552025498; sender.id = 1362132697230478; text=orari 92   trasp.pubb. FC
   // page id=303990613406509; sender.id = 1773056349400989; text=ciao       I miei esperim.
   if (data.captured) { return; }
@@ -153,16 +178,16 @@ bot.on('attachment', (payload, chat) => {
 
   let coords;
   if (att.type === 'location' && att.payload && (coords = att.payload.coordinates)) {
-    for (let s of skills) 
+    for (let s of skills)
       s.onLocationReceived(chat, coords, pid)
-    
+
   }
 });
 
 bot.on('postback', (payload, chat, data) => {
   const pl: string = payload.postback.payload
   console.log("on postback : " + pl)
-  
+
 
   // NO: if (data.captured) { return; }
   const pid = getPidData(payload.recipient.id)

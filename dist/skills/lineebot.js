@@ -232,7 +232,8 @@ export function onLocationReceived_OLD_2_(chat, coords) {
     }
     */
 function sayLineaTrovata(chat, tas, dir01, dayOffset) {
-    chat.say("Ecco il percorso della linea " + tas.linea.route_short_name).then(() => chat.sendAttachment('image', tas.gmapUrl(mapAttachmentSize, dir01, 20), undefined, { typing: true })
+    chat.say("Ecco il percorso della linea " + tas.linea.getTitle() +
+        "\n(Attenzione: alcune corse potrebbero seguire percorsi diversi da quello rappresentato)").then(() => chat.sendAttachment('image', tas.gmapUrl(mapAttachmentSize, dir01, 25), undefined, { typing: true })
         .then(() => {
         const m = Math.random();
         /*
@@ -243,12 +244,12 @@ function sayLineaTrovata(chat, tas, dir01, dayOffset) {
         else
         sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
         */
-        chat.say("Attenzione: alcune corse potrebbero seguire un percorso diverso o limitato").then(() => chat.say("Ora ti dirò i percorsi di 'Andata' e di 'Ritorno' di " + ut.formatDate(new Date()), { typing: true }).then(() => chat.say("Andata:\n" + tas.getPercorsiOD(0).join('\n')).then(() => chat.say("Ritorno:\n" + tas.getPercorsiOD(1).join('\n')).then(() => sayLineaTrovata_ListCompact(chat, tas, dayOffset)))));
+        chat.say("Percorsi di oggi (Andata):\n" + tas.getPercorsiOD(0).join('\n')).then(() => chat.say("Percorsi di oggi (Ritorno):\n" + tas.getPercorsiOD(1).join('\n')).then(() => sayLineaTrovata_ListCompact(chat, tas, dayOffset)));
     }));
 }
 exports.sayLineaTrovata = sayLineaTrovata;
 function sayLineaTrovata_ListCompact(chat, tas, dayOffset) {
-    chat.say("Qui puoi consultare gli orari completi").then(() => {
+    chat.say("Clicca su VEDI ORARI per aprire una pagina web con gli orari completi").then(() => {
         // prendi il trip[0] come rappresentativo TODO
         //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
         const options = { topElementStyle: 'compact' }; // large o compact

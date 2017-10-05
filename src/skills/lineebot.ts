@@ -20,7 +20,7 @@ type StopSchedule = model.StopSchedule
 // var. globale inizializzata dalla init()
 // let linee: Linea[] = []
 //var bacino = 'FC'
-var bacino : string = process.env.BACINO || 'RA'
+var bacino: string = process.env.BACINO || 'RA'
 var atok
 const mapAttachmentSize = "300x300"
 const mapAttachmentSizeRect = "300x150"
@@ -31,7 +31,7 @@ export const PB_TPL = 'TPL_';
 export const onPostback = (pl: string, chat, data, pidData): boolean => {
 
     bacino = pidData.bacino;
-    
+
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
         const route_id = pl.substring(16);
         onCodlinea(chat, route_id)
@@ -43,7 +43,7 @@ export const onPostback = (pl: string, chat, data, pidData): boolean => {
 export const onMessage = (chat, text, pidData): boolean => {
     //   const bacino='FC'
     bacino = pidData.bacino;
-    
+
     console.log("linee.ts: onMessage: " + text);
     if (text.startsWith("linea ") || text.startsWith("orari ")) {
         text = text.substring(6)
@@ -288,9 +288,12 @@ export function onLocationReceived_OLD_2_(chat, coords) {
 
 export function sayLineaTrovata(chat, tas: TripsAndShapes, dir01: number, dayOffset: number) {
 
-    chat.say("Ecco il percorso della linea " + tas.linea.route_short_name).then(() =>
+    chat.say("Ecco il percorso della linea " + tas.linea.getTitle() +
+        "\n(Attenzione: alcune corse potrebbero seguire percorsi diversi da quello rappresentato)"
 
-        chat.sendAttachment('image', tas.gmapUrl(mapAttachmentSize, dir01, 20), undefined,
+    ).then(() =>
+
+        chat.sendAttachment('image', tas.gmapUrl(mapAttachmentSize, dir01, 25), undefined,
             { typing: true })
             .then(() => {
                 const m = Math.random()
@@ -302,24 +305,20 @@ export function sayLineaTrovata(chat, tas: TripsAndShapes, dir01: number, dayOff
                 else 
                 sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
                 */
-                chat.say("Attenzione: alcune corse potrebbero seguire un percorso diverso o limitato").then(() =>
-                    chat.say("Ora ti dirò i percorsi di 'Andata' e di 'Ritorno' di " + ut.formatDate(new Date()), { typing: true }).then(() =>
-                        chat.say("Andata:\n" + tas.getPercorsiOD(0).join('\n')).then(() =>
-                            chat.say("Ritorno:\n" + tas.getPercorsiOD(1).join('\n')).then(() =>
-                                sayLineaTrovata_ListCompact(chat, tas, dayOffset)
-                            )
-                        )
+                chat.say("Percorsi di oggi (Andata):\n" + tas.getPercorsiOD(0).join('\n')).then(() =>
+                    chat.say("Percorsi di oggi (Ritorno):\n" + tas.getPercorsiOD(1).join('\n')).then(() =>
+                        sayLineaTrovata_ListCompact(chat, tas, dayOffset)
                     )
                 )
             })
-    )
+        )
 
 
 }
 
 export function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dayOffset: number) {
 
-    chat.say("Qui puoi consultare gli orari completi").then(() => {
+    chat.say("Clicca su VEDI ORARI per aprire una pagina web con gli orari completi").then(() => {
         // prendi il trip[0] come rappresentativo TODO
         //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
         const options = { topElementStyle: 'compact' }  // large o compact

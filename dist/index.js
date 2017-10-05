@@ -34,11 +34,27 @@ app.get(baseUriBacino + "/stops/:stopid/g/:giorno", (req, res) => tpl.webgetStop
 // ============================================================= end web
 const skills = [tpl, tt, prove];
 const BootBot = require('../lib/MyBootBot');
-const pageIds = [
-    { pid: "185193552025498", bacino: "FC", atok: process.env.ATOK },
-    { pid: "303990613406509", bacino: "RA", atok: process.env.ATOK_RA },
-    { pid: "999999999999999", bacino: "RN", atok: process.env.ATOK },
-];
+/**
+ * associa a ogni identificativo di pagina un access-token
+ * ogni volta che ricevo un messaggio da una pagina devo modificare l'access-token del bot
+ * in modo che risponda alla pagina che ha mandato la richiesta
+ */
+const pageIds = [];
+// legge i pageIds dalle env PID_<i>
+for (let i = 0; i < 9; i++) {
+    if (process.env["PID_" + i]) {
+        const pidd = process.env["PID_" + i];
+        // PID_0 = 185193552025498:FC,<access token>
+        const i2punti = pidd.indexOf(":");
+        const iComma = pidd.indexOf(",");
+        pageIds.push({
+            pid: pidd.substring(0, i2punti),
+            bacino: pidd.substring(i2punti + 1, iComma),
+            atok: pidd.substring(iComma + 1),
+        });
+    }
+}
+// TODO:
 const bot = new BootBot(app, {
     accessToken: pageIds[0].atok,
     verifyToken: process.env.VTOK,
