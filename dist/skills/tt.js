@@ -5,8 +5,8 @@ exports.onMessage = (chat, text, page_id) => {
     if (!text.startsWith("tt "))
         return false;
     const data = text.substring(3);
-    let match;
-    if ((match = /squadra\s+(\d+)/i.exec(data)).length >= 2) {
+    let match = /squadra\s+(\d+)/i.exec(data);
+    if (match && match.length >= 2 && match[1]) {
         onMessageSquadra(chat, match[1]);
         return true;
     }
