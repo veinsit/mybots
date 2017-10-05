@@ -131,7 +131,7 @@ bot.on('postback', (payload, chat, data) => {
     }
 });
 if (debug) {
-    require("./indexDebug").goDebug(tpl);
+    require("./indexDebug").goDebug(tpl, tt);
 }
 bot.start(process.env.PORT || 3000);
 //# sourceMappingURL=index.js.map

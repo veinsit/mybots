@@ -137,6 +137,7 @@ export function loop(i: number, n: number, action: (ii: number) => any) {
     }
 }
 
+
 export class MinFinder<T> {
     private dst: number[];
     private tps: T[];

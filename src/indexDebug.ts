@@ -47,11 +47,9 @@ function getSquadra(squadra, callback) {
 }
 
 /*linee && console.log(linee.map(l=>[l.LINEA_ID, l.display_name])); err && console.log(err)}*/
-export function goDebug(tpl) { 
+export function goDebug(tpl, tt) { 
 
-    getSquadra(7401, (body) => {
-        console.log(body)
-      })  
+    tt.onMessage(utils.fakechat, "tt squadra 7401", "999")
 
     // tpl.onPostback("TPL_ON_CODLINEA_FO04", utils.fakechat, {})
     
