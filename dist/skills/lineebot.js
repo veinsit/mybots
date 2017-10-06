@@ -238,7 +238,7 @@ function sayLineaTrovata(chat, tas, dir01, dayOffset) {
         else
         sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
         */
-        chat.say("Percorsi di oggi (Andata):\n" + tas.getPercorsiOD(0).join('\n')).then(() => chat.say("Percorsi di oggi (Ritorno):\n" + tas.getPercorsiOD(1).join('\n')).then(() => sayLineaTrovata_ListCompact(chat, tas, dayOffset)));
+        return chat.say("Percorsi di oggi (Andata):\n" + tas.getPercorsiOD(0).join('\n')).then(() => chat.say("Percorsi di oggi (Ritorno):\n" + tas.getPercorsiOD(1).join('\n')).then(() => m < 0.5 ? sayLineaTrovata_ListCompact(chat, tas, dayOffset) : sayLineaTrovata_Generic(chat, tas, dayOffset)));
     }));
 }
 exports.sayLineaTrovata = sayLineaTrovata;
@@ -299,39 +299,33 @@ function sayLineaTrovata_ListCompact(chat, tas, dayOffset) {
     ).then(() => menu.showHelp(chat));
     // end chat.say.then
 }
-exports.sayLineaTrovata_ListCompact = sayLineaTrovata_ListCompact;
 ;
-/*
-
-function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dayOffset) {  // items = array of {linea, shape}
-
-    //     options && options.imageAspectRatio && (payload.image_aspect_ratio = options.imageAspectRatio) && (delete options.imageAspectRatio);
-
-    const _element = (t: Trip) => {
-        return {
-            title: t.getOD(),
-            subtitle: 'partenza ' + t.stop_times[0].departure_time + " da " + t.stop_times[0].stop_name,
-            image_url: ut.find<Shape>(tas.shapes, s => s.shape_id === t.shape_id).gmapUrl("180x180", 20),
-            //        image_url: tas.shapes.filter(s => s.shape_id===t.shape_id)[0].gmapUrl("180x180", 20),
-            default_action: {
-                type: "web_url",
-                url: sv.getOpendataUri(linea, 0, dayOffset, t.trip_id),   // andata oggi
-                webview_height_ratio: "tall",
-                // messenger_extensions: true,
-                //"fallback_url": "http://www.startromagna.it/"
-            }
-        }
-    }
-    let elements = []
-    //        +----------------- solo andata
-    //        +
-    tas.trips[0].slice(0, 10).forEach(t => {
-        elements.push(_element(t))
-    })
-    chat.sendGenericTemplate(elements, { image_aspect_ratio: 'square' })
-
+function sayLineaTrovata_Generic(chat, tas, dayOffset) {
+    const subtitleA = tas.getEndStopNames(0).join(', ').substring(0, 100);
+    const subtitleR = tas.getEndStopNames(1).join(', ').substring(0, 100);
+    return chat.sendGenericTemplate([
+        {
+            title: "Orari di oggi (Andata)",
+            subtitle: subtitleA,
+            buttons: [ut.weburlBtn("Vai alla pagina", sv.getOpendataUri(tas.linea, 0, 0))]
+        },
+        {
+            title: "Orari di oggi (Ritorno)",
+            subtitle: subtitleR,
+            buttons: [ut.weburlBtn("Vai alla pagina", sv.getOpendataUri(tas.linea, 1, 0))]
+        },
+        {
+            title: "Orari di domani (Andata)",
+            subtitle: subtitleA,
+            buttons: [ut.weburlBtn("Vai alla pagina", sv.getOpendataUri(tas.linea, 0, 1))]
+        },
+        {
+            title: "Orari di domani (Ritorno)",
+            subtitle: subtitleR,
+            buttons: [ut.weburlBtn("Vai alla pagina", sv.getOpendataUri(tas.linea, 1, 1))]
+        },
+    ], { image_aspect_ratio: 'horizontal' });
 }
-*/
 exports.showHelpLineeOrari = (chat) => chat.say(`In ogni momento, puoi scrivere "linea" oppure "orari", seguito dal numero di una linea. Ad esempio: linea 5A, orari 92. 
 Puoi anche premere il tasto '+' per inviarmi la tua posizione: ti indicherò le fermate 🚏 più vicine a te !`, { typing: true }).then(() => menu.showHelp(chat));
 //# sourceMappingURL=lineebot.js.map

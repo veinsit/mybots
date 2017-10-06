@@ -308,9 +308,9 @@ export function sayLineaTrovata(chat, tas: TripsAndShapes, dir01: number, dayOff
                 else 
                 sayLineaTrovata_Generic(chat, linea, tas, dir01, dayOffset);
                 */
-                chat.say("Percorsi di oggi (Andata):\n" + tas.getPercorsiOD(0).join('\n')).then(() =>
+                return chat.say("Percorsi di oggi (Andata):\n" + tas.getPercorsiOD(0).join('\n')).then(() =>
                     chat.say("Percorsi di oggi (Ritorno):\n" + tas.getPercorsiOD(1).join('\n')).then(() =>
-                        sayLineaTrovata_ListCompact(chat, tas, dayOffset)
+                        m<0.5 ? sayLineaTrovata_ListCompact(chat, tas, dayOffset) : sayLineaTrovata_Generic(chat, tas, dayOffset)
                     )
                 )
             })
@@ -319,7 +319,7 @@ export function sayLineaTrovata(chat, tas: TripsAndShapes, dir01: number, dayOff
 
 }
 
-export function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dayOffset: number) {
+function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dayOffset: number) {
 
     return chat.say("Clicca su VEDI ORARI per aprire una pagina web con gli orari completi").then(() =>
 
@@ -382,37 +382,35 @@ export function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dayOffset
     // end chat.say.then
 };
 
-/*
+function sayLineaTrovata_Generic(chat, tas: TripsAndShapes, dayOffset: number) {
 
-function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dayOffset) {  // items = array of {linea, shape}
-
-    //     options && options.imageAspectRatio && (payload.image_aspect_ratio = options.imageAspectRatio) && (delete options.imageAspectRatio);
-
-    const _element = (t: Trip) => {
-        return {
-            title: t.getOD(),
-            subtitle: 'partenza ' + t.stop_times[0].departure_time + " da " + t.stop_times[0].stop_name,
-            image_url: ut.find<Shape>(tas.shapes, s => s.shape_id === t.shape_id).gmapUrl("180x180", 20),
-            //        image_url: tas.shapes.filter(s => s.shape_id===t.shape_id)[0].gmapUrl("180x180", 20),
-            default_action: {
-                type: "web_url",
-                url: sv.getOpendataUri(linea, 0, dayOffset, t.trip_id),   // andata oggi
-                webview_height_ratio: "tall",
-                // messenger_extensions: true,
-                //"fallback_url": "http://www.startromagna.it/"
-            }
-        }
-    }
-    let elements = []
-    //        +----------------- solo andata
-    //        +
-    tas.trips[0].slice(0, 10).forEach(t => {
-        elements.push(_element(t))
-    })
-    chat.sendGenericTemplate(elements, { image_aspect_ratio: 'square' })
+    const subtitleA = tas.getEndStopNames(0).join(', ').substring(0,100)
+    const subtitleR = tas.getEndStopNames(1).join(', ').substring(0,100)
+    return chat.sendGenericTemplate([
+        {
+            title: "Orari di oggi (Andata)",
+            subtitle: subtitleA,
+            buttons: [ut.weburlBtn("Vai alla pagina", sv.getOpendataUri(tas.linea, 0, 0))]
+        },
+        {
+            title: "Orari di oggi (Ritorno)",
+            subtitle: subtitleR,
+            buttons: [ut.weburlBtn("Vai alla pagina", sv.getOpendataUri(tas.linea, 1, 0))]
+        },
+        {
+            title: "Orari di domani (Andata)",
+            subtitle: subtitleA,
+            buttons: [ut.weburlBtn("Vai alla pagina", sv.getOpendataUri(tas.linea, 0, 1))]
+        },
+        {
+            title: "Orari di domani (Ritorno)",
+            subtitle: subtitleR,
+            buttons: [ut.weburlBtn("Vai alla pagina", sv.getOpendataUri(tas.linea, 1, 1))]
+        },
+    ], { image_aspect_ratio: 'horizontal' })
 
 }
-*/
+
 
 export const showHelpLineeOrari = (chat) =>
     chat.say(
