@@ -94,8 +94,8 @@ export function onLocationReceived(chat, coords, pidData) {
     // marker per coords
     const mp = ut.gMapMarker(coords.lat, coords.long, undefined, 'blue')
 
-    sv.getNearestStops(bacino, coords, 0, 4) 
-        .then((nrs: sv.NearestStopResult[]) => 
+    sv.getNearestStops(bacino, coords, 0, 4)
+        .then((nrs: sv.NearestStopResult[]) =>
             chat.say("Ecco le fermate più vicine (in linea d'aria)", { typing: true })
                 .then(() =>
                     sayNearestStops(nrs)
@@ -112,38 +112,30 @@ export function onLocationReceived(chat, coords, pidData) {
         }
 
         // invia mappa con markers
-        return chat.sendAttachment('image', ut.gStatMapUrl(`size=${mapAttachmentSize}${markers}`), undefined, { typing: true }).then(() => 
-            chat.say("Puoi consultare gli orari:").then(() => 
+        return chat.sendAttachment('image', ut.gStatMapUrl(`size=${mapAttachmentSize}${markers}`), undefined, { typing: true }).then(() =>
+            chat.say("Puoi consultare gli orari:").then(() =>
                 chat.sendGenericTemplate(
                     nrs.map((currElement, index) =>
                         stopTemplateElement(bacino, index, currElement.stopSchedules, currElement.dist, mp)
                     ), //elements, 
                     { image_aspect_ratio: 'horizontal ' } // horizontal o square))
-                ).then(() => 
+                ).then(() =>
                     menu.showHelp(chat)
-                ) 
-            ) 
+                    )
+            )
         );
     }
 }
 
 export const initModule = (bot, _getPidData) => {
-    bot.hear('linee e orari',
-    
-        (payload, chat) => {
-          const pid = _getPidData(payload.recipient.id)
-          bot.accessToken = pid.atok
-    
-          showHelpLineeOrari(chat)
-        });
-        
-   
+
+    bot.hear('linee e orari', (payload, chat) => {
+        const pid = _getPidData(payload.recipient.id)
+        bot.accessToken = pid.atok
+
+        showHelpLineeOrari(chat)
+    });
 }
-export const showHelpLineeOrari = (chat) =>
-chat.say(
-  `In ogni momento, puoi scrivere "linea" oppure "orari", seguito dal numero di una linea. Ad esempio: linea 5A, orari 92. 
-Puoi anche premere il tasto '+' per inviarmi la tua posizione: ti indicherò le fermate 🚏 più vicine a te !`, { typing: true }
-).then(() => menu.showHelp(chat))
 
 export const webgetStopSchedule = (b, stop_id, dayOffset: number, req, res) => {
     sv.getStopSchedule(b, stop_id, dayOffset)
@@ -205,14 +197,12 @@ export const webgetLinea = (b, route_id, dir01: number, dayOffset: number, req, 
 
 }
 
-const onCodlinea = (chat, route_id) => {
-    const dayOffset = 0;
+const onCodlinea = (chat, route_id) =>
+    sv.getTripsAndShapes(bacino, route_id, -1, 0) // -1: sia A che R
+        .then((tas: TripsAndShapes) =>
+            sayLineaTrovata(chat, tas, 0, 0) // 0 = Andata come default
+        )
 
-    sv.getTripsAndShapes(bacino, route_id, -1, dayOffset) // -1: sia A che R
-        .then((tas: TripsAndShapes) => {
-            sayLineaTrovata(chat, tas, 0, dayOffset); // 0 = Andata come default
-        })
-}
 
 // ok sia per List che per generic
 function stopTemplateElement(bacino, i: number, ss: StopSchedule, dist: number, mp: string): any {
@@ -301,7 +291,7 @@ export function onLocationReceived_OLD_2_(chat, coords) {
 
 export function sayLineaTrovata(chat, tas: TripsAndShapes, dir01: number, dayOffset: number) {
 
-    chat.say("Ecco il percorso della linea " + tas.linea.getTitle() +
+    return chat.say("Ecco il percorso della linea " + tas.linea.getTitle() +
         `\n(${emo.emoji.warning} alcune corse potrebbero seguire percorsi diversi da quello rappresentato)`
 
     ).then(() =>
@@ -331,10 +321,8 @@ export function sayLineaTrovata(chat, tas: TripsAndShapes, dir01: number, dayOff
 
 export function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dayOffset: number) {
 
-    chat.say("Clicca su VEDI ORARI per aprire una pagina web con gli orari completi").then(() => {
-        // prendi il trip[0] come rappresentativo TODO
-        //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
-        const options = { topElementStyle: 'compact' }  // large o compact
+    return chat.say("Clicca su VEDI ORARI per aprire una pagina web con gli orari completi").then(() =>
+
         chat.sendListTemplate([
             //            (#100) Incomplete element data: 
             // title and at least one other field (image url, subtitle or buttons) is required with non-empty value
@@ -387,12 +375,14 @@ export function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dayOffset
                 buttons: [ut.weburlBtn("Vedi orari", sv.getOpendataUri(tas.linea, 1, 1))]
             }
         ], // end elements
-            [], options)
-    }).then(() => 
-    menu.showHelp(chat)
-) 
+            [], { topElementStyle: 'compact' })  // large o compact)
+    ).then(() =>
+        menu.showHelp(chat)
+        )
     // end chat.say.then
 };
+
+/*
 
 function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dayOffset) {  // items = array of {linea, shape}
 
@@ -420,41 +410,13 @@ function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dayOff
         elements.push(_element(t))
     })
     chat.sendGenericTemplate(elements, { image_aspect_ratio: 'square' })
-    /*
-    // posso avere 10 elements (utile per i trip ?)
-    chat.sendGenericTemplate([
-        {
-            title: linea.getTitle(),
-            subtitle: tas.getAsDir(),
-            image_url: tas.gmapUrl("320x160", 20),
-            default_action: {
-                type: "web_url",
-                url: sv.getOpendataUri(linea, 0, dayOffset),   // andata oggi
-                webview_height_ratio: "tall",
-                // messenger_extensions: true,
-                //"fallback_url": "http://www.startromagna.it/"
-            },
-            buttons: [
-                //            ut.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_0_0`), // 0 sta per pagina 0
-                //            ut.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_1_0`), // 0 sta per pagina 0
 
-                ut.weburlBtn("Andata", sv.getOpendataUri(linea, 0, dayOffset)),
-                ut.weburlBtn("Ritorno", sv.getOpendataUri(linea, 0, dayOffset))
-                //                ut.weburlBtn("Sito R", sv.getOpendataUri(linea,1))
-            ]
-        }
-    ]
-    , {image_aspect_ratio:'square'});
-    */
 }
+*/
 
-
-
-
-// =================================================================================
-//            helpers
-// =================================================================================
-
-
-
+export const showHelpLineeOrari = (chat) =>
+    chat.say(
+        `In ogni momento, puoi scrivere "linea" oppure "orari", seguito dal numero di una linea. Ad esempio: linea 5A, orari 92. 
+Puoi anche premere il tasto '+' per inviarmi la tua posizione: ti indicherò le fermate 🚏 più vicine a te !`, { typing: true }
+    ).then(() => menu.showHelp(chat))
 

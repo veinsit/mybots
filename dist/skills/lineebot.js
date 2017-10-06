@@ -87,8 +87,6 @@ exports.initModule = (bot, _getPidData) => {
         exports.showHelpLineeOrari(chat);
     });
 };
-exports.showHelpLineeOrari = (chat) => chat.say(`In ogni momento, puoi scrivere "linea" oppure "orari", seguito dal numero di una linea. Ad esempio: linea 5A, orari 92. 
-Puoi anche premere il tasto '+' per inviarmi la tua posizione: ti indicherò le fermate 🚏 più vicine a te !`, { typing: true }).then(() => menu.showHelp(chat));
 exports.webgetStopSchedule = (b, stop_id, dayOffset, req, res) => {
     sv.getStopSchedule(b, stop_id, dayOffset)
         .then((ss) => {
@@ -143,13 +141,9 @@ exports.webgetLinea = (b, route_id, dir01, dayOffset, req, res, trip_id) => {
         }
     });
 };
-const onCodlinea = (chat, route_id) => {
-    const dayOffset = 0;
-    sv.getTripsAndShapes(bacino, route_id, -1, dayOffset) // -1: sia A che R
-        .then((tas) => {
-        sayLineaTrovata(chat, tas, 0, dayOffset); // 0 = Andata come default
-    });
-};
+const onCodlinea = (chat, route_id) => sv.getTripsAndShapes(bacino, route_id, -1, 0) // -1: sia A che R
+    .then((tas) => sayLineaTrovata(chat, tas, 0, 0) // 0 = Andata come default
+);
 // ok sia per List che per generic
 function stopTemplateElement(bacino, i, ss, dist, mp) {
     /*
@@ -232,7 +226,7 @@ export function onLocationReceived_OLD_2_(chat, coords) {
     }
     */
 function sayLineaTrovata(chat, tas, dir01, dayOffset) {
-    chat.say("Ecco il percorso della linea " + tas.linea.getTitle() +
+    return chat.say("Ecco il percorso della linea " + tas.linea.getTitle() +
         `\n(${emo.emoji.warning} alcune corse potrebbero seguire percorsi diversi da quello rappresentato)`).then(() => chat.sendAttachment('image', tas.gmapUrl(mapAttachmentSize, dir01, 25), undefined, { typing: true })
         .then(() => {
         const m = Math.random();
@@ -249,115 +243,95 @@ function sayLineaTrovata(chat, tas, dir01, dayOffset) {
 }
 exports.sayLineaTrovata = sayLineaTrovata;
 function sayLineaTrovata_ListCompact(chat, tas, dayOffset) {
-    chat.say("Clicca su VEDI ORARI per aprire una pagina web con gli orari completi").then(() => {
-        // prendi il trip[0] come rappresentativo TODO
-        //const mainTrip: sv.Trip = (trips[1] && (trips[1].stop_times.length > trips[0].stop_times.length)) ? trips[1] : (trips[0] || undefined);
-        const options = { topElementStyle: 'compact' }; // large o compact
-        chat.sendListTemplate([
-            //            (#100) Incomplete element data: 
-            // title and at least one other field (image url, subtitle or buttons) is required with non-empty value
-            {
-                title: "Andata (oggi)",
-                /*
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 0, 0),   // andata oggi
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    //fallback_url: "http://www.startromagna.it/"
-                },*/
-                buttons: [ut.weburlBtn("Vedi orari", sv.getOpendataUri(tas.linea, 0, 0))]
-            },
-            {
-                title: "Ritorno (oggi)",
-                /*
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 1, 0),   // ritorno oggi
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    //fallback_url: "http://www.startromagna.it/"
-                } */
-                buttons: [ut.weburlBtn("Vedi orari", sv.getOpendataUri(tas.linea, 1, 0))]
-            },
-            {
-                title: "Andata (domani)",
-                /*
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 0, 1),   // andata oggi
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    //fallback_url: "http://www.startromagna.it/"
-                }*/
-                buttons: [ut.weburlBtn("Vedi orari", sv.getOpendataUri(tas.linea, 0, 1))]
-            },
-            {
-                title: "Ritorno (domani)",
-                /*
-                default_action: {
-                    type: "web_url",
-                    url: sv.getOpendataUri(tas.linea, 1, 1),   // ritorno oggi
-                    webview_height_ratio: "tall",
-                    // messenger_extensions: true,
-                    //fallback_url: "http://www.startromagna.it/"
-                } */
-                buttons: [ut.weburlBtn("Vedi orari", sv.getOpendataUri(tas.linea, 1, 1))]
-            }
-        ], // end elements
-        [], options);
-    }).then(() => menu.showHelp(chat));
+    return chat.say("Clicca su VEDI ORARI per aprire una pagina web con gli orari completi").then(() => chat.sendListTemplate([
+        //            (#100) Incomplete element data: 
+        // title and at least one other field (image url, subtitle or buttons) is required with non-empty value
+        {
+            title: "Andata (oggi)",
+            /*
+            default_action: {
+                type: "web_url",
+                url: sv.getOpendataUri(tas.linea, 0, 0),   // andata oggi
+                webview_height_ratio: "tall",
+                // messenger_extensions: true,
+                //fallback_url: "http://www.startromagna.it/"
+            },*/
+            buttons: [ut.weburlBtn("Vedi orari", sv.getOpendataUri(tas.linea, 0, 0))]
+        },
+        {
+            title: "Ritorno (oggi)",
+            /*
+            default_action: {
+                type: "web_url",
+                url: sv.getOpendataUri(tas.linea, 1, 0),   // ritorno oggi
+                webview_height_ratio: "tall",
+                // messenger_extensions: true,
+                //fallback_url: "http://www.startromagna.it/"
+            } */
+            buttons: [ut.weburlBtn("Vedi orari", sv.getOpendataUri(tas.linea, 1, 0))]
+        },
+        {
+            title: "Andata (domani)",
+            /*
+            default_action: {
+                type: "web_url",
+                url: sv.getOpendataUri(tas.linea, 0, 1),   // andata oggi
+                webview_height_ratio: "tall",
+                // messenger_extensions: true,
+                //fallback_url: "http://www.startromagna.it/"
+            }*/
+            buttons: [ut.weburlBtn("Vedi orari", sv.getOpendataUri(tas.linea, 0, 1))]
+        },
+        {
+            title: "Ritorno (domani)",
+            /*
+            default_action: {
+                type: "web_url",
+                url: sv.getOpendataUri(tas.linea, 1, 1),   // ritorno oggi
+                webview_height_ratio: "tall",
+                // messenger_extensions: true,
+                //fallback_url: "http://www.startromagna.it/"
+            } */
+            buttons: [ut.weburlBtn("Vedi orari", sv.getOpendataUri(tas.linea, 1, 1))]
+        }
+    ], // end elements
+    [], { topElementStyle: 'compact' }) // large o compact)
+    ).then(() => menu.showHelp(chat));
     // end chat.say.then
 }
 exports.sayLineaTrovata_ListCompact = sayLineaTrovata_ListCompact;
 ;
-function sayLineaTrovata_Generic(chat, linea, tas, dayOffset) {
+/*
+
+function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dayOffset) {  // items = array of {linea, shape}
+
     //     options && options.imageAspectRatio && (payload.image_aspect_ratio = options.imageAspectRatio) && (delete options.imageAspectRatio);
-    const _element = (t) => {
+
+    const _element = (t: Trip) => {
         return {
             title: t.getOD(),
             subtitle: 'partenza ' + t.stop_times[0].departure_time + " da " + t.stop_times[0].stop_name,
-            image_url: ut.find(tas.shapes, s => s.shape_id === t.shape_id).gmapUrl("180x180", 20),
+            image_url: ut.find<Shape>(tas.shapes, s => s.shape_id === t.shape_id).gmapUrl("180x180", 20),
             //        image_url: tas.shapes.filter(s => s.shape_id===t.shape_id)[0].gmapUrl("180x180", 20),
             default_action: {
                 type: "web_url",
-                url: sv.getOpendataUri(linea, 0, dayOffset, t.trip_id),
-                webview_height_ratio: "tall",
-            }
-        };
-    };
-    let elements = [];
-    //        +----------------- solo andata
-    //        +
-    tas.trips[0].slice(0, 10).forEach(t => {
-        elements.push(_element(t));
-    });
-    chat.sendGenericTemplate(elements, { image_aspect_ratio: 'square' });
-    /*
-    // posso avere 10 elements (utile per i trip ?)
-    chat.sendGenericTemplate([
-        {
-            title: linea.getTitle(),
-            subtitle: tas.getAsDir(),
-            image_url: tas.gmapUrl("320x160", 20),
-            default_action: {
-                type: "web_url",
-                url: sv.getOpendataUri(linea, 0, dayOffset),   // andata oggi
+                url: sv.getOpendataUri(linea, 0, dayOffset, t.trip_id),   // andata oggi
                 webview_height_ratio: "tall",
                 // messenger_extensions: true,
                 //"fallback_url": "http://www.startromagna.it/"
-            },
-            buttons: [
-                //            ut.postbackBtn(linea.getAscDir(), `TPL_PAGE_CORSE_${linea.route_id}_0_0`), // 0 sta per pagina 0
-                //            ut.postbackBtn(linea.getDisDir(), `TPL_PAGE_CORSE_${linea.route_id}_1_0`), // 0 sta per pagina 0
-
-                ut.weburlBtn("Andata", sv.getOpendataUri(linea, 0, dayOffset)),
-                ut.weburlBtn("Ritorno", sv.getOpendataUri(linea, 0, dayOffset))
-                //                ut.weburlBtn("Sito R", sv.getOpendataUri(linea,1))
-            ]
+            }
         }
-    ]
-    , {image_aspect_ratio:'square'});
-    */
+    }
+    let elements = []
+    //        +----------------- solo andata
+    //        +
+    tas.trips[0].slice(0, 10).forEach(t => {
+        elements.push(_element(t))
+    })
+    chat.sendGenericTemplate(elements, { image_aspect_ratio: 'square' })
+
 }
+*/
+exports.showHelpLineeOrari = (chat) => chat.say(`In ogni momento, puoi scrivere "linea" oppure "orari", seguito dal numero di una linea. Ad esempio: linea 5A, orari 92. 
+Puoi anche premere il tasto '+' per inviarmi la tua posizione: ti indicherò le fermate 🚏 più vicine a te !`, { typing: true }).then(() => menu.showHelp(chat));
 //# sourceMappingURL=lineebot.js.map
