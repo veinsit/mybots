@@ -301,26 +301,28 @@ function sayLineaTrovata_ListCompact(chat, tas, dayOffset) {
 }
 ;
 function sayLineaTrovata_Generic(chat, tas, dayOffset) {
-    const subtitleA = tas.getEndStopNames(0).join(', ').substring(0, 100);
-    const subtitleR = tas.getEndStopNames(1).join(', ').substring(0, 100);
+    const ja = tas.getEndStopNames(0).join(', ');
+    const jr = tas.getEndStopNames(1).join(', ');
+    const subtitleA = "Destinazioni: " + ja.substring(0, 100) + (ja.length > 100 ? "...." : "");
+    const subtitleR = "Destinazioni: " + jr.substring(0, 100) + (jr.length > 100 ? "...." : "");
     return chat.sendGenericTemplate([
         {
-            title: "Orari di oggi (Andata)",
+            title: tas.linea.getPrefixedTitle() + "\nOrari di oggi (Andata)",
             subtitle: subtitleA,
             buttons: [ut.weburlBtn("Vai alla pagina", sv.getOpendataUri(tas.linea, 0, 0))]
         },
         {
-            title: "Orari di oggi (Ritorno)",
+            title: tas.linea.getPrefixedTitle() + "\nOrari di oggi (Ritorno)",
             subtitle: subtitleR,
             buttons: [ut.weburlBtn("Vai alla pagina", sv.getOpendataUri(tas.linea, 1, 0))]
         },
         {
-            title: "Orari di domani (Andata)",
+            title: tas.linea.getPrefixedTitle() + "\nOrari di domani (Andata)",
             subtitle: subtitleA,
             buttons: [ut.weburlBtn("Vai alla pagina", sv.getOpendataUri(tas.linea, 0, 1))]
         },
         {
-            title: "Orari di domani (Ritorno)",
+            title: tas.linea.getPrefixedTitle() + "\nOrari di domani (Ritorno)",
             subtitle: subtitleR,
             buttons: [ut.weburlBtn("Vai alla pagina", sv.getOpendataUri(tas.linea, 1, 1))]
         },
