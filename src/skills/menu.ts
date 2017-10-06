@@ -18,7 +18,7 @@ export const initModule = (bot, _getPidData) => {
 
   bot.setGetStartedButton((payload, chat) => {
     chat.sendTypingIndicator(500).then(() =>
-      showSalutation(chat)
+      showHelp(chat)
     )
   })
 
@@ -42,7 +42,7 @@ export const initModule = (bot, _getPidData) => {
       const pid = getPidData(payload.recipient.id)
       bot.accessToken = pid.atok
 
-      showSalutation(chat)
+      showHelp(chat)
     });
 
   // help
@@ -55,9 +55,11 @@ export const initModule = (bot, _getPidData) => {
 
       showHelp(chat)
     });
+
+
 }
 
-
+/*
 export const showSalutation = (chat) => {
 
   chat.getUserProfile()
@@ -67,7 +69,7 @@ export const showSalutation = (chat) => {
     })
 }
 
-export const showHelp = (chat) => {
+export const showHelpOLD = (chat) => {
   chat.say(
     `Riconosco queste parole:
 - "linea" o "orari", seguito dal numero di una linea
@@ -82,11 +84,21 @@ export const showHelp = (chat) => {
       })
     )
 }
+*/
 
 
-export const showAbout = (chat) => {
+
+export const showAbout = (chat) =>
   chat.say("Questo servizio utilizza i dati sulle linee e gli orari pubblicati negli Open Data di Start Romagna. http://www.startromagna.it/servizi/open-data/")
-}
+
+export const showHelp = (chat) =>
+  chat.getUserProfile()
+    .then((user) => {
+      chat.say({
+        text: user.first_name + ", come posso aiutarti adesso? 😊",
+        quickReplies: ['linee e orari', 'help', { content_type: "location" }, 'ping pong']
+      })
+    })
 
 
 // =======================================================  exports

@@ -225,9 +225,8 @@ for (let s of skills) {
   s.initModule(bot, getPidData)
 }
 
-
 if (debug) {
-  require("./indexDebug").goDebug(tpl, tt)
+  require("./indexDebug").goDebug(tpl, tt, getPidData)
 }
 
 bot.start(process.env.PORT || 3000)

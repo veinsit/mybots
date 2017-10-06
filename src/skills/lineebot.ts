@@ -4,6 +4,7 @@ import ut = require("../utils");
 
 // Load emojis
 import emo = require("../assets/emoji");
+import menu = require("./menu");
 
 import sv = require("../servicedb");
 const sqlite3 = require('sqlite3').verbose();
@@ -93,13 +94,13 @@ export function onLocationReceived(chat, coords, pidData) {
     // marker per coords
     const mp = ut.gMapMarker(coords.lat, coords.long, undefined, 'blue')
 
-    sv.getNearestStops(bacino, coords, 0, 4)
-        .then((nrs: sv.NearestStopResult[]) => {
+    sv.getNearestStops(bacino, coords, 0, 4) 
+        .then((nrs: sv.NearestStopResult[]) => 
             chat.say("Ecco le fermate più vicine (in linea d'aria)", { typing: true })
                 .then(() =>
                     sayNearestStops(nrs)
                 )
-        })
+        )
 
     function sayNearestStops(nrs: sv.NearestStopResult[]) {
 
@@ -111,28 +112,38 @@ export function onLocationReceived(chat, coords, pidData) {
         }
 
         // invia mappa con markers
-        chat.sendAttachment('image', ut.gStatMapUrl(`size=${mapAttachmentSize}${markers}`), undefined,
-            { typing: true })
-            .then(() => {
-                chat.say("Puoi consultare gli orari:").then(() => {
-                    /*
-                    const elements = []
-                    for (var index = 0; index < nrs.length; index++) {
-                        elements.push(stopTemplateElement(bacino, index, nrs[index].stopSchedules, nrs[index].dist, mp));
-                    }*/
-                    // chat.sendListTemplate(elements, [], { topElementStyle: 'compact' })
-                    chat.sendGenericTemplate(
-                        nrs.map((currElement, index) =>
-                            stopTemplateElement(bacino, index, currElement.stopSchedules, currElement.dist, mp)
-                        ), //elements, 
-                        { image_aspect_ratio: 'horizontal ' }
-                    ) // horizontal o square))
-                }) // .then(() => {  })
-            });
+        return chat.sendAttachment('image', ut.gStatMapUrl(`size=${mapAttachmentSize}${markers}`), undefined, { typing: true }).then(() => 
+            chat.say("Puoi consultare gli orari:").then(() => 
+                chat.sendGenericTemplate(
+                    nrs.map((currElement, index) =>
+                        stopTemplateElement(bacino, index, currElement.stopSchedules, currElement.dist, mp)
+                    ), //elements, 
+                    { image_aspect_ratio: 'horizontal ' } // horizontal o square))
+                ).then(() => 
+                    menu.showHelp(chat)
+                ) 
+            ) 
+        );
     }
 }
 
-export const initModule = (bot, _getPidData) => {}
+export const initModule = (bot, _getPidData) => {
+    bot.hear('linee e orari',
+    
+        (payload, chat) => {
+          const pid = _getPidData(payload.recipient.id)
+          bot.accessToken = pid.atok
+    
+          showHelpLineeOrari(chat)
+        });
+        
+   
+}
+export const showHelpLineeOrari = (chat) =>
+chat.say(
+  `In ogni momento, puoi scrivere "linea" oppure "orari", seguito dal numero di una linea. Ad esempio: linea 5A, orari 92. 
+Puoi anche premere il tasto '+' per inviarmi la tua posizione: ti indicherò le fermate 🚏 più vicine a te !`, { typing: true }
+).then(() => menu.showHelp(chat))
 
 export const webgetStopSchedule = (b, stop_id, dayOffset: number, req, res) => {
     sv.getStopSchedule(b, stop_id, dayOffset)
@@ -377,7 +388,10 @@ export function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dayOffset
             }
         ], // end elements
             [], options)
-    })// end chat.say.then
+    }).then(() => 
+    menu.showHelp(chat)
+) 
+    // end chat.say.then
 };
 
 function sayLineaTrovata_Generic(chat, linea: Linea, tas: TripsAndShapes, dayOffset) {  // items = array of {linea, shape}

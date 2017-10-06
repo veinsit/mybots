@@ -10,6 +10,8 @@ exports.emoji = {
     pingpong: '🏓',
     heart: '❤️',
     sun: '😎',
+    smile: '☺️',
+    smile2: '😊',
     tv: '📺',
     camera: '🎥',
     view_emj: '👉',

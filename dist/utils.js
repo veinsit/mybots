@@ -52,7 +52,7 @@ export function omStatMapUrl(params:string) : string {
 */
 exports.fakechat = {
     say: (text) => new Promise((rs, rj) => {
-        rs(console.log('chat say > ' + text));
+        rs(console.log('chat say > ' + (typeof text === "string" ? text : text.text)));
     }),
     sendAttachment: (type, url) => new Promise((rs, rj) => {
         rs(console.log('chat sendAttachment > ' + url));
@@ -60,6 +60,12 @@ exports.fakechat = {
     sendListTemplate: (elements) => new Promise((rs, rj) => {
         rs(elements.forEach(e => console.log(`${e.title} - ${e.subtitle}`)));
     }),
+    sendGenericTemplate: (elements) => new Promise((rs, rj) => {
+        rs(elements.forEach(e => console.log(`${e.title} - ${e.subtitle}`)));
+    }),
+    getUserProfile: () => new Promise((rs, rj) => {
+        rs({ first_name: "Usertest" });
+    })
 };
 // crea una Promise per una funzione
 function MyPro(afunction) {

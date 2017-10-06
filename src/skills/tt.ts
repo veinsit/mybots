@@ -2,6 +2,20 @@
 
 import ut = require("../utils");
 import emo = require("../assets/emoji");
+import menu = require("./menu");
+
+var getPidData
+export const initModule = (bot, _getPidData) => {
+    getPidData = _getPidData
+    bot.hear(['pingpong', 'ping pong', 'tt', 'tennistavolo', 'tennis tavolo'],
+    
+        (payload, chat) => {
+          const pid = getPidData(payload.recipient.id)
+          bot.accessToken = pid.atok
+    
+          showHelpPingPong(chat)
+        });     
+ }
 
 export const onMessage = (chat, text, page_id): boolean => {
     // The \b denotes a word boundary,
@@ -58,6 +72,7 @@ function onMessageSquadra(chat, codSquadra) {
         loopWhile(html)
 
         displayAtleti(chat, atleti)
+        .then(() => menu.showHelp(chat))
 
         function loopWhile(h: string) {
 //            const indexPrefix = h.indexOf(nomeAtletaPrefix)
@@ -118,14 +133,14 @@ function displayAtleti(chat, atleti: any[]) {
         chat.say(`${atleti[i].nomeAtleta} ${atleti[i].ranking}, vinte ${atleti[i].partiteVinte} su ${atleti[i].partiteDisputate}`)
     )
     */
-    chat.say("Ecco gli atleti della squadra:").then(() => {
+    return chat.say("Ecco gli atleti della squadra:").then(() => 
         chat.sendGenericTemplate(
             atleti.map((currElement, index) =>
                 atletaTemplateElement(currElement)
             ), //elements, 
             { image_aspect_ratio: 'horizontal ' }
         ) // horizontal o square))
-    })
+    )
 
     // ok sia per List che per generic
     function atletaTemplateElement(a): any {
@@ -158,4 +173,11 @@ function onMessageCalendario(chat) {
 export function onLocationReceived(chat, coords, page_id) {
 }
 
-export const initModule = (bot, _getPidData) => { }
+
+
+ const showHelpPingPong = (chat) =>
+ chat.say(
+   `In ogni momento, puoi scrivere "ping pong" oppure "tt", seguito da:
+- la parola "squadra" seguita dal codice della squadra Ad esempio: "tt squadra 7401".`
+, { typing: true }
+ ).then(() => require("./menu").showHelp(chat))

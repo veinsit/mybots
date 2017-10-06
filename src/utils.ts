@@ -56,7 +56,7 @@ export function omStatMapUrl(params:string) : string {
 export const fakechat = {
     say: (text): Promise<any> => new Promise<any>((rs, rj) => {
         rs(
-            console.log('chat say > ' + text)
+            console.log('chat say > ' + (typeof text==="string" ? text : text.text))
         )
     }),
     sendAttachment: (type, url) : Promise<any> => new Promise<any>((rs, rj) => {
@@ -69,6 +69,17 @@ export const fakechat = {
             elements.forEach(e => console.log(`${e.title} - ${e.subtitle}`))
         )
     }),
+    sendGenericTemplate: (elements): Promise<any> => new Promise<any>((rs, rj) => {
+        rs(
+            elements.forEach(e => console.log(`${e.title} - ${e.subtitle}`))
+        )
+    }),
+    getUserProfile: (): Promise<any> => new Promise<any>((rs, rj) => {
+        rs(
+            {first_name : "Usertest"}
+        )
+    })
+
 }
 
 // crea una Promise per una funzione

@@ -1,6 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ut = require("../utils");
+const menu = require("./menu");
+var getPidData;
+exports.initModule = (bot, _getPidData) => {
+    getPidData = _getPidData;
+    bot.hear(['pingpong', 'ping pong', 'tt', 'tennistavolo', 'tennis tavolo'], (payload, chat) => {
+        const pid = getPidData(payload.recipient.id);
+        bot.accessToken = pid.atok;
+        showHelpPingPong(chat);
+    });
+};
 exports.onMessage = (chat, text, page_id) => {
     // The \b denotes a word boundary,
     let regex1 = /\b(?:fitet|ping\s?pong|table\s?tennis|tt|tennis\s+tavolo)\b\s+\b(?:squadra|team)\b\s+(\d+)/i;
@@ -46,7 +56,8 @@ function onMessageSquadra(chat, codSquadra) {
         const dataPrefix = "<p class=dettagli>";
         const atleti = [];
         loopWhile(html);
-        displayAtleti(chat, atleti);
+        displayAtleti(chat, atleti)
+            .then(() => menu.showHelp(chat));
         function loopWhile(h) {
             //            const indexPrefix = h.indexOf(nomeAtletaPrefix)
             const indexPrefix = h.indexOf(codAtletaPrefix);
@@ -95,10 +106,9 @@ function displayAtleti(chat, atleti) {
         chat.say(`${atleti[i].nomeAtleta} ${atleti[i].ranking}, vinte ${atleti[i].partiteVinte} su ${atleti[i].partiteDisputate}`)
     )
     */
-    chat.say("Ecco gli atleti della squadra:").then(() => {
-        chat.sendGenericTemplate(atleti.map((currElement, index) => atletaTemplateElement(currElement)), //elements, 
-        { image_aspect_ratio: 'horizontal ' }); // horizontal o square))
-    });
+    return chat.say("Ecco gli atleti della squadra:").then(() => chat.sendGenericTemplate(atleti.map((currElement, index) => atletaTemplateElement(currElement)), //elements, 
+    { image_aspect_ratio: 'horizontal ' }) // horizontal o square))
+    );
     // ok sia per List che per generic
     function atletaTemplateElement(a) {
         return {
@@ -122,5 +132,6 @@ function onMessageCalendario(chat) {
 function onLocationReceived(chat, coords, page_id) {
 }
 exports.onLocationReceived = onLocationReceived;
-exports.initModule = (bot, _getPidData) => { };
+const showHelpPingPong = (chat) => chat.say(`In ogni momento, puoi scrivere "ping pong" oppure "tt", seguito da:
+- la parola "squadra" seguita dal codice della squadra Ad esempio: "tt squadra 7401".`, { typing: true }).then(() => require("./menu").showHelp(chat));
 //# sourceMappingURL=tt.js.map

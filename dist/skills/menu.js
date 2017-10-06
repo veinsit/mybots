@@ -11,7 +11,7 @@ exports.initModule = (bot, _getPidData) => {
     bot.setGreetingText("Sono un automa (un 'bot') e posso darti informazioni sulle linee e sugli orari degli autobus" +
         "\n\nClicca per iniziare" + emo.emoji.down);
     bot.setGetStartedButton((payload, chat) => {
-        chat.sendTypingIndicator(500).then(() => exports.showSalutation(chat));
+        chat.sendTypingIndicator(500).then(() => exports.showHelp(chat));
     });
     // bot.deletePersistentMenu()
     bot.setPersistentMenu([
@@ -29,7 +29,7 @@ exports.initModule = (bot, _getPidData) => {
     ['hello', 'hi', 'hey', 'ehi', 'start', 'inizia', 'ciao', 'salve', 'chat', 'parla'], (payload, chat) => {
         const pid = getPidData(payload.recipient.id);
         bot.accessToken = pid.atok;
-        exports.showSalutation(chat);
+        exports.showHelp(chat);
     });
     // help
     bot.hear(//     ['hello', 'hi', /hey( there)?/i], 
@@ -39,28 +39,40 @@ exports.initModule = (bot, _getPidData) => {
         exports.showHelp(chat);
     });
 };
-exports.showSalutation = (chat) => {
-    chat.getUserProfile()
-        .then((user) => {
-        chat.say("Ciao, " + user.first_name + "! " + emo.emoji.waving)
-            .then(() => exports.showHelp(chat));
-    });
-};
-exports.showHelp = (chat) => {
-    chat.say(`Riconosco queste parole:
+/*
+export const showSalutation = (chat) => {
+
+  chat.getUserProfile()
+    .then((user) => {
+      chat.say("Ciao, " + user.first_name + "! " + emo.emoji.waving)
+        .then(() => showHelp(chat))
+    })
+}
+
+export const showHelpOLD = (chat) => {
+  chat.say(
+    `Riconosco queste parole:
 - "linea" o "orari", seguito dal numero di una linea
 - "fermata", seguito dal codice della fermata che leggi sulla tabella oraria
 - "aiuto" o "help", per rivedere questo messaggio
 - un saluto, come "ciao", "hello", "salve"
 - oppure inviami la tua posizione: provalo !!`, { typing: true })
-        .then(() => chat.say({
+    .then(() =>
+      chat.say({
         text: 'Ecco alcuni esempi',
         quickReplies: ['linea 127', 'orari 92', 'linea 2', 'aiuto', { content_type: "location" }]
-    }));
-};
-exports.showAbout = (chat) => {
-    chat.say("Questo servizio utilizza i dati sulle linee e gli orari pubblicati negli Open Data di Start Romagna. http://www.startromagna.it/servizi/open-data/");
-};
+      })
+    )
+}
+*/
+exports.showAbout = (chat) => chat.say("Questo servizio utilizza i dati sulle linee e gli orari pubblicati negli Open Data di Start Romagna. http://www.startromagna.it/servizi/open-data/");
+exports.showHelp = (chat) => chat.getUserProfile()
+    .then((user) => {
+    chat.say({
+        text: user.first_name + ", come posso aiutarti adesso? 😊",
+        quickReplies: ['linee e orari', 'help', { content_type: "location" }, 'ping pong']
+    });
+});
 // =======================================================  exports
 exports.PB_MENU = 'MENU_';
 var bacino;
