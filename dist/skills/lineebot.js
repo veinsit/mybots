@@ -13,10 +13,12 @@ var bacino = process.env.BACINO || 'RA';
 var atok;
 const mapAttachmentSize = "300x300";
 const mapAttachmentSizeRect = "300x150";
+var mPidData;
 // =======================================================  exports
 exports.PB_TPL = 'TPL_';
 exports.onPostback = (pl, chat, data, pidData) => {
     bacino = pidData.bacino;
+    mPidData = pidData;
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
         const route_id = pl.substring(16);
         onCodlinea(chat, route_id);
@@ -27,6 +29,7 @@ exports.onPostback = (pl, chat, data, pidData) => {
 exports.onMessage = (chat, text, pidData) => {
     //   const bacino='FC'
     bacino = pidData.bacino;
+    mPidData = pidData;
     console.log("linee.ts: onMessage: " + text);
     if (text.startsWith("linea ") || text.startsWith("orari ")) {
         text = text.substring(6);
@@ -56,6 +59,7 @@ exports.onMessage = (chat, text, pidData) => {
 };
 function onLocationReceived(chat, coords, pidData) {
     bacino = pidData.bacino;
+    mPidData = pidData;
     // const bacino='FC'
     //    const db = sv.opendb(bacino);
     //    db.serialize(function() {
@@ -76,7 +80,7 @@ function onLocationReceived(chat, coords, pidData) {
         // invia mappa con markers
         return chat.sendAttachment('image', ut.gStatMapUrl(`size=${mapAttachmentSize}${markers}`), undefined, { typing: true }).then(() => chat.say("Puoi consultare gli orari:").then(() => chat.sendGenericTemplate(nrs.map((currElement, index) => stopTemplateElement(bacino, index, currElement.stopSchedules, currElement.dist, mp)), //elements, 
         { image_aspect_ratio: 'horizontal ' } // horizontal o square))
-        ).then(() => menu.showHelp(chat))));
+        ).then(() => menu.showHelp(chat, mPidData.pid))));
     }
 }
 exports.onLocationReceived = onLocationReceived;
@@ -296,7 +300,7 @@ function sayLineaTrovata_ListCompact(chat, tas, dayOffset) {
         }
     ], // end elements
     [], { topElementStyle: 'compact' }) // large o compact)
-    ).then(() => menu.showHelp(chat));
+    );
     // end chat.say.then
 }
 ;
@@ -329,5 +333,5 @@ function sayLineaTrovata_Generic(chat, tas, dayOffset) {
     ], { image_aspect_ratio: 'horizontal' });
 }
 exports.showHelpLineeOrari = (chat) => chat.say(`In ogni momento, puoi scrivere "linea" oppure "orari", seguito dal numero di una linea. Ad esempio: linea 5A, orari 92. 
-Puoi anche premere il tasto '+' per inviarmi la tua posizione: ti indicherò le fermate 🚏 più vicine a te !`, { typing: true }).then(() => menu.showHelp(chat));
+Puoi anche premere il tasto '+' per inviarmi la tua posizione: ti indicherò le fermate 🚏 più vicine a te !`, { typing: true }).then(() => menu.showHelp(chat, mPidData.pid));
 //# sourceMappingURL=lineebot.js.map

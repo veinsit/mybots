@@ -18,7 +18,7 @@ export const initModule = (bot, _getPidData) => {
 
   bot.setGetStartedButton((payload, chat) => {
     chat.sendTypingIndicator(500).then(() =>
-      showHelp(chat)
+      showHelp(chat,payload.recipient.id)
     )
   })
 
@@ -42,7 +42,7 @@ export const initModule = (bot, _getPidData) => {
       const pid = getPidData(payload.recipient.id)
       bot.accessToken = pid.atok
 
-      showHelp(chat)
+      showHelp(chat, payload.recipient.id)
     });
 
   // help
@@ -53,7 +53,7 @@ export const initModule = (bot, _getPidData) => {
       const pid = getPidData(payload.recipient.id)
       bot.accessToken = pid.atok
 
-      showHelp(chat)
+      showHelp(chat, payload.recipient.id)
     });
 
 
@@ -86,19 +86,29 @@ export const showHelpOLD = (chat) => {
 }
 */
 
+const pid_TtCastrocaro = "1734287426880054"
+const pid_TplFC = "185193552025498"
+const pid_TplRA = "303990613406509"
 
+const qrs = [
+  {pid:pid_TtCastrocaro, quickReplies:['squadre', 'risultati', 'squadra 7401', 'squadra 7734'] },
+  {pid:pid_TplFC, quickReplies:['linee e orari' , 'help', { content_type: "location" }]},
+  {pid:pid_TplRA, quickReplies:['linee e orari' , 'help', { content_type: "location" }]},
+]
 
 export const showAbout = (chat) =>
   chat.say("Questo servizio utilizza i dati sulle linee e gli orari pubblicati negli Open Data di Start Romagna. http://www.startromagna.it/servizi/open-data/")
 
-export const showHelp = (chat) =>
-  chat.getUserProfile()
-    .then((user) => {
-      chat.say({
-        text: user.first_name + ", come posso aiutarti adesso? 😊",
-        quickReplies: ['linee e orari', 'help', { content_type: "location" }, 'ping pong']
-      })
+export const showHelp = (chat, page_id) => {
+  
+  return chat.getUserProfile()
+  .then((user) => {
+    chat.say({
+      text: user.first_name + ", come posso aiutarti adesso? 😊",
+      quickReplies: qrs.filter(x=>x.pid===page_id)[0].quickReplies
     })
+  })
+}
 
 
 // =======================================================  exports
@@ -114,7 +124,7 @@ export const onPostback = (pl: string, chat, data, pidData): boolean => {
   // è mio !!!
 
   if (pl === "MENU_HELP") {
-    showHelp(chat)
+    showHelp(chat, pidData.pid)
   }
   else if (pl === "MENU_CREDITS") {
     showAbout(chat)

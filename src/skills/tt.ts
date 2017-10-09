@@ -4,16 +4,20 @@ import ut = require("../utils");
 import emo = require("../assets/emoji");
 import menu = require("./menu");
 
-const squadre = [
-    {cod:7401, nome:"Castrocaro PUB"},
-    {cod:7396, nome:"TT S. MARTINO RIMINI ADRIACHANNEL"},
-    {cod:7398, nome:"TT MASSA LOMBARDA ROSSI"},
-    {cod:7399, nome:"TT S. MARTINO RIMINI OLD AMERICAN"},
-    {cod:7400, nome:"EVERPING RAVENNA A"},
-    {cod:7734, nome:"ALFIERI S. TOME'"},
-    {cod:7745, nome:"TT ACLI LUGO D3/B"},
-    {cod:7397, nome:"EVERPING RAVENNA B"}
+const gironi = [
+    {cam:916, camd:"D/3 gir.G", 
+        squadre:[
+            {cod:7401, nome:"Castrocaro PUB"},
+            {cod:7396, nome:"TT S. MARTINO RIMINI ADRIACHANNEL"},
+            {cod:7398, nome:"TT MASSA LOMBARDA ROSSI"},
+            {cod:7399, nome:"TT S. MARTINO RIMINI OLD AMERICAN"},
+            {cod:7400, nome:"EVERPING RAVENNA A"},
+            {cod:7734, nome:"ALFIERI S. TOME'"},
+            {cod:7745, nome:"TT ACLI LUGO D3/B"},
+            {cod:7397, nome:"EVERPING RAVENNA B"}
+    ]},
 ]
+
 var getPidData
 export const initModule = (bot, _getPidData) => {
     getPidData = _getPidData
@@ -33,13 +37,19 @@ export const onMessage = (chat, text, page_id): boolean => {
     let regex1 = /\b(?:squadra|team)\b\s+(\d+)/i
     let match1 = regex1.exec(text)
     if (match1 && match1.length >= 2 && match1[1]) {
-        onMessageSquadra(chat, match1[1])
+        onMessageSquadra(chat, match1[1], page_id)
         return true;
     }
     regex1 = /\b(?:squadre|elenco\ssquadre)\b/i
     match1 = regex1.exec(text)
     if (match1 && match1.length >= 1) {
-        onMessageSquadre(chat)
+        onMessageSquadre(chat, page_id)
+        return true;
+    }
+    regex1 = /\b(?:calendario|risultati)\b/i
+    match1 = regex1.exec(text)
+    if (match1 && match1.length >= 1) {
+        onMessageCalendario(chat, page_id)
         return true;
     }
     /*
@@ -71,14 +81,15 @@ function getSquadra(squadra, callback) {
 }
 
 
-function onMessageSquadre(chat) {
+function onMessageSquadre(chat, page_id) {
+    const squadre = gironi.filter(g=>g.cam===916)[0].squadre
     chat.say(`Le squadre del girone D3/G sono:\n`+squadre.map(s=>`${s.nome} ${s.cod}`).join('\n')).then(()=>
     chat.say({text:"Dimmi il codice della squadra",
         quickReplies: squadre.map(s=>"Squadra "+s.cod)
     }))
 }
     
-function onMessageSquadra(chat, codSquadra) {
+function onMessageSquadra(chat, codSquadra, page_id) {
 
     getSquadra(codSquadra, (html: string) => {
 
@@ -90,7 +101,7 @@ function onMessageSquadra(chat, codSquadra) {
         loopWhile(html)
 
         displayAtleti(chat, atleti)
-        .then(() => menu.showHelp(chat))
+        .then(() => menu.showHelp(chat, page_id))
 
         function loopWhile(h: string) {
 //            const indexPrefix = h.indexOf(nomeAtletaPrefix)
@@ -158,9 +169,7 @@ function displayAtleti(chat, atleti: any[]) {
             ), //elements, 
             { image_aspect_ratio: 'horizontal ' }
         ) // horizontal o square))
-        .then(() =>
-        menu.showHelp(chat)
-        )
+
     )
 
     // ok sia per List che per generic
@@ -187,7 +196,7 @@ function getCalendarioERisultati(cam=916, callback) {
 }
 
 
-function onMessageCalendario(chat) {
+function onMessageCalendario(chat, page_id) {
 // http://portale.fitet.org/risultati/campionati/Calendario.asp?CAM=916&ANNO=32
     // chat.say('Vedi http://portale.fitet.org' + `/risultati/regioni/default_reg.asp?REG=9`)
     // getCalendario((html:string) => {  })
@@ -209,7 +218,7 @@ function onMessageCalendario(chat) {
     ],
                 { image_aspect_ratio: 'horizontal ' } // horizontal o square))
     ).then(() =>
-    menu.showHelp(chat)
+    menu.showHelp(chat, page_id)
     ) 
 
 }

@@ -56,6 +56,10 @@ const skills = [tpl, tt, menu]
 
 const BootBot = require('../lib/MyBootBot')
 
+const pid_TtCastrocaro = "1734287426880054"
+const pid_TplFC = "185193552025498"
+const pid_TplRA = "303990613406509"
+
 /**
  * associa a ogni identificativo di pagina un access-token
  * ogni volta che ricevo un messaggio da una pagina devo modificare l'access-token del bot
@@ -164,7 +168,7 @@ bot.on('message', (payload, chat, data) => {
   if (!gestitoDaModulo) {
     chat.say("Non ho capito ...")
       .then(() =>
-        menu.showHelp(chat)
+        menu.showHelp(chat, pid.pid)
       )
   }
 }) // end bot.on('message', ..)

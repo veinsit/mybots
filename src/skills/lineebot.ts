@@ -25,6 +25,7 @@ var bacino: string = process.env.BACINO || 'RA'
 var atok
 const mapAttachmentSize = "300x300"
 const mapAttachmentSizeRect = "300x150"
+var mPidData
 
 // =======================================================  exports
 export const PB_TPL = 'TPL_';
@@ -32,6 +33,7 @@ export const PB_TPL = 'TPL_';
 export const onPostback = (pl: string, chat, data, pidData): boolean => {
 
     bacino = pidData.bacino;
+    mPidData = pidData
 
     if (pl.startsWith("TPL_ON_CODLINEA_")) {
         const route_id = pl.substring(16);
@@ -44,6 +46,7 @@ export const onPostback = (pl: string, chat, data, pidData): boolean => {
 export const onMessage = (chat, text, pidData): boolean => {
     //   const bacino='FC'
     bacino = pidData.bacino;
+    mPidData = pidData
 
     console.log("linee.ts: onMessage: " + text);
     if (text.startsWith("linea ") || text.startsWith("orari ")) {
@@ -83,7 +86,8 @@ export const onMessage = (chat, text, pidData): boolean => {
 export function onLocationReceived(chat, coords, pidData) {
 
     bacino = pidData.bacino;
-
+    mPidData = pidData
+    
     // const bacino='FC'
     //    const db = sv.opendb(bacino);
 
@@ -120,7 +124,7 @@ export function onLocationReceived(chat, coords, pidData) {
                     ), //elements, 
                     { image_aspect_ratio: 'horizontal ' } // horizontal o square))
                 ).then(() =>
-                    menu.showHelp(chat)
+                    menu.showHelp(chat, mPidData.pid)
                     )
             )
         );
@@ -376,9 +380,7 @@ function sayLineaTrovata_ListCompact(chat, tas: TripsAndShapes, dayOffset: numbe
             }
         ], // end elements
             [], { topElementStyle: 'compact' })  // large o compact)
-    ).then(() =>
-        menu.showHelp(chat)
-        )
+    )
     // end chat.say.then
 };
 
@@ -418,5 +420,5 @@ export const showHelpLineeOrari = (chat) =>
     chat.say(
         `In ogni momento, puoi scrivere "linea" oppure "orari", seguito dal numero di una linea. Ad esempio: linea 5A, orari 92. 
 Puoi anche premere il tasto '+' per inviarmi la tua posizione: ti indicherò le fermate 🚏 più vicine a te !`, { typing: true }
-    ).then(() => menu.showHelp(chat))
+    ).then(() => menu.showHelp(chat, mPidData.pid))
 
