@@ -48,15 +48,15 @@ export const onMessage = (chat, text, page_id): boolean => {
         onMessageSquadra(chat, match1[1], page_id)
         return true;
     }
-    regex1 = /\b(?:squadre|elenco\ssquadre)\b\s+\b(D\d[A-G])\b/i
+    regex1 = /\b(?:squadre|elenco\ssquadre)\b\b/i
     match1 = regex1.exec(text)
-    if (match1 && match1.length >= 2) {
-        onMessageSquadre(chat, match1[1], page_id)
+    if (match1 && match1.length >= 1) {
+        onMessageSquadre(chat, page_id)
         return true;
     }
     regex1 = /\b(?:calendario|risultati)\b/i
     match1 = regex1.exec(text)
-    if (match1 && match1.length >= 2) {
+    if (match1 && match1.length >= 1) {
         onMessageCalendario(chat,page_id)
         return true;
     }
@@ -78,7 +78,8 @@ export const onMessage = (chat, text, page_id): boolean => {
 
 export const onPostback = (pl: string, chat, data, page_id): boolean => {
 
-    if (pl.startsWith("...")) {
+    if (pl.startsWith("TT_SQUADRA_")) {
+        onMessageSquadra(chat, pl.substring(11), page_id)
         return true;
     }
     return false;
@@ -89,14 +90,25 @@ function getSquadra(squadra, callback) {
 }
 
 
-function onMessageSquadre(chat, _codecam, page_id) {
-    const {squadre, codecam} = gironi.filter(g => g.codecam === _codecam)[0]
-    return chat.say(`Le squadre del girone ${codecam} sono:\n` + squadre.map(s => `${s.nome} (${s.cod})`).join('\n')).then(() =>
+function onMessageSquadre(chat, page_id) {
+    const {squadre, codecam} = gironi.filter(g => g.cam === 916)[0]
+     /* return  chat.say(`Le squadre D/3 gir.G sono:\n` + squadre.map(s => `${s.nome} (${s.cod})`).join('\n')).then(() =>
     
         chat.say({
             text: "Quale squadra vuoi vedere ?",
             quickReplies: squadre.map(s => "Squadra " + s.cod)
-        })) //  menu.showHelp(chat, page_id))
+        }) */
+    
+        return chat.sendGenericTemplate(squadre.map(s => { return      {
+                title: s.nome, subtitle: "Codice squadra: "+s.cod,
+                // image_url: ut.gStatMapUrl(`size=${mapAttachmentSizeRect}${mp}${mf}`),
+                buttons: [
+                    ut.postbackBtn("Vedi squadra", `TT_SQUADRA_${s.cod}`),
+                ]
+            }}),
+            { image_aspect_ratio: 'horizontal ' } // horizontal o square))
+        )    
+     //  menu.showHelp(chat, page_id))
 }
 
 function onMessageSquadra(chat, codSquadra, page_id) {
@@ -108,12 +120,13 @@ function onMessageSquadra(chat, codSquadra, page_id) {
         const dataPrefix = "<p class=dettagli>"
 
         var cam = 916
+        /*
         for (let g of gironi) {
             if (g.squadre.filter(s=>s.cod===codSquadra).length===1) {
                 cam = g.cam
                 break;
             }
-        }
+        }*/
         const atleti = []
         loopWhile(html)
 
