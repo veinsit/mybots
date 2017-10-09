@@ -3,7 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ut = require("../utils");
 const menu = require("./menu");
 const gironi = [
-    { cam: 916, camd: "D/3 gir.G",
+    {
+        cam: 916, codecam: "D3G", camd: "D/3 gir.G",
         squadre: [
             { cod: 7401, nome: "Castrocaro PUB" },
             { cod: 7396, nome: "TT S. MARTINO RIMINI ADRIACHANNEL" },
@@ -13,7 +14,14 @@ const gironi = [
             { cod: 7734, nome: "ALFIERI S. TOME'" },
             { cod: 7745, nome: "TT ACLI LUGO D3/B" },
             { cod: 7397, nome: "EVERPING RAVENNA B" }
-        ] },
+        ]
+    },
+    {
+        cam: 909, codecam: "D2D", camd: "D/2 gir.D",
+        squadre: [
+            { cod: 7349, nome: "Castrocaro BAR" },
+        ]
+    },
 ];
 var getPidData;
 exports.initModule = (bot, _getPidData) => {
@@ -33,15 +41,15 @@ exports.onMessage = (chat, text, page_id) => {
         onMessageSquadra(chat, match1[1], page_id);
         return true;
     }
-    regex1 = /\b(?:squadre|elenco\ssquadre)\b/i;
+    regex1 = /\b(?:squadre|elenco\ssquadre)\b\s+\b(D\d[A-G])\b/i;
     match1 = regex1.exec(text);
-    if (match1 && match1.length >= 1) {
-        onMessageSquadre(chat, page_id);
+    if (match1 && match1.length >= 2) {
+        onMessageSquadre(chat, match1[1], page_id);
         return true;
     }
     regex1 = /\b(?:calendario|risultati)\b/i;
     match1 = regex1.exec(text);
-    if (match1 && match1.length >= 1) {
+    if (match1 && match1.length >= 2) {
         onMessageCalendario(chat, page_id);
         return true;
     }
@@ -68,20 +76,28 @@ exports.onPostback = (pl, chat, data, page_id) => {
 function getSquadra(squadra, callback) {
     return ut.httpGet('portale.fitet.org', `/risultati/campionati/percentuali.php?SQUADRA=${squadra}&CAM=916`, callback);
 }
-function onMessageSquadre(chat, page_id) {
-    const squadre = gironi.filter(g => g.cam === 916)[0].squadre;
-    chat.say(`Le squadre del girone D3/G sono:\n` + squadre.map(s => `${s.nome} ${s.cod}`).join('\n')).then(() => chat.say({ text: "Dimmi il codice della squadra",
+function onMessageSquadre(chat, _codecam, page_id) {
+    const { squadre, codecam } = gironi.filter(g => g.codecam === _codecam)[0];
+    return chat.say(`Le squadre del girone ${codecam} sono:\n` + squadre.map(s => `${s.nome} (${s.cod})`).join('\n')).then(() => chat.say({
+        text: "Quale squadra vuoi vedere ?",
         quickReplies: squadre.map(s => "Squadra " + s.cod)
-    }));
+    })); //  menu.showHelp(chat, page_id))
 }
 function onMessageSquadra(chat, codSquadra, page_id) {
     getSquadra(codSquadra, (html) => {
         const codAtletaPrefix = 'dettaglio_percentuali.php?IDA=';
         const nomeAtletaPrefix = `SQUADRA=${codSquadra}'>`;
         const dataPrefix = "<p class=dettagli>";
+        var cam = 916;
+        for (let g of gironi) {
+            if (g.squadre.filter(s => s.cod === codSquadra).length === 1) {
+                cam = g.cam;
+                break;
+            }
+        }
         const atleti = [];
         loopWhile(html);
-        displayAtleti(chat, atleti)
+        displayAtleti(chat, cam, atleti)
             .then(() => menu.showHelp(chat, page_id));
         function loopWhile(h) {
             //            const indexPrefix = h.indexOf(nomeAtletaPrefix)
@@ -92,20 +108,20 @@ function onMessageSquadra(chat, codSquadra, page_id) {
                 let hh = parseAtleta(h.substring(indexAtleta));
                 loopWhile(hh);
             }
-        }
-        function parseAtleta(h) {
-            const codAtleta = h.substring(0, h.indexOf("&"));
-            // <a href='dettaglio_percentuali.php?IDA=729176&CAM=916&SQUADRA=7401'>CANGINI MATTEO</a>
-            h = h.substring(h.indexOf(nomeAtletaPrefix) + nomeAtletaPrefix.length);
-            const nomeAtleta = h.substring(0, h.indexOf("</a>"));
-            h = h.substring(h.indexOf(dataPrefix) + dataPrefix.length);
-            const ranking = h.substring(0, h.indexOf("</p>"));
-            h = h.substring(h.indexOf(dataPrefix) + dataPrefix.length);
-            const partiteDisputate = h.substring(0, h.indexOf("</p>"));
-            h = h.substring(h.indexOf(dataPrefix) + dataPrefix.length);
-            const partiteVinte = h.substring(0, h.indexOf("</p>"));
-            atleti.push({ nomeAtleta, codAtleta, codSquadra, ranking, partiteDisputate, partiteVinte });
-            return h;
+            function parseAtleta(h) {
+                const codAtleta = h.substring(0, h.indexOf("&"));
+                // <a href='dettaglio_percentuali.php?IDA=729176&CAM=916&SQUADRA=7401'>CANGINI MATTEO</a>
+                h = h.substring(h.indexOf(nomeAtletaPrefix) + nomeAtletaPrefix.length);
+                const nomeAtleta = h.substring(0, h.indexOf("</a>"));
+                h = h.substring(h.indexOf(dataPrefix) + dataPrefix.length);
+                const ranking = h.substring(0, h.indexOf("</p>"));
+                h = h.substring(h.indexOf(dataPrefix) + dataPrefix.length);
+                const partiteDisputate = h.substring(0, h.indexOf("</p>"));
+                h = h.substring(h.indexOf(dataPrefix) + dataPrefix.length);
+                const partiteVinte = h.substring(0, h.indexOf("</p>"));
+                atleti.push({ nomeAtleta, codAtleta, codSquadra, ranking, partiteDisputate, partiteVinte });
+                return h;
+            }
         }
     });
     //    const codSquadra = squadre[0].cod
@@ -126,26 +142,19 @@ function onMessageSquadra(chat, codSquadra, page_id) {
     */
 }
 // EAAZAg7V5gYmcBAHo7zshyKIHktYFCWnC8ZAsLr9wR1XAHOHUPVbZAuSK1PFKa0VUH1ozDL6e3qSrRNNMRIOP1CcFiMYZCjYU8fhHBPfoV1wVo5ZAitlaT5mJbP68qISw6psICG7PF7ZCQqJHlGVg1d5enTVxg760ovIfUwvvZBEaAZDZD
-function displayAtleti(chat, atleti) {
-    /*
-    ut.loop(0, atleti.length, (i) =>
-        chat.say(`${atleti[i].nomeAtleta} ${atleti[i].ranking}, vinte ${atleti[i].partiteVinte} su ${atleti[i].partiteDisputate}`)
-    )
-    */
-    return chat.say("Ecco gli atleti della squadra:").then(() => chat.sendGenericTemplate(atleti.map((currElement, index) => atletaTemplateElement(currElement)), //elements, 
-    { image_aspect_ratio: 'horizontal ' }) // horizontal o square))
-    );
-    // ok sia per List che per generic
-    function atletaTemplateElement(a) {
-        return {
-            title: a.nomeAtleta + " (" + a.codAtleta + ")",
-            subtitle: `${a.ranking}, vinte ${a.partiteVinte} su ${a.partiteDisputate}`,
-            // image_url: ut.gStatMapUrl(`size=${mapAttachmentSizeRect}${mp}${mf}`),
-            buttons: [
-                ut.weburlBtn("Incontri", `http://portale.fitet.org/risultati/campionati/dettaglio_percentuali.php?IDA=${a.codAtleta}&CAM=916&SQUADRA=${a.codSquadra}`),
-            ]
-        };
-    }
+const displayAtleti = (chat, cam, atleti) => chat.say("Ecco gli atleti della squadra:").then(() => chat.sendGenericTemplate(atleti.map((currElement, index) => atletaTemplateElement(currElement, cam)), //elements, 
+{ image_aspect_ratio: 'horizontal ' }) // horizontal o square))
+);
+// ok sia per List che per generic
+function atletaTemplateElement(a, cam) {
+    return {
+        title: a.nomeAtleta + " (" + a.codAtleta + ")",
+        subtitle: `${a.ranking}, vinte ${a.partiteVinte} su ${a.partiteDisputate}`,
+        // image_url: ut.gStatMapUrl(`size=${mapAttachmentSizeRect}${mp}${mf}`),
+        buttons: [
+            ut.weburlBtn("Incontri", `http://portale.fitet.org/risultati/campionati/dettaglio_percentuali.php?IDA=${a.codAtleta}&CAM=${cam}&SQUADRA=${a.codSquadra}`),
+        ]
+    };
 }
 function getCalendario(callback) {
     return ut.httpGet('portale.fitet.org', `/risultati/regioni/default_reg.asp?REG=9`, callback);
