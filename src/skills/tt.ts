@@ -4,6 +4,16 @@ import ut = require("../utils");
 import emo = require("../assets/emoji");
 import menu = require("./menu");
 
+const squadre = [
+    {cod:7401, nome:"Castrocaro PUB"},
+    {cod:7396, nome:"TT S. MARTINO RIMINI ADRIACHANNEL"},
+    {cod:7398, nome:"TT MASSA LOMBARDA ROSSI"},
+    {cod:7399, nome:"TT S. MARTINO RIMINI OLD AMERICAN"},
+    {cod:7400, nome:"EVERPING RAVENNA A"},
+    {cod:7734, nome:"ALFIERI S. TOME'"},
+    {cod:7745, nome:"TT ACLI LUGO D3/B"},
+    {cod:7397, nome:"EVERPING RAVENNA B"}
+]
 var getPidData
 export const initModule = (bot, _getPidData) => {
     getPidData = _getPidData
@@ -19,16 +29,17 @@ export const initModule = (bot, _getPidData) => {
 
 export const onMessage = (chat, text, page_id): boolean => {
     // The \b denotes a word boundary,
-    let regex1 = /\b(?:fitet|ping\s?pong|table\s?tennis|tt|tennis\s+tavolo)\b\s+\b(?:squadra|team)\b\s+(\d+)/i
+//    let regex1 = /\b(?:fitet|ping\s?pong|table\s?tennis|tt|tennis\s+tavolo)\b\s+\b(?:squadra|team)\b\s+(\d+)/i
+    let regex1 = /\b(?:squadra|team)\b\s+(\d+)/i
     let match1 = regex1.exec(text)
     if (match1 && match1.length >= 2 && match1[1]) {
         onMessageSquadra(chat, match1[1])
         return true;
     }
-    regex1 = /\b(?:fitet|ping\s?pong|table\s?tennis|tt|tennis\s+tavolo)\b\s+\b(?:calendario|date|incontri)\b/i
+    regex1 = /\b(?:squadre|elenco\ssquadre)\b/i
     match1 = regex1.exec(text)
     if (match1 && match1.length >= 1) {
-        onMessageCalendario(chat)
+        onMessageSquadre(chat)
         return true;
     }
     /*
@@ -59,7 +70,14 @@ function getSquadra(squadra, callback) {
     return ut.httpGet('portale.fitet.org', `/risultati/campionati/percentuali.php?SQUADRA=${squadra}&CAM=916`, callback);
 }
 
-const squadre = [{ cod: 7401, name: "Castrocaro PUB" }]
+
+function onMessageSquadre(chat) {
+    chat.say(`Le squadre del girone D3/G sono:\n`+squadre.map(s=>`${s.nome} ${s.cod}`).join('\n')).then(()=>
+    chat.say({text:"Dimmi il codice della squadra",
+        quickReplies: squadre.map(s=>"Squadra "+s.cod)
+    }))
+}
+    
 function onMessageSquadra(chat, codSquadra) {
 
     getSquadra(codSquadra, (html: string) => {
@@ -126,7 +144,7 @@ function onMessageSquadra(chat, codSquadra) {
         <p class=dettagli>66.7</p></center></b></td></tr><tr><td><a href='../new_rank/DettaglioAtleta.php?ATLETA=717524&ZU=0&AVVERSARIO=0&ID_CLASS=150'><img src='../../images/images.jpg' width=14 height=15 border=0
     */
 }
-
+// EAAZAg7V5gYmcBAHo7zshyKIHktYFCWnC8ZAsLr9wR1XAHOHUPVbZAuSK1PFKa0VUH1ozDL6e3qSrRNNMRIOP1CcFiMYZCjYU8fhHBPfoV1wVo5ZAitlaT5mJbP68qISw6psICG7PF7ZCQqJHlGVg1d5enTVxg760ovIfUwvvZBEaAZDZD
 function displayAtleti(chat, atleti: any[]) {
     /*
     ut.loop(0, atleti.length, (i) =>
@@ -140,6 +158,9 @@ function displayAtleti(chat, atleti: any[]) {
             ), //elements, 
             { image_aspect_ratio: 'horizontal ' }
         ) // horizontal o square))
+        .then(() =>
+        menu.showHelp(chat)
+        )
     )
 
     // ok sia per List che per generic
@@ -161,11 +182,35 @@ function getCalendario(callback) {
     return ut.httpGet('portale.fitet.org', `/risultati/regioni/default_reg.asp?REG=9`, callback);
 }
 
-function onMessageCalendario(chat) {
+function getCalendarioERisultati(cam=916, callback) {
+    return ut.httpGet('portale.fitet.org', `/risultati/campionati/Calendario.asp?CAM=${cam}&ANNO=32`, callback);
+}
 
-    chat.say('Vedi http://portale.fitet.org' + `/risultati/regioni/default_reg.asp?REG=9`)
+
+function onMessageCalendario(chat) {
+// http://portale.fitet.org/risultati/campionati/Calendario.asp?CAM=916&ANNO=32
+    // chat.say('Vedi http://portale.fitet.org' + `/risultati/regioni/default_reg.asp?REG=9`)
     // getCalendario((html:string) => {  })
     //    const codSquadra = squadre[0].cod
+
+    return chat.sendGenericTemplate([
+        {
+            title: "D/3 gir.G",  subtitle : "Calendario e Risultati",
+            // image_url: ut.gStatMapUrl(`size=${mapAttachmentSizeRect}${mp}${mf}`),
+            buttons: [
+                ut.weburlBtn("Vai alla pagina", `http://portale.fitet.org/risultati/campionati/Calendario.asp?CAM=916&ANNO=32` ),
+        ]},
+        {
+            title: "D/2 gir.D",  subtitle : "Calendario e Risultati",
+            // image_url: ut.gStatMapUrl(`size=${mapAttachmentSizeRect}${mp}${mf}`),
+            buttons: [
+                ut.weburlBtn("Vai alla pagina", `http://portale.fitet.org/risultati/campionati/Calendario.asp?CAM=909&ANNO=32` ),
+        ]},
+    ],
+                { image_aspect_ratio: 'horizontal ' } // horizontal o square))
+    ).then(() =>
+    menu.showHelp(chat)
+    ) 
 
 }
 
@@ -177,7 +222,6 @@ export function onLocationReceived(chat, coords, page_id) {
 
  const showHelpPingPong = (chat) =>
  chat.say(
-   `In ogni momento, puoi scrivere "ping pong" oppure "tt", seguito da:
-- la parola "squadra" seguita dal codice della squadra Ad esempio: "tt squadra 7401".`
+   `In ogni momento, puoi scrivere "squadre", oppure "squadra" seguita dal codice della squadra Ad esempio: "squadra 7401".`
 , { typing: true }
  ).then(() => require("./menu").showHelp(chat))

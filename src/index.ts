@@ -134,6 +134,7 @@ bot.on('message', (payload, chat, data) => {
   console.log("page id=" + payload.recipient.id + "; sender.id = " + fid + "; text=" + text)
   // page id=185193552025498; sender.id = 1362132697230478; text=orari 92   trasp.pubb. FC
   // page id=303990613406509; sender.id = 1773056349400989; text=ciao       I miei esperim.
+  //         1734287426880054
   if (data.captured) { return; }
 
   const pid = getPidData(payload.recipient.id)
