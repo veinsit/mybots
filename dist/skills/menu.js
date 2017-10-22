@@ -70,8 +70,8 @@ const pid_TplFC = "185193552025498";
 const pid_TplRA = "303990613406509";
 const qrs = [
     { pid: pid_TtCastrocaro, quickReplies: ['squadre D3G', 'squadre D2D', 'risultati D3G', 'risultati D2D', 'squadra 7401'] },
-    { pid: pid_TplFC, quickReplies: ['linee e orari', 'help', { content_type: "location" }] },
-    { pid: pid_TplRA, quickReplies: ['linee e orari', 'help', { content_type: "location" }] },
+    { pid: pid_TplFC, quickReplies: ['istruzioni', 'esempio', { content_type: "location" }] },
+    { pid: pid_TplRA, quickReplies: ['istruzioni', 'esempio', { content_type: "location" }] },
 ];
 exports.showAbout = (chat) => chat.say("Questo servizio utilizza i dati sulle linee e gli orari pubblicati negli Open Data di Start Romagna. http://www.startromagna.it/servizi/open-data/");
 exports.showHelp = (chat, page_id) => {

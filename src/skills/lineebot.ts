@@ -133,11 +133,17 @@ export function onLocationReceived(chat, coords, pidData) {
 
 export const initModule = (bot, _getPidData) => {
 
-    bot.hear('linee e orari', (payload, chat) => {
+    bot.hear('istruzioni', (payload, chat) => {
         const pid = _getPidData(payload.recipient.id)
         bot.accessToken = pid.atok
 
         showHelpLineeOrari(chat)
+    });
+    bot.hear('esempio', (payload, chat) => {
+        const pid = _getPidData(payload.recipient.id)
+        bot.accessToken = pid.atok
+
+        chat.say("Prova a scrivere:\nlinea 3");
     });
 }
 
@@ -205,6 +211,7 @@ const onCodlinea = (chat, route_id) =>
     sv.getTripsAndShapes(bacino, route_id, -1, 0) // -1: sia A che R
         .then((tas: TripsAndShapes) =>
             sayLineaTrovata(chat, tas, 0, 0) // 0 = Andata come default
+            .then(()=> menu.showHelp(chat, mPidData.pid))
         )
 
 
@@ -314,7 +321,7 @@ export function sayLineaTrovata(chat, tas: TripsAndShapes, dir01: number, dayOff
                 */
                 return chat.say("Percorsi di oggi (Andata):\n" + tas.getPercorsiOD(0).join('\n')).then(() =>
                     chat.say("Percorsi di oggi (Ritorno):\n" + tas.getPercorsiOD(1).join('\n')).then(() =>
-                        m<0.5 ? sayLineaTrovata_ListCompact(chat, tas, dayOffset) : sayLineaTrovata_Generic(chat, tas, dayOffset)
+                       /* m<0.5 ? sayLineaTrovata_ListCompact(chat, tas, dayOffset) : */sayLineaTrovata_Generic(chat, tas, dayOffset)
                     )
                 )
             })
