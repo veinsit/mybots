@@ -16,6 +16,7 @@ export const initModule = (bot, _getPidData) => {
     "Sono un automa (un 'bot') e posso darti informazioni sulle linee e sugli orari degli autobus" +
     "\n\nClicca per iniziare" + emo.emoji.down)
 
+
   bot.setGetStartedButton((payload, chat) => {
     chat.sendTypingIndicator(500).then(() =>
       showHelp(chat,payload.recipient.id)
@@ -34,27 +35,7 @@ export const initModule = (bot, _getPidData) => {
       ]
     }], false)
 
-  // saluti e inviti
-  bot.hear( //     ['hello', 'hi', /hey( there)?/i], 
-    ['hello', 'hi', 'hey', 'ehi', 'start', 'inizia', 'ciao', 'salve', 'chat', 'parla'],
 
-    (payload, chat) => {
-      const pid = getPidData(payload.recipient.id)
-      bot.accessToken = pid.atok
-
-      showHelp(chat, payload.recipient.id)
-    });
-
-  // help
-  bot.hear( //     ['hello', 'hi', /hey( there)?/i], 
-    ['help', 'aiuto', 'aiutami', 'istruzioni', 'info', '/'],
-
-    (payload, chat) => {
-      const pid = getPidData(payload.recipient.id)
-      bot.accessToken = pid.atok
-
-      showHelp(chat, payload.recipient.id)
-    });
 
 
 }
@@ -99,16 +80,15 @@ const qrs = [
 export const showAbout = (chat) =>
   chat.say("Questo servizio utilizza i dati sulle linee e gli orari pubblicati negli Open Data di Start Romagna. http://www.startromagna.it/servizi/open-data/")
 
-export const showHelp = (chat, page_id) => {
-  
-  return chat.getUserProfile()
-  .then((user) => {
-    chat.say({
-      text: user.first_name + ", come posso aiutarti adesso? 😊",
-      quickReplies: qrs.filter(x=>x.pid===page_id)[0].quickReplies
-    })
-  })
-}
+export const showHelp = (chat, page_id) =>  
+      chat.getUserProfile()
+        .then((user) => {
+          chat.say({
+            text: user.first_name + ", come posso aiutarti adesso? 😊",
+            quickReplies: qrs.filter(x=>x.pid===page_id)[0].quickReplies
+          })
+        })
+
 
 
 // =======================================================  exports

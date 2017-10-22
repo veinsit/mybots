@@ -90,6 +90,16 @@ exports.initModule = (bot, _getPidData) => {
         bot.accessToken = pid.atok;
         exports.showHelpLineeOrari(chat);
     });
+    // saluti e inviti
+    bot.hear(//     ['hello', 'hi', /hey( there)?/i], 
+    [
+        'hello', 'hi', 'hey', 'ehi', 'start', 'inizia', 'ciao', 'salve', 'chat', 'parla',
+        'help', 'aiuto', 'aiutami', 'istruzioni', 'info', '/'
+    ], (payload, chat) => {
+        const pid = _getPidData(payload.recipient.id);
+        bot.accessToken = pid.atok;
+        exports.showHelpLineeOrari(chat);
+    });
     bot.hear('esempio', (payload, chat) => {
         const pid = _getPidData(payload.recipient.id);
         bot.accessToken = pid.atok;
@@ -176,64 +186,6 @@ function stopTemplateElement(bacino, i, ss, dist, mp) {
         ]
     };
 }
-/*
-export function onLocationReceived_OLD_2_(chat, coords) {
-    
-        //    const db = sv.opendb(bacino);
-    
-        //    db.serialize(function() {
-        let dist: number = 9e6
-        let nearestStop;
-    
-        sv.getNearestStops(bacino, coords, 0)
-            .then((nrs: sv.NearestStopsResult) => {
-                sayNearestStops_Text(nrs)
-            })
-    
-        function sayNearestStops_Text(nrs: sv.NearestStopsResult) {
-            if (nrs.dist[0] > 8000)
-                chat && chat.say(`Mi dispiace, non c'è nessuna fermata nel raggio di 8 Km`, { typing: true })
-            else {
-                let nearestStop: Stop = nrs.stopSchedules[0].stop;
-                let routeIds = new Set
-                for (let trip of nrs.stopSchedules[0].trips) {
-                    routeIds.add(trip.route_id)
-                }
-                let lineePassanti = Array.from(routeIds)
-    
-                chat && chat.say(
-                    `La fermata più vicina è ${nearestStop.stop_name} a ${nrs.dist[0].toFixed(0)} metri in linea d'aria`,
-                    { typing: true })
-                    .then(() => {
-                        const m1 = ut.gMapMarker(coords.lat, coords.long, 'P', 'blue')
-                        const m2 = ut.gMapMarker(nearestStop.stop_lat, nearestStop.stop_lon, 'F', 'red')
-                        //        chat.sendAttachment('image', ut.gStatMapUrl(`zoom=11&size=160x160&center=${coords.lat},${coords.long}${m1}${m2}`), undefined, {typing:true})
-                        chat.sendAttachment('image',
-                            ut.gStatMapUrl(`size=300x300${m1}${m2}`),
-                            undefined,
-                            { typing: true })
-                            .then(() =>
-                                chat.say('Ci passano le linee ' + lineePassanti.join(', ')).then(() => {
-                                    for (let route_id of lineePassanti) {
-                                        chat.say(`${route_id}: ` + nrs.stopSchedules[0]
-                                            .trips
-                                            .filter(t => t.route_id === route_id)
-                                            .map(t => t.stop_times.filter(x => x.stop_id === nearestStop.stop_id)[0].departure_time)
-                                            .join(', ')
-                                        )
-    
-                                    }
-                                }
-                                )
-                            )
-                    })
-    
-            }
-    
-        }
-    
-    }
-    */
 function sayLineaTrovata(chat, tas, dir01, dayOffset) {
     return chat.say("Ecco il percorso della linea " + tas.linea.getTitle() +
         `\n(${emo.emoji.warning} alcune corse potrebbero seguire percorsi diversi da quello rappresentato)`).then(() => chat.sendAttachment('image', tas.gmapUrl(mapAttachmentSize, dir01, 25), undefined, { typing: true })

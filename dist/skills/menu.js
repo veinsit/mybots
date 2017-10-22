@@ -24,20 +24,6 @@ exports.initModule = (bot, _getPidData) => {
             ]
         }
     ], false);
-    // saluti e inviti
-    bot.hear(//     ['hello', 'hi', /hey( there)?/i], 
-    ['hello', 'hi', 'hey', 'ehi', 'start', 'inizia', 'ciao', 'salve', 'chat', 'parla'], (payload, chat) => {
-        const pid = getPidData(payload.recipient.id);
-        bot.accessToken = pid.atok;
-        exports.showHelp(chat, payload.recipient.id);
-    });
-    // help
-    bot.hear(//     ['hello', 'hi', /hey( there)?/i], 
-    ['help', 'aiuto', 'aiutami', 'istruzioni', 'info', '/'], (payload, chat) => {
-        const pid = getPidData(payload.recipient.id);
-        bot.accessToken = pid.atok;
-        exports.showHelp(chat, payload.recipient.id);
-    });
 };
 /*
 export const showSalutation = (chat) => {
@@ -74,15 +60,13 @@ const qrs = [
     { pid: pid_TplRA, quickReplies: ['istruzioni', 'esempio', { content_type: "location" }] },
 ];
 exports.showAbout = (chat) => chat.say("Questo servizio utilizza i dati sulle linee e gli orari pubblicati negli Open Data di Start Romagna. http://www.startromagna.it/servizi/open-data/");
-exports.showHelp = (chat, page_id) => {
-    return chat.getUserProfile()
-        .then((user) => {
-        chat.say({
-            text: user.first_name + ", come posso aiutarti adesso? 😊",
-            quickReplies: qrs.filter(x => x.pid === page_id)[0].quickReplies
-        });
+exports.showHelp = (chat, page_id) => chat.getUserProfile()
+    .then((user) => {
+    chat.say({
+        text: user.first_name + ", come posso aiutarti adesso? 😊",
+        quickReplies: qrs.filter(x => x.pid === page_id)[0].quickReplies
     });
-};
+});
 // =======================================================  exports
 exports.PB_MENU = 'MENU_';
 var bacino;
