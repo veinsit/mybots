@@ -11,7 +11,7 @@ const useFakeChat = false; // process.env.USE_FAKE_CHAT || false; // debug;
 // Load emojis
 const utils = require("./utils");
 const tpl = require("./skills/lineebot");
-const tt = require("./skills/tt");
+//import tt   = require("./skills/tt")
 const menu = require("./skills/menu");
 //import prove = require("./skills/prove")
 // tslint:disable-next-line:ordered-imports
@@ -33,7 +33,11 @@ tpl.webgetLinea(req.params.bacino, req.params.routeid, parseInt(req.params.dir01
 app.get(baseUriBacino + "/stops/:stopid/g/:giorno", (req, res) => tpl.webgetStopSchedule(req.params.bacino, req.params.stopid, parseInt(req.params.giorno), req, res));
 // tutto quello qui sopre deve essere PRIMA di new BootBot
 // ============================================================= end web
-const skills = [tpl, tt, menu];
+const skills = [
+    tpl,
+    //  tt, 
+    menu
+];
 const BootBot = require('../lib/MyBootBot');
 const pid_TtCastrocaro = "1734287426880054";
 const pid_TplFC = "185193552025498";
@@ -110,7 +114,7 @@ bot.on('message', (payload, chat, data) => {
           showSalutation(chat)
         )
   
-      return;
+      return;tsc
     }
     */
     let gestitoDaModulo = false;
@@ -170,7 +174,7 @@ for (let s of skills) {
     s.initModule(bot, getPidData);
 }
 if (debug) {
-    require("./indexDebug").goDebug(tpl, tt, getPidData);
+    require("./indexDebug").goDebug(tpl, /*tt*/ null, getPidData);
 }
 bot.start(process.env.PORT || 3000);
 //# sourceMappingURL=index.js.map

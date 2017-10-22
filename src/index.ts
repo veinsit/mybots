@@ -18,7 +18,7 @@ import utils = require('./utils')
 import emo  = require('./assets/emoji')
 
 import tpl  = require("./skills/lineebot")
-import tt   = require("./skills/tt")
+//import tt   = require("./skills/tt")
 import menu = require("./skills/menu")
 //import prove = require("./skills/prove")
 // tslint:disable-next-line:ordered-imports
@@ -52,7 +52,11 @@ app.get(baseUriBacino + "/stops/:stopid/g/:giorno", (req, res) =>
 // tutto quello qui sopre deve essere PRIMA di new BootBot
 // ============================================================= end web
 
-const skills = [tpl, tt, menu]
+const skills = [
+  tpl, 
+//  tt, 
+  menu
+]
 
 const BootBot = require('../lib/MyBootBot')
 
@@ -155,7 +159,7 @@ bot.on('message', (payload, chat, data) => {
         showSalutation(chat)
       )
 
-    return;
+    return;tsc
   }
   */
 
@@ -231,7 +235,7 @@ for (let s of skills) {
 }
 
 if (debug) {
-  require("./indexDebug").goDebug(tpl, tt, getPidData)
+  require("./indexDebug").goDebug(tpl, /*tt*/ null, getPidData)
 }
 
 bot.start(process.env.PORT || 3000)
